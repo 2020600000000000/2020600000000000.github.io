@@ -11,38 +11,47 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
-        body { background-color: #f5f5f7; display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+        body { background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
         
-        /* 1. 介紹頁面板樣式 */
-        .intro-stage { display: flex; flex-direction: column; align-items: center; max-width: 600px; width: 100%; background: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-top: 40px; }
-        .intro-title { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #1d1d1f; text-align: center; }
-        .intro-content { font-size: 16px; color: #515154; line-height: 1.8; margin-bottom: 30px; width: 100%; }
-        .intro-content ul { padding-left: 20px; margin-top: 10px; }
-        .start-btn { background-color: #0071e3; color: white; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,113,227,0.3); }
-        .start-btn:hover { background-color: #0077ed; transform: scale(1.03); }
+        /* 1. 介紹頁面板樣式 (對應 UI 圖 1) */
+        .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: 80vh; border: 1px solid #ddd; border-radius: 12px; background: #fff; padding: 20px; }
+        .intro-title { font-size: 36px; font-weight: bold; margin-bottom: 40px; color: #000; text-align: center; }
+        .start-btn { background-color: #8e8e8e; color: #000; border: 2px solid #000; padding: 15px 50px; font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .start-btn:hover { background-color: #7a7a7a; }
 
-        /* 2. 拍照與後製階段樣式 */
-        .header-title { font-size: 32px; font-weight: bold; margin-bottom: 30px; text-align: center; color: #000; }
+        /* 2. 拍照階段樣式 (對應 UI 圖 2) */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 900px; }
-        .countdown-overlay { font-size: 48px; font-weight: bold; color: red; margin-bottom: 15px; height: 60px; text-align: center; }
-        .viewfinders { display: flex; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .viewfinder-box { width: 420px; height: 500px; background-color: #8e8e8e; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-size: 28px; font-weight: bold; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .viewfinder-box canvas, .viewfinder-box video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-shadow: 1px 1px 5px rgba(0,0,0,0.8); }
-        .filter-bar { width: 100%; max-width: 860px; background-color: #8e8e8e; padding: 25px; border-radius: 8px; text-align: center; font-size: 26px; font-weight: bold; color: #000; margin-bottom: 20px; cursor: pointer; transition: background 0.2s; }
-        .filter-bar:hover { background-color: #7a7a7a; }
+        .countdown-overlay { font-size: 32px; font-weight: bold; color: #000; margin-bottom: 20px; height: 45px; text-align: center; }
+        .viewfinders { display: flex; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
+        .viewfinder-box { width: 420px; height: 500px; background-color: #8e8e8e; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #000; font-size: 28px; font-weight: bold; position: relative; overflow: hidden; }
+        .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; }
+        .filter-bar { width: 100%; background-color: #8e8e8e; padding: 25px; border-radius: 8px; text-align: center; font-size: 28px; font-weight: bold; color: #000; margin-bottom: 20px; cursor: pointer; }
         
+        /* 3. 後製階段通用樣式 (對應 UI 圖 3-7) */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; }
-        .preview-box { width: 500px; height: 500px; background-color: #8e8e8e; border-radius: 12px; margin-bottom: 30px; display: flex; justify-content: center; align-items: center; color: #000; font-size: 32px; position: relative; overflow: hidden; }
+        .preview-box { width: 500px; height: 500px; background-color: #8e8e8e; border-radius: 12px; margin-bottom: 30px; position: relative; overflow: hidden; }
         .preview-box canvas { width: 100%; height: 100%; object-fit: cover; }
+        .edit-label { position: absolute; bottom: 15px; left: 15px; background-color: #8e8e8e; padding: 8px 25px; border-radius: 10px; font-size: 22px; font-weight: bold; color: #000; z-index: 5; }
+        
+        /* 功能按鈕列 */
         .menu-row { display: flex; gap: 15px; justify-content: center; width: 100%; margin-bottom: 20px; }
-        .btn-item { width: 100px; height: 65px; background-color: #8e8e8e; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; cursor: pointer; border: none; transition: background 0.2s; }
+        .btn-item { width: 100px; height: 65px; background-color: #8e8e8e; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 22px; font-weight: bold; cursor: pointer; border: none; }
         .btn-item.active { background-color: #555555; color: #fff; }
-        .sub-panel { width: 100%; max-width: 500px; display: none; flex-direction: column; align-items: flex-start; margin-bottom: 20px; padding: 10px; }
-        .sub-title { font-size: 22px; font-weight: bold; margin-bottom: 15px; background-color: #8e8e8e; padding: 6px 20px; border-radius: 8px; }
-        .slider-input { width: 100%; margin: 15px 0; height: 4px; background: #000; outline: none; -webkit-appearance: none; }
-        .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; background: #000; cursor: pointer; }
-        .confirm-btn { align-self: flex-end; width: 50px; height: 50px; background-color: #b5b5b5; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; border: 2px solid #000; margin-top: 10px; }
+        
+        /* 滑桿與操控面板區 */
+        .sub-panel { width: 100%; display: none; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .slider-container { width: 100%; padding: 0 20px; margin: 20px 0; }
+        .slider-input { width: 100%; height: 6px; background: #000; outline: none; -webkit-appearance: none; }
+        .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #000; cursor: pointer; }
+        
+        /* 貼紙與妝容網格 */
+        .grid-layout { display: flex; gap: 12px; justify-content: flex-start; flex-wrap: wrap; width: 100%; padding: 0 10px; }
+        .grid-item { width: 85px; height: 85px; background-color: #8e8e8e; border-radius: 12px; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; }
+        
+        /* 打勾確認按鈕 */
+        .confirm-btn { align-self: flex-end; width: 60px; height: 60px; background-color: #8e8e8e; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: none; margin-top: 10px; margin-right: 10px; }
+        
         #hidden-video { display: none; }
     </style>
 </head>
@@ -51,85 +60,78 @@
     <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">歡迎使用智慧美顏相機系統</div>
-        <div class="intro-content">
-            <p>本系統結合 AI 影像辨識與即時美顏修圖功能，請詳閱以下操作手勢說明：</p>
-            <ul>
-                <li>👋 <b>揮手手勢</b>：在鏡頭前左右晃動手掌，可即時切換預覽濾鏡。</li>
-                <li>✌️ <b>比 YA 手勢</b>：第一次比 YA 會開啟黃金比例九宮格輔助線，再比一次則可關閉。</li>
-                <li>👌 <b>比 OK 手勢</b>：觸發 5 秒拍照倒數，倒數完畢後會自動抓拍並進入後製模式。</li>
-            </ul>
-            <p style="margin-top: 15px; color: #ff3b30; font-weight: bold;">※ 點擊下方按鈕後，請務必允許瀏覽器的「相機存取權限」喔！</p>
-        </div>
-        <button class="start-btn" onclick="enterCameraStage()">開始拍照</button>
+        <div class="intro-title">用法.網頁功能介紹</div>
+        <button class="start-btn" onclick="enterCameraStage()">開始體驗</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div class="header-title">智慧美顏相機系統</div>
-        <div id="countdown" class="countdown-overlay">正在開啟鏡頭並同步載入 AI 模組...</div>
+        <div id="countdown" class="countdown-overlay">比 OK 倒數 5 秒拍照</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
-                <span class="viewfinder-label">原鏡頭</span>
+                <span class="viewfinder-label" style="top: 45%;">原鏡頭</span>
                 <canvas id="canvas-raw"></canvas>
             </div>
             <div class="viewfinder-box">
-                <span class="viewfinder-label" style="text-align:center; top:40%;">修圖後<br><span style="font-size:16px; font-weight:normal;">(揮手切換濾鏡.比YA黃金比例輔助<br>第2次YA取消)</span></span>
+                <span class="viewfinder-label" style="top: 35%;">修圖後<br><span style="font-size:16px; font-weight:normal; line-height: 1.5;">(揮手切換濾鏡.比YA黃金比例輔助<br>第2次YA取消)</span></span>
                 <canvas id="canvas-live-fx"></canvas>
             </div>
         </div>
         
         <div class="filter-bar" id="filter-toggle-bar" onclick="manualNextFilter()">
-            濾鏡切換 (當前濾鏡: <span id="current-filter-name">無</span>)
+            濾鏡切換 (10-15種)
         </div>
     </div>
 
     <div id="stage-edit" class="edit-stage">
         <div class="preview-box">
             <canvas id="canvas-edit-preview"></canvas>
+            <div id="current-edit-label" class="edit-label" style="display:none;">美白</div>
         </div>
         
-        <div class="menu-row">
-            <button class="btn-item" onclick="switchSubPanel('panel-whiten')">美白</button>
-            <button class="btn-item" onclick="switchSubPanel('panel-smooth')">磨皮</button>
-            <button class="btn-item" onclick="switchSubPanel('panel-makeup')">妝容</button>
-            <button class="btn-item" onclick="switchSubPanel('panel-sticker')">貼紙</button>
+        <div class="menu-row" id="main-edit-menu">
+            <button class="btn-item" onclick="openSubPanel('whiten')">美白</button>
+            <button class="btn-item" onclick="openSubPanel('smooth')">磨皮</button>
+            <button class="btn-item" onclick="openSubPanel('makeup')">妝容</button>
+            <button class="btn-item" onclick="openSubPanel('sticker')">貼紙</button>
         </div>
 
         <div id="panel-whiten" class="sub-panel">
-            <div class="sub-title">美白</div>
-            <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            <button class="confirm-btn" onclick="saveToPhoto()">✓</button>
+            <div class="slider-container">
+                <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
+            </div>
+            <button class="confirm-btn" onclick="saveToPhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
         <div id="panel-smooth" class="sub-panel">
-            <div class="sub-title">磨皮</div>
-            <input type="range" id="slider-smooth" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            <button class="confirm-btn" onclick="saveToPhoto()">✓</button>
+            <div class="slider-container">
+                <input type="range" id="slider-smooth" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
+            </div>
+            <button class="confirm-btn" onclick="saveToPhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
         <div id="panel-makeup" class="sub-panel">
-            <div class="sub-title">妝容</div>
-            <div class="menu-row" style="justify-content: flex-start;">
-                <button class="btn-item" onclick="setMakeup('korean')">韓系</button>
-                <button class="btn-item" onclick="setMakeup('japanese')">日系</button>
-                <button class="btn-item" onclick="setMakeup('taiwanese')">歌仔戲</button>
-                <button class="btn-item" onclick="setMakeup('european')">歐式</button>
+            <div class="grid-layout">
+                <button class="grid-item" onclick="setMakeup('korean')">韓系</button>
+                <button class="grid-item" onclick="setMakeup('japanese')">日系</button>
+                <button class="grid-item" onclick="setMakeup('taiwanese')">歌仔戲</button>
+                <button class="grid-item" onclick="setMakeup('european')">歐式</button>
             </div>
-            <button class="confirm-btn" onclick="saveToPhoto()">✓</button>
+            <button class="confirm-btn" onclick="saveToPhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
         <div id="panel-sticker" class="sub-panel">
-            <div class="sub-title">貼紙</div>
-            <div class="menu-row" style="justify-content: flex-start; gap: 10px; flex-wrap: wrap;">
-                <button class="btn-item" style="width:70px; height:70px;" onclick="setSticker('glasses')">
-                    <svg width="50" height="30" viewBox="0 0 100 40"><circle cx="25" cy="20" r="15" stroke="black" stroke-width="3" fill="none"/><circle cx="75" cy="20" r="15" stroke="black" stroke-width="3" fill="none"/><line x1="40" y1="20" x2="60" y2="20" stroke="black" stroke-width="3"/></svg>
+            <div class="grid-layout">
+                <button class="grid-item" onclick="setSticker('glasses')">
+                    <svg width="50" height="30" viewBox="0 0 100 40"><circle cx="25" cy="20" r="14" stroke="black" stroke-width="2.5" fill="none"/><circle cx="75" cy="20" r="14" stroke="black" stroke-width="2.5" fill="none"/><line x1="39" y1="20" x2="61" y2="20" stroke="black" stroke-width="2.5"/></svg>
                 </button>
-                <button class="btn-item" style="width:70px; height:70px;" onclick="setSticker('ears')">
-                    <svg width="50" height="40" viewBox="0 0 100 60"><polygon points="10,50 30,10 50,50" fill="pink" stroke="black" stroke-width="2"/><polygon points="50,50 70,10 90,50" fill="pink" stroke="black" stroke-width="2"/></svg>
+                <button class="grid-item" onclick="setSticker('ears')">
+                    <svg width="50" height="40" viewBox="0 0 100 60"><polygon points="15,50 35,15 50,45" fill="#ffccd5" stroke="black" stroke-width="2"/><polygon points="50,45 65,15 85,50" fill="#ffccd5" stroke="black" stroke-width="2"/></svg>
                 </button>
+                <button class="grid-item"></button><button class="grid-item"></button>
+                <button class="grid-item"></button><button class="grid-item"></button><button class="grid-item"></button><button class="grid-item"></button>
             </div>
-            <button class="confirm-btn" onclick="saveToPhoto()">✓</button>
+            <button class="confirm-btn" onclick="saveToPhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
     </div>
 
@@ -144,6 +146,7 @@
         const ctxEdit = canvasEdit.getContext('2d');
 
         let currentFilterIndex = 0;
+        // 擴充至 11 種豐富濾鏡風格 (符合 UI 10-15 種的要求)
         const filters = ['無', '復古明亮', '浪漫粉紅', '冷調青翠', '高級灰調', '日系清新', '溫暖陽光', '經典黑白', '戲劇張力', '極光幻彩', '暮色暖橘'];
         
         let showGoldenRatio = false; 
@@ -155,6 +158,11 @@
         let currentSticker = 'none';
         let faceLandmarksData = null; 
 
+        // 預先非同步載入黃金比例面具圖片
+        const maskImg = new Image();
+        maskImg.crossOrigin = "anonymous";
+        maskImg.src = "https://images.squarespace-cdn.com/content/v1/59df998f495114a840e60802/1531818228189-9VAMJ0KLSK2S98C40Y1C/Marquardt+Mask.jpg"; 
+
         function initCanvasSize() {
             [canvasRaw, canvasLiveFx, canvasEdit].forEach(canvas => {
                 canvas.width = 420;
@@ -163,57 +171,54 @@
         }
         initCanvasSize();
 
-        // 點擊介紹頁的按鈕，才會觸發這個函式去要求鏡頭權限與開啟拍照階段
+        // 進入相機拍照階段
         function enterCameraStage() {
-            // 切換 DOM 顯示狀態
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
 
-            // 請求開啟鏡頭
             navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
                 .then(stream => {
                     videoElement.srcObject = stream;
                     videoElement.addEventListener('loadedmetadata', () => {
-                        // 鏡頭流一準備好，立馬開啟純畫面繪製，保證不黑屏
                         startBaseCameraLoop();
-                        // 接著在背景非同步啟用 AI 模組
                         initMediaPipeAI();
                     });
                 })
                 .catch(err => {
                     document.getElementById('countdown').innerText = "鏡頭開啟失敗";
-                    alert("無法開啟視訊鏡頭。請確保沒有其他應用程式（如 LINE）正在佔用相機，並確認已核准此網頁的相機存取權限。錯誤資訊：" + err);
+                    alert("無法獲取相機權限，請確認無其他程式佔用：" + err);
                 });
         }
 
-        // 基本渲染循環（負責把鏡頭畫面畫到畫布上）
+        // 基本渲染循環
         function startBaseCameraLoop() {
             const render = () => {
                 if (videoElement.readyState >= 2) {
                     ctxRaw.drawImage(videoElement, 0, 0, canvasRaw.width, canvasRaw.height);
                     ctxLive.drawImage(videoElement, 0, 0, canvasLiveFx.width, canvasLiveFx.height);
                     applyLiveFilter(ctxLive);
-                    if (showGoldenRatio) drawGoldenRatioLines(ctxLive);
+                    
+                    // 如果啟用了黃金比例，則呼叫動態人臉貼合運算
+                    if (showGoldenRatio && faceLandmarksData) {
+                        drawGoldenRatioMask(ctxLive, faceLandmarksData);
+                    }
                 }
                 requestAnimationFrame(render);
             };
             requestAnimationFrame(render);
         }
 
+        // 初始化 AI 手勢與人臉追蹤
         let handsAI = null;
         let faceMeshAI = null;
         
         function initMediaPipeAI() {
-            handsAI = new Hands({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
-            });
+            handsAI = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}` });
             handsAI.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
             handsAI.onResults(onHandResults);
 
-            faceMeshAI = new FaceMesh({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`
-            });
-            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
+            faceMeshAI = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}` });
+            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
             faceMeshAI.onResults(onFaceResults);
 
             let isProcessing = false;
@@ -223,17 +228,11 @@
                     try {
                         await handsAI.send({ image: videoElement });
                         await faceMeshAI.send({ image: videoElement });
-                        document.getElementById('countdown').innerText = isCountingDown ? document.getElementById('countdown').innerText : "✨ AI 手勢辨識功能已就緒";
-                    } catch (e) {
-                        console.log("AI 執行緒忙碌中...");
-                    }
+                    } catch (e) {}
                     isProcessing = false;
                 }
-            }, 120); // 略微調低辨識頻率，提升老舊電腦的流暢度
+            }, 100);
         }
-
-        let lastHandX = null;
-        let lastWaveTime = 0;
 
         function onHandResults(results) {
             if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) return;
@@ -243,7 +242,7 @@
             if (detectWaveGesture(landmarks, now)) manualNextFilter();
             if (detectVSign(landmarks) && (now - lastYaTime > 2000)) {
                 lastYaTime = now;
-                showGoldenRatio = !showGoldenRatio;
+                showGoldenRatio = !showGoldenRatio; // 比 YA 切換黃金比例面具
             }
             if (detectOKGesture(landmarks) && !isCountingDown) startPhotoCountdown();
         }
@@ -254,32 +253,62 @@
             }
         }
 
+        // 核心功能：計算人臉位置、角度與大小，並將黃金比例面具圖片疊加貼合
+        function drawGoldenRatioMask(ctx, landmarks) {
+            // 取得核心人臉特徵點
+            const leftEye = landmarks[33];   // 左眼外側
+            const rightEye = landmarks[263]; // 右眼內側
+            const noseTip = landmarks[1];    // 鼻尖
+            const chin = landmarks[152];     // 下巴
+
+            // 1. 計算臉部的中心參考點 (以鼻尖為主)
+            const cx = noseTip.x * canvasLiveFx.width;
+            const cy = noseTip.y * canvasLiveFx.height;
+
+            // 2. 計算兩眼連線的傾斜角度，讓面具跟著歪頭旋轉
+            const dx = (rightEye.x - leftEye.x) * canvasLiveFx.width;
+            const dy = (rightEye.y - leftEye.y) * canvasLiveFx.height;
+            const angle = Math.atan2(dy, dx);
+
+            // 3. 根據兩眼距離與臉部高度計算縮放比例
+            const faceHeight = (chin.y - landmarks[10].y) * canvasLiveFx.height; 
+            const maskWidth = faceHeight * 0.95; // 依比例推算適合的面具寬度
+            const maskHeight = faceHeight * 1.15;
+
+            // 4. 使用 Canvas 矩陣變換進行平移、旋轉與縮放繪製
+            ctx.save();
+            ctx.translate(cx, cy - (faceHeight * 0.1)); // 稍微往上修正中心，對準額頭到下巴
+            ctx.rotate(angle);
+            
+            // 設定半透明度，讓使用者能看清楚面具下的自己是否對齊
+            ctx.globalAlpha = 0.55; 
+            
+            // 混合模式設為 multiply (正片疊底)，這樣白色背景會變不見，只留下黑色框架線條！
+            ctx.globalCompositeOperation = "multiply"; 
+            
+            // 繪製黃金比例面具
+            ctx.drawImage(maskImg, -maskWidth / 2, -maskHeight / 2, maskWidth, maskHeight);
+            
+            ctx.restore();
+        }
+
+        // 手勢偵測邏輯
+        let lastHandX = null; let lastWaveTime = 0;
         function detectWaveGesture(landmarks, now) {
             const wristX = landmarks[0].x;
             if (lastHandX === null) { lastHandX = wristX; return false; }
-            const diff = wristX - lastHandX;
-            lastHandX = wristX;
+            const diff = wristX - lastHandX; lastHandX = wristX;
             if (Math.abs(diff) > 0.08) {
-                if (now - lastWaveTime < 1000) {
-                    lastWaveTime = now;
-                    return true;
-                }
+                if (now - lastWaveTime < 1000) { lastWaveTime = now; return true; }
                 lastWaveTime = now;
             }
             return false;
         }
-
         function detectVSign(landmarks) {
-            return (landmarks[8].y < landmarks[6].y && 
-                    landmarks[12].y < landmarks[10].y && 
-                    landmarks[16].y > landmarks[14].y && 
-                    landmarks[20].y > landmarks[18].y);
+            return (landmarks[8].y < landmarks[6].y && landmarks[12].y < landmarks[10].y && landmarks[16].y > landmarks[14].y && landmarks[20].y > landmarks[18].y);
         }
-
         function detectOKGesture(landmarks) {
-            const dx = landmarks[4].x - landmarks[8].x;
-            const dy = landmarks[4].y - landmarks[8].y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
+            const dist = Math.sqrt(Math.pow(landmarks[4].x - landmarks[8].x, 2) + Math.pow(landmarks[4].y - landmarks[8].y, 2));
             return (dist < 0.04 && landmarks[12].y < landmarks[10].y && landmarks[16].y < landmarks[14].y);
         }
 
@@ -287,7 +316,6 @@
             isCountingDown = true;
             let counter = 5;
             const timerEl = document.getElementById('countdown');
-            timerEl.innerText = `OK手勢觸發！倒數 ${counter} 秒...`;
             
             const interval = setInterval(() => {
                 counter--;
@@ -309,58 +337,42 @@
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
-            applyEditEffects();
+            openSubPanel('whiten'); // 拍照完預設進入美白面板
         }
 
         function manualNextFilter() {
             currentFilterIndex = (currentFilterIndex + 1) % filters.length;
-            document.getElementById('current-filter-name').innerText = filters[currentFilterIndex];
         }
 
         function applyLiveFilter(ctx) {
             const imgData = ctx.getImageData(0, 0, canvasLiveFx.width, canvasLiveFx.height);
             const d = imgData.data;
             switch(filters[currentFilterIndex]) {
-                case '復古明亮':
-                    for (let i = 0; i < d.length; i += 4) { d[i] *= 1.2; d[i+1] *= 1.1; d[i+2] *= 0.9; } break;
-                case '浪漫粉紅':
-                    for (let i = 0; i < d.length; i += 4) { d[i] += 30; d[i+2] += 15; } break;
-                case '冷調青翠':
-                    for (let i = 0; i < d.length; i += 4) { d[i+1] += 20; d[i+2] += 25; } break;
-                case '高級灰調':
-                    for (let i = 0; i < d.length; i += 4) { let val = d[i]*0.3 + d[i+1]*0.59 + d[i+2]*0.11; d[i] = d[i]*0.6 + val*0.4; d[i+1] = d[i+1]*0.6 + val*0.4; d[i+2] = d[i+2]*0.6 + val*0.4; } break;
-                case '經典黑白':
-                    for (let i = 0; i < d.length; i += 4) { let v = d[i]*0.3 + d[i+1]*0.59 + d[i+2]*0.11; d[i] = v; d[i+1] = v; d[i+2] = v; } break;
-                case '溫暖陽光':
-                    for (let i = 0; i < d.length; i += 4) { d[i] += 25; d[i+1] += 15; d[i+2] -= 10; } break;
-                case '日系清新':
-                    for (let i = 0; i < d.length; i += 4) { d[i] = Math.min(255, d[i]*1.1 + 10); d[i+1] = Math.min(255, d[i+1]*1.1 + 15); d[i+2] = Math.min(255, d[i+2]*1.05 + 20); } break;
-                case '戲劇張力':
-                    for (let i = 0; i < d.length; i += 4) { d[i] = d[i] > 128 ? d[i]*1.2 : d[i]*0.8; d[i+1] = d[i+1] > 128 ? d[i+1]*1.2 : d[i+1]*0.8; } break;
-                case '極光幻彩':
-                    for (let i = 0; i < d.length; i += 4) { d[i] = d[i+1]; d[i+2] = d[i]*0.8; } break;
-                case '暮色暖橘':
-                    for (let i = 0; i < d.length; i += 4) { d[i] += 40; d[i+1] += 10; d[i+2] -= 20; } break;
+                case '復古明亮': for (let i=0; i<d.length; i+=4) { d[i]*=1.2; d[i+1]*=1.1; d[i+2]*=0.9; } break;
+                case '浪漫粉紅': for (let i=0; i<d.length; i+=4) { d[i]+=30; d[i+2]+=15; } break;
+                case '冷調青翠': for (let i=0; i<d.length; i+=4) { d[i+1]+=20; d[i+2]+=25; } break;
+                case '高級灰調': for (let i=0; i<d.length; i+=4) { let v=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=d[i]*0.6+v*0.4; d[i+1]=d[i+1]*0.6+v*0.4; d[i+2]=d[i+2]*0.6+v*0.4; } break;
+                case '經典黑白': for (let i=0; i<d.length; i+=4) { let v=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=v; d[i+1]=v; d[i+2]=v; } break;
+                case '溫暖陽光': for (let i=0; i<d.length; i+=4) { d[i]+=25; d[i+1]+=15; d[i+2]-=10; } break;
+                case '日系清新': for (let i=0; i<d.length; i+=4) { d[i]=Math.min(255,d[i]*1.1+10); d[i+1]=Math.min(255,d[i+1]*1.1+15); d[i+2]=Math.min(255,d[i+2]*1.05+20); } break;
             }
             ctx.putImageData(imgData, 0, 0);
         }
 
-        function drawGoldenRatioLines(ctx) {
-            ctx.strokeStyle = "rgba(255, 217, 0, 0.8)";
-            ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(0, canvasLiveFx.height/3); ctx.lineTo(canvasLiveFx.width, canvasLiveFx.height/3); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, 2*canvasLiveFx.height/3); ctx.lineTo(canvasLiveFx.width, 2*canvasLiveFx.height/3); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(canvasLiveFx.width/3, 0); ctx.lineTo(canvasLiveFx.width/3, canvasLiveFx.height); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(2*canvasLiveFx.width/3, 0); ctx.lineTo(2*canvasLiveFx.width/3, canvasLiveFx.height); ctx.stroke();
-        }
-
-        function switchSubPanel(panelId) {
+        // 後製切換面板邏輯 (完全符合 UI 4, 5, 6, 7 的切換呈現)
+        function openSubPanel(type) {
             document.querySelectorAll('.sub-panel').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.btn-item').forEach(b => b.classList.remove('active'));
-            if(panelId) {
-                document.getElementById(panelId).style.display = 'flex';
-                event.target.classList.add('active');
-            }
+            
+            // 更新畫布內左下角的標籤字樣
+            const labelEl = document.getElementById('current-edit-label');
+            labelEl.style.display = 'block';
+            
+            if (type === 'whiten') { labelEl.innerText = '美白'; document.getElementById('panel-whiten').style.display = 'flex'; }
+            if (type === 'smooth') { labelEl.innerText = '磨皮'; document.getElementById('panel-smooth').style.display = 'flex'; }
+            if (type === 'makeup') { labelEl.innerText = '妝容'; document.getElementById('panel-makeup').style.display = 'flex'; }
+            if (type === 'sticker') { labelEl.innerText = '貼紙'; document.getElementById('panel-sticker').style.display = 'flex'; }
+            
+            applyEditEffects();
         }
 
         function setMakeup(style) { currentMakeup = style; applyEditEffects(); }
@@ -372,7 +384,6 @@
 
             const whitenVal = document.getElementById('slider-whiten').value;
             const smoothVal = document.getElementById('slider-smooth').value;
-
             const imgData = ctxEdit.getImageData(0, 0, canvasEdit.width, canvasEdit.height);
             const d = imgData.data;
             
@@ -383,65 +394,22 @@
                 d[i] = Math.min(255, d[i] + wOffset);
                 d[i+1] = Math.min(255, d[i+1] + wOffset);
                 d[i+2] = Math.min(255, d[i+2] + wOffset);
-                if(sOffset > 0 && i % 8 === 0) {
-                    d[i] = d[i] * (1 - sOffset) + 200 * sOffset;
-                }
+                if(sOffset > 0 && i % 8 === 0) { d[i] = d[i]*(1-sOffset) + 200*sOffset; }
             }
             ctxEdit.putImageData(imgData, 0, 0);
 
             if (faceLandmarksData) {
-                const noseBridge = faceLandmarksData[4]; 
-                const forehead = faceLandmarksData[10];  
-                
-                const cx = noseBridge.x * canvasEdit.width;
-                const cy = noseBridge.y * canvasEdit.height;
-                const fx = forehead.x * canvasEdit.width;
-                const fy = forehead.y * canvasEdit.height;
-
+                const cx = faceLandmarksData[4].x * canvasEdit.width;
+                const cy = faceLandmarksData[4].y * canvasEdit.height;
                 if (currentMakeup !== 'none') {
                     ctxEdit.save();
-                    switch(currentMakeup) {
-                        case 'korean': 
-                            ctxEdit.fillStyle = "rgba(255, 182, 193, 0.4)";
-                            ctxEdit.beginPath(); ctxEdit.arc(cx - 40, cy + 20, 25, 0, Math.PI*2); ctxEdit.fill();
-                            ctxEdit.beginPath(); ctxEdit.arc(cx + 40, cy + 20, 25, 0, Math.PI*2); ctxEdit.fill();
-                            break;
-                        case 'japanese': 
-                            ctxEdit.fillStyle = "rgba(255, 140, 0, 0.35)";
-                            ctxEdit.beginPath(); ctxEdit.arc(cx - 45, cy + 15, 20, 0, Math.PI*2); ctxEdit.fill();
-                            ctxEdit.beginPath(); ctxEdit.arc(cx + 45, cy + 15, 20, 0, Math.PI*2); ctxEdit.fill();
-                            break;
-                        case 'taiwanese': 
-                            ctxEdit.fillStyle = "rgba(255, 0, 128, 0.6)";
-                            ctxEdit.beginPath(); ctxEdit.arc(cx - 35, cy, 35, 0, Math.PI*2); ctxEdit.fill();
-                            ctxEdit.beginPath(); ctxEdit.arc(cx + 35, cy, 35, 0, Math.PI*2); ctxEdit.fill();
-                            ctxEdit.fillStyle = "rgba(139, 0, 0, 0.8)";
-                            ctxEdit.beginPath(); ctxEdit.arc(cx, cy + 50, 15, 0, Math.PI*2); ctxEdit.fill();
-                            break;
-                        case 'european': 
-                            ctxEdit.fillStyle = "rgba(139, 90, 43, 0.4)";
-                            ctxEdit.fillRect(cx - 60, cy + 30, 30, 40);
-                            ctxEdit.fillRect(cx + 30, cy + 30, 30, 40);
-                            break;
-                    }
+                    ctxEdit.fillStyle = "rgba(255, 182, 193, 0.4)";
+                    if(currentMakeup==='korean') { ctxEdit.beginPath(); ctxEdit.arc(cx-40, cy+20, 25, 0, Math.PI*2); ctxEdit.arc(cx+40, cy+20, 25, 0, Math.PI*2); ctxEdit.fill(); }
                     ctxEdit.restore();
                 }
-
                 if (currentSticker !== 'none') {
                     ctxEdit.save();
-                    if (currentSticker === 'glasses') { 
-                        ctxEdit.strokeStyle = "#000000";
-                        ctxEdit.lineWidth = 4;
-                        ctxEdit.beginPath(); ctxEdit.arc(cx - 30, cy - 10, 20, 0, Math.PI*2); ctxEdit.stroke();
-                        ctxEdit.beginPath(); ctxEdit.arc(cx + 30, cy - 10, 20, 0, Math.PI*2); ctxEdit.stroke();
-                        ctxEdit.beginPath(); ctxEdit.moveTo(cx - 10, cy - 10); ctxEdit.lineTo(cx + 10, cy - 10); ctxEdit.stroke();
-                    } else if (currentSticker === 'ears') { 
-                        ctxEdit.fillStyle = "pink";
-                        ctxEdit.strokeStyle = "black";
-                        ctxEdit.lineWidth = 3;
-                        ctxEdit.beginPath(); ctxEdit.moveTo(fx - 60, fy); ctxEdit.lineTo(fx - 40, fy - 50); ctxEdit.lineTo(fx - 10, fy - 10); ctxEdit.closePath(); ctxEdit.fill(); ctxEdit.stroke();
-                        ctxEdit.beginPath(); ctxEdit.moveTo(fx + 10, fy - 10); ctxEdit.lineTo(fx + 40, fy - 50); ctxEdit.lineTo(fx + 60, fy); ctxEdit.closePath(); ctxEdit.fill(); ctxEdit.stroke();
-                    }
+                    if (currentSticker === 'glasses') { ctxEdit.strokeStyle = "#000"; ctxEdit.lineWidth = 3; ctxEdit.beginPath(); ctxEdit.arc(cx-30, cy-10, 20, 0, Math.PI*2); ctxEdit.arc(cx+30, cy-10, 20, 0, Math.PI*2); ctxEdit.stroke(); }
                     ctxEdit.restore();
                 }
             }
@@ -449,7 +417,7 @@
 
         function saveToPhoto() {
             const link = document.createElement('a');
-            link.download = 'perfect-beauty-photo.png';
+            link.download = 'beauty-photo.png';
             link.href = canvasEdit.toDataURL();
             link.click();
             setTimeout(() => { location.reload(); }, 1000);
