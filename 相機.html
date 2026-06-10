@@ -480,90 +480,43 @@
             // 將變形完的基礎畫到主編輯區
             ctxEdit.drawImage(tempCanvas, 0, 0);
 
-           // 3. 終極 AI 幾何去背美白 (完全捨棄顏色判定，100% 精準隔離五官)
-if (whitenVal > 0 && faceLandmarksData) {
+        // 3. 全局智慧膚色美白 (讓臉部、脖子、所有外露皮膚同步提亮，拉桿精準控制程度)
+if (whitenVal > 0) {
     const w = canvasEdit.width;
     const h = canvasEdit.height;
 
-    // 1. 建立一個離屏畫布來繪製「純皮膚幾何面具」
-    const maskCanvas = document.createElement('canvas');
-    maskCanvas.width = w;
-    maskCanvas.height = h;
-    const mctx = maskCanvas.getContext('2d');
-
-    // 基礎背景為純黑 (代表不美白)
-    mctx.fillStyle = '#000000';
-    mctx.fillRect(0, 0, w, h);
-
-    // 2. 畫出整張臉的大輪廓 (過濾掉頭髮、脖子、背景)
-    const faceOutline = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10];
-    mctx.fillStyle = '#ffffff'; // 白色代表要美白
-    mctx.beginPath();
-    faceOutline.forEach((idx, i) => {
-        if (faceLandmarksData[idx]) {
-            const pt = faceLandmarksData[idx];
-            if (i === 0) mctx.moveTo(pt.x * w, pt.y * h);
-            else mctx.lineTo(pt.x * w, pt.y * h);
-        }
-    });
-    mctx.closePath();
-    mctx.fill();
-
-    // 3. 🚀 【核心關鍵】逆向工程：從臉部白色區域中，把五官用「純黑色」狠狠挖掉！
-    mctx.fillStyle = '#000000'; // 黑色代表絕對不美白
-
-    // (A) 挖掉左眼
-    const leftEye = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33];
-    mctx.beginPath();
-    leftEye.forEach((idx, i) => { if(faceLandmarksData[idx]) { const pt = faceLandmarksData[idx]; if(i===0) mctx.moveTo(pt.x*w, pt.y*h); else mctx.lineTo(pt.x*w, pt.y*h); } });
-    mctx.closePath(); mctx.fill();
-
-    // (B) 挖掉右眼
-    const rightEye = [263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388, 466, 263];
-    mctx.beginPath();
-    rightEye.forEach((idx, i) => { if(faceLandmarksData[idx]) { const pt = faceLandmarksData[idx]; if(i===0) mctx.moveTo(pt.x*w, pt.y*h); else mctx.lineTo(pt.x*w, pt.y*h); } });
-    mctx.closePath(); mctx.fill();
-
-    // (C) 挖掉嘴唇內部與邊緣
-    const lips = [0, 37, 39, 40, 185, 61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0];
-    mctx.beginPath();
-    lips.forEach((idx, i) => { if(faceLandmarksData[idx]) { const pt = faceLandmarksData[idx]; if(i===0) mctx.moveTo(pt.x*w, pt.y*h); else mctx.lineTo(pt.x*w, pt.y*h); } });
-    mctx.closePath(); mctx.fill();
-
-    // (D) 挖掉眉毛 (左眉與右眉)
-    const eyebrows = [70, 63, 105, 66, 107, 55, 46, 53, 52, 65, 300, 293, 334, 296, 336, 285, 276, 283, 282, 295];
-    mctx.beginPath();
-    eyebrows.forEach((idx, i) => { if(faceLandmarksData[idx]) { const pt = faceLandmarksData[idx]; if(i===0) mctx.moveTo(pt.x*w, pt.y*h); else mctx.lineTo(pt.x*w, pt.y*h); } });
-    mctx.closePath(); mctx.fill();
-
-    // 4. 讀取畫布像素，進行幾何面具重疊美白
+    // 1. 直接取出乾淨原圖加工後的目前像素
     const imgData = ctxEdit.getImageData(0, 0, w, h);
-    const maskData = mctx.getImageData(0, 0, w, h);
     const pixels = imgData.data;
-    const maskPixels = maskData.data;
 
-    // 調整美白公式的平滑度，防止邊緣死白
-    const factor = (whitenVal / 100) * 32;
+    // 2. 🚀 拉桿美白程度控制（由 whitenVal 決定提亮幅度，每次都是全新計算）
+    const factor = (whitenVal / 100) * 40; 
 
+    // 3. 逐像素掃描整張照片
     for (let i = 0; i < pixels.length; i += 4) {
-        // 核心幾何防線：只要在離屏畫布上不是純白色（被我們留下來的純皮膚區），一律不准動！
-        if (maskPixels[i] < 255) continue; 
-
-        // 既然 100% 確定這裡一定是皮膚，我們就不需要任何不穩定的 RGB 顏色判斷式了！
         let r = pixels[i];
         let g = pixels[i + 1];
         let b = pixels[i + 2];
 
-        // 進行柔和提亮（符合亞洲人膚色的黃金比例，白裡透紅不發灰）
-        pixels[i]     = Math.min(255, r + factor);
-        pixels[i + 1] = Math.min(255, g + factor * 0.93);
-        pixels[i + 2] = Math.min(255, b + factor * 0.88);
+        // 🚀 【黃金膚色篩選公式】
+        // 這樣可以精準抓到你的臉、脖子、手臂，同時避開純黑的頭髮、深色衣服與背景
+        const isSkin = (r > 95 && g > 40 && b > 20) && 
+                       (r > g && r > b) && 
+                       ((Math.max(r, g, b) - Math.min(r, g, b)) > 15) && 
+                       (r - g > 15) &&
+                       !(r > 220 && g < 80 && b < 80); // 避開紅唇
+
+        if (isSkin) {
+            // 4. 僅對皮膚區域進行黃金比例提亮（白裡透紅，絕不發灰）
+            pixels[i]     = Math.min(255, r + factor);        // 紅色調
+            pixels[i + 1] = Math.min(255, g + factor * 0.92); // 綠色調
+            pixels[i + 2] = Math.min(255, b + factor * 0.85); // 藍色調
+        }
     }
 
     // 5. 覆蓋回編輯畫布
     ctxEdit.putImageData(imgData, 0, 0);
 }
-
     // 4. 逐像素精準過濾
     for (let i = 0; i < pixels.length; i += 4) {
         // 幾何防禦線：只要遮罩不是純白（代表超出臉部邊界，如背景、頭髮、耳朵、脖子），一律不准動
