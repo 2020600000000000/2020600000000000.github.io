@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧美顏相機網頁系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智慧美顏相機網頁系統 - 流暢優化版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -24,26 +24,20 @@
         .countdown-overlay { font-size: 26px; font-weight: bold; color: #000; margin-bottom: 15px; min-height: 40px; text-align: center; width: 100%; transition: color 0.3s; }
         .countdown-overlay.warning { color: #ff3b30; } 
         
-        /* 雙視窗外層：預設（電腦端）為左右並排橫向 */
+        /* 雙視窗外層 */
         .viewfinders { display: flex; flex-direction: row; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
-        
-        /* 視窗盒子：電腦端固定比例，設定為寬高比 4:5 的矩形 */
         .viewfinder-box { width: 420px; height: 500px; background-color: #8e8e8e; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #000; font-size: 28px; font-weight: bold; position: relative; overflow: hidden; }
         
-        /* 關鍵：透過 CSS 的 object-fit: cover 裁剪填滿，不論畫布比例如何改變，人都絕對不會變形 */
-        .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        /* 啟用硬體加速並防止形變 */
+        .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: translateZ(0); }
         .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 6px rgba(255,255,255,0.9); font-size: 24px; color: #000; }
         
-        /* 【重要升級】：手機與平板響應式（RWD）斷點設定 */
+        /* 手機與平板響應式（RWD） */
         @media (max-width: 850px) or (orientation: portrait) {
             body { padding: 5px; }
             .camera-stage { width: 100%; height: calc(100vh - 30px); justify-content: space-between; }
             .countdown-overlay { font-size: 20px; margin-bottom: 5px; min-height: 30px; }
-            
-            /* 行動端：強制改為上下垂直排列，並填滿可用高度 */
             .viewfinders { flex-direction: column; gap: 10px; flex: 1; height: 60vh; margin-bottom: 10px; }
-            
-            /* 行動端：讓兩個鏡頭各自佔據上半部與下半部 */
             .viewfinder-box { width: 100%; flex: 1; height: auto; }
             .viewfinder-label { font-size: 18px; }
             .viewfinder-label span { font-size: 12px !important; }
@@ -54,7 +48,7 @@
             .filter-thumb-name { font-size: 12px; }
         }
 
-        /* 1.1 濾鏡動態滾動欄 */
+        /* 濾鏡動態滾動欄 */
         .filter-scroller-container { width: 100%; background: #f2f2f7; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         .filter-scroller-title { font-size: 16px; font-weight: bold; color: #3a3a3c; padding-left: 5px; }
         .filter-scroller { display: flex; gap: 12px; overflow-x: auto; width: 100%; padding-bottom: 5px; scroll-behavior: smooth; }
@@ -65,7 +59,7 @@
         .filter-item-box.active .filter-thumb-canvas { border-color: #0071e3; }
         .filter-thumb-name { font-size: 14px; font-weight: bold; color: #000; text-align: center; }
 
-        /* 3. 後製階段通用樣式 */
+        /* 3. 後製階段 */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; }
         .preview-box { width: 100%; max-width: 500px; aspect-ratio: 1/1; background-color: #8e8e8e; border-radius: 12px; margin-bottom: 20px; position: relative; overflow: hidden; }
         .preview-box canvas { width: 100%; height: 100%; object-fit: cover; }
@@ -172,8 +166,8 @@
         const canvasLiveFx = document.getElementById('canvas-live-fx');
         const canvasEdit = document.getElementById('canvas-edit-preview');
         
-        const ctxRaw = canvasRaw.getContext('2d');
-        const ctxLive = canvasLiveFx.getContext('2d');
+        const ctxRaw = canvasRaw.getContext('2d', { alpha: false });
+        const ctxLive = canvasLiveFx.getContext('2d', { alpha: false });
         const ctxEdit = canvasEdit.getContext('2d');
 
         let currentFilterIndex = 0;
@@ -189,11 +183,11 @@
         let faceLandmarksData = null; 
         let isFrontFace = false;
 
-        // 為了支援彈性排版，這裡將內部解析度固定提高，外部大小交給 CSS 控制
+        // 【優化點 1】優化解析度：內部渲染 400x500 即可（效能提升顯著，畫面依舊清晰）
         function initCanvasSize() {
             [canvasRaw, canvasLiveFx, canvasEdit].forEach(canvas => {
-                canvas.width = 480;
-                canvas.height = 600;
+                canvas.width = 400;
+                canvas.height = 500;
             });
         }
         initCanvasSize();
@@ -209,8 +203,8 @@
 
                 const canvas = document.createElement('canvas');
                 canvas.className = 'filter-thumb-canvas';
-                canvas.width = 100;
-                canvas.height = 110;
+                canvas.width = 80;
+                canvas.height = 90;
 
                 const nameLabel = document.createElement('div');
                 nameLabel.className = 'filter-thumb-name';
@@ -237,7 +231,8 @@
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
 
-            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+            // 【優化點 2】調小相機串流解析度至 480x360，MediaPipe 分析速度直接翻倍
+            navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360, frameRate: { ideal: 30 } } })
                 .then(stream => {
                     videoElement.srcObject = stream;
                     videoElement.addEventListener('loadedmetadata', () => {
@@ -251,11 +246,16 @@
                 });
         }
 
+        // 【優化點 3】降頻更新底下的濾鏡小縮圖（每 10 幀才畫一次，節省大量 GPU 資源）
+        let thumbFrameCounter = 0;
+
         function startBaseCameraLoop() {
             const render = () => {
                 if (videoElement.readyState >= 2) {
+                    // 畫左側/上方原鏡頭
                     ctxRaw.drawImage(videoElement, 0, 0, canvasRaw.width, canvasRaw.height);
                     
+                    // 畫右側/下方修圖鏡頭
                     if (showGoldenRatio && faceLandmarksData && isFrontFace) {
                         drawWarpedGoldenRatioFace(ctxLive, videoElement, faceLandmarksData);
                     } else {
@@ -263,18 +263,22 @@
                     }
                     applyLiveFilter(ctxLive, filters[currentFilterIndex]);
 
-                    filters.forEach((filterName, index) => {
-                        const itemBox = document.getElementById(`filter-item-${index}`);
-                        if (itemBox) {
-                            if (index === currentFilterIndex) itemBox.classList.add('active');
-                            else itemBox.classList.remove('active');
-                            
-                            const thumbCanvas = itemBox.querySelector('canvas');
-                            const tCtx = thumbCanvas.getContext('2d');
-                            tCtx.drawImage(videoElement, 0, 0, thumbCanvas.width, thumbCanvas.height);
-                            applyLiveFilter(tCtx, filterName);
-                        }
-                    });
+                    // 優化後的縮圖分流渲染
+                    thumbFrameCounter++;
+                    if (thumbFrameCounter % 10 === 0) { 
+                        filters.forEach((filterName, index) => {
+                            const itemBox = document.getElementById(`filter-item-${index}`);
+                            if (itemBox) {
+                                if (index === currentFilterIndex) itemBox.classList.add('active');
+                                else itemBox.classList.remove('active');
+                                
+                                const thumbCanvas = itemBox.querySelector('canvas');
+                                const tCtx = thumbCanvas.getContext('2d');
+                                tCtx.drawImage(videoElement, 0, 0, thumbCanvas.width, thumbCanvas.height);
+                                applyLiveFilter(tCtx, filterName);
+                            }
+                        });
+                    }
                 }
                 requestAnimationFrame(render);
             };
@@ -284,13 +288,14 @@
         let handsAI = null; let faceMeshAI = null;
         function initMediaPipeAI() {
             handsAI = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}` });
-            handsAI.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
+            handsAI.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.65, minTrackingConfidence: 0.5 }); // modelComplexity 降到 0 提升手勢流暢度
             handsAI.onResults(onHandResults);
 
             faceMeshAI = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}` });
-            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 }); // 關閉精細特徵，降低運算負載
             faceMeshAI.onResults(onFaceResults);
 
+            // 【優化點 4】嚴格限制 AI 傳送頻率（改為 120 毫秒一次），確保低階手機不發燙、不卡頓
             let isProcessing = false;
             setInterval(async () => {
                 if (videoElement.readyState >= 2 && !isProcessing) {
@@ -301,7 +306,7 @@
                     } catch (e) {}
                     isProcessing = false;
                 }
-            }, 90);
+            }, 120);
         }
 
         function onHandResults(results) {
@@ -313,7 +318,6 @@
             
             if (detectVSign(landmarks) && (now - lastYaTime > 2000)) {
                 lastYaTime = now;
-                
                 if (!showGoldenRatio) {
                     if (!faceLandmarksData || !isFrontFace) {
                         const timerEl = document.getElementById('countdown');
@@ -322,7 +326,7 @@
                         setTimeout(() => { 
                             timerEl.innerText = isCountingDown ? timerEl.innerText : "比 OK 倒數 5 秒拍照"; 
                             timerEl.classList.remove('warning');
-                        }, 3000);
+                        }, 2500);
                         return; 
                     }
                     showGoldenRatio = true;
@@ -452,20 +456,23 @@
             openSubPanel('whiten');
         }
 
+        // 最佳化像素迴圈效能
         function applyLiveFilter(ctx, filterName) {
+            if (filterName === '無') return;
             const imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
             const d = imgData.data;
+            const len = d.length;
             switch(filterName) {
-                case '復古明亮': for (let i=0; i<d.length; i+=4) { d[i]*=1.2; d[i+1]*=1.1; d[i+2]*=0.9; } break;
-                case '浪漫粉紅': for (let i=0; i<d.length; i+=4) { d[i]+=30; d[i+2]+=15; } break;
-                case '冷調青翠': for (let i=0; i<d.length; i+=4) { d[i+1]+=20; d[i+2]+=25; } break;
-                case '高級灰調': for (let i=0; i<d.length; i+=4) { let v=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=d[i]*0.6+v*0.4; d[i+1]=d[i+1]*0.6+v*0.4; d[i+2]=d[i+2]*0.6+v*0.4; } break;
-                case '經典黑白': for (let i=0; i<d.length; i+=4) { let v=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=v; d[i+1]=v; d[i+2]=v; } break;
-                case '溫慢陽光': for (let i=0; i<d.length; i+=4) { d[i]+=25; d[i+1]+=15; d[i+2]-=10; } break;
-                case '日系清新': for (let i=0; i<d.length; i+=4) { d[i]=Math.min(255,d[i]*1.1+10); d[i+1]=Math.min(255,d[i+1]*1.1+15); d[i+2]=Math.min(255,d[i+2]*1.05+20); } break;
-                case '戲劇張力': for (let i=0; i<d.length; i+=4) { d[i]=d[i]>128?d[i]*1.1:d[i]*0.9; d[i+1]=d[i+1]>128?d[i+1]*1.1:d[i+1]*0.9; } break;
-                case '極光幻彩': for (let i=0; i<d.length; i+=4) { d[i]=d[i+1]; d[i+2]=d[i]*0.85; } break;
-                case '暮色暖橘': for (let i=0; i<d.length; i+=4) { d[i]+=35; d[i+1]+=10; d[i+2]-=15; } break;
+                case '復古明亮': for (let i=0; i<len; i+=4) { d[i]*=1.2; d[i+1]*=1.1; d[i+2]*=0.9; } break;
+                case '浪漫粉紅': for (let i=0; i<len; i+=4) { d[i]+=30; d[i+2]+=15; } break;
+                case '冷調青翠': for (let i=0; i<len; i+=4) { d[i+1]+=20; d[i+2]+=25; } break;
+                case '高級灰調': for (let i=0; i<len; i+=4) { let v=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=d[i]*0.6+v*0.4; d[i+1]=d[i+1]*0.6+v*0.4; d[i+2]=d[i+2]*0.6+v*0.4; } break;
+                case '經典黑白': for (let i=0; i<len; i+=4) { let v=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=v; d[i+1]=v; d[i+2]=v; } break;
+                case '溫慢陽光': for (let i=0; i<len; i+=4) { d[i]+=25; d[i+1]+=15; d[i+2]-=10; } break;
+                case '日系清新': for (let i=0; i<len; i+=4) { d[i]=Math.min(255,d[i]*1.1+10); d[i+1]=Math.min(255,d[i+1]*1.1+15); d[i+2]=Math.min(255,d[i+2]*1.05+20); } break;
+                case '戲劇張力': for (let i=0; i<len; i+=4) { d[i]=d[i]>128?d[i]*1.1:d[i]*0.9; d[i+1]=d[i+1]>128?d[i+1]*1.1:d[i+1]*0.9; } break;
+                case '極光幻彩': for (let i=0; i<len; i+=4) { d[i]=d[i+1]; d[i+2]=d[i]*0.85; } break;
+                case '暮色暖橘': for (let i=0; i<len; i+=4) { d[i]+=35; d[i+1]+=10; d[i+2]-=15; } break;
             }
             ctx.putImageData(imgData, 0, 0);
         }
@@ -494,14 +501,17 @@
             const smoothVal = document.getElementById('slider-smooth').value;
             const imgData = ctxEdit.getImageData(0, 0, canvasEdit.width, canvasEdit.height);
             const d = imgData.data;
+            const len = d.length;
             
             let wOffset = (whitenVal / 100) * 45;
             let sOffset = (smoothVal / 100);
 
-            for (let i = 0; i < d.length; i += 4) {
-                d[i] = Math.min(255, d[i] + wOffset);
-                d[i+1] = Math.min(255, d[i+1] + wOffset);
-                d[i+2] = Math.min(255, d[i+2] + wOffset);
+            for (let i = 0; i < len; i += 4) {
+                if (wOffset > 0) {
+                    d[i] = Math.min(255, d[i] + wOffset);
+                    d[i+1] = Math.min(255, d[i+1] + wOffset);
+                    d[i+2] = Math.min(255, d[i+2] + wOffset);
+                }
                 if(sOffset > 0 && i % 8 === 0) { d[i] = d[i]*(1-sOffset) + 200*sOffset; }
             }
             ctxEdit.putImageData(imgData, 0, 0);
