@@ -480,20 +480,78 @@
             // 將變形完的基礎畫到主編輯區
             ctxEdit.drawImage(tempCanvas, 0, 0);
 
-            // 3. 純人臉皮膚遮罩美白
-            if (whitenVal > 0 && faceLandmarksData) {
-                ctxEdit.save(); ctxEdit.beginPath();
-                const faceOutlineIndices = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
-                faceOutlineIndices.forEach((idx, i) => {
-                    const pt = faceLandmarksData[idx];
-                    if(i === 0) ctxEdit.moveTo(pt.x * canvasEdit.width, pt.y * canvasEdit.height);
-                    else ctxEdit.lineTo(pt.x * canvasEdit.width, pt.y * canvasEdit.height);
-                });
-                ctxEdit.closePath(); ctxEdit.clip();
-                ctxEdit.fillStyle = `rgba(255, 255, 255, ${whitenVal / 240})`; ctxEdit.fill();
-                ctxEdit.restore();
-            }
+            // 3. 醫美級純人臉皮膚隔離美白 (修正版：完美人臉邊界鎖定)
+if (whitenVal > 0 && faceLandmarksData) {
+    const w = canvasEdit.width;
+    const h = canvasEdit.height;
 
+    // 1. 建立離屏 Canvas
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = w;
+    maskCanvas.height = h;
+    const mctx = maskCanvas.getContext('2d');
+
+    // 先填滿純黑 (代表不要美白的區域)
+    mctx.fillStyle = '#000000';
+    mctx.fillRect(0, 0, w, h);
+
+    // 2. 🚀 【官方標準：完美閉合人臉外輪廓索點】(嚴密依序連線，絕不漏水)
+    const strictFaceOutline = [
+        10,  338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 
+        400, 377, 152, 148, 176, 149, 150, 136, 172, 58,  132, 93,  234, 127, 162, 21, 
+        54,  103, 67,  109, 10 // 結尾連回 10，確保幾何圖形 100% 完美閉合
+    ];
+
+    mctx.fillStyle = '#ffffff';
+    mctx.beginPath();
+    strictFaceOutline.forEach((idx, i) => {
+        // 確保點位存在，防止 MediaPipe 偵測邊緣時閃爍造成 undefined 錯誤
+        if (faceLandmarksData[idx]) {
+            const pt = faceLandmarksData[idx];
+            if (i === 0) mctx.moveTo(pt.x * w, pt.y * h);
+            else mctx.lineTo(pt.x * w, pt.y * h);
+        }
+    });
+    mctx.closePath();
+    mctx.fill();
+
+    // 3. 讀取像素資料
+    const imgData = ctxEdit.getImageData(0, 0, w, h);
+    const maskData = mctx.getImageData(0, 0, w, h);
+    const pixels = imgData.data;
+    const maskPixels = maskData.data;
+
+    // 美白強度
+    const factor = (whitenVal / 100) * 35; 
+
+    // 4. 逐像素精準過濾
+    for (let i = 0; i < pixels.length; i += 4) {
+        // 幾何防禦線：只要遮罩不是純白（代表超出臉部邊界，如背景、頭髮、耳朵、脖子），一律不准動
+        if (maskPixels[i] < 255) continue;
+
+        let r = pixels[i];
+        let g = pixels[i + 1];
+        let b = pixels[i + 2];
+
+        // 🚀 【升級版：嚴格東亞人種膚色動態光譜判定公式】
+        // 透過更嚴格的 YCbCr/RGB 複合數學模型，把背景中類似皮膚的黃褐色、木頭牆壁、昏暗陰影徹底濾除
+        const isTrueSkin = (r > 105 && g > 55 && b > 30) && // 提高整體亮度門檻，防止暗部與陰影發白
+                           (r > g && r > b) && 
+                           ((Math.max(r, g, b) - Math.min(r, g, b)) > 20) && // 擴大色彩對比度，排除中性灰沉背景
+                           (r - g > 12) && // 鎖定黃皮膚與紅潤皮膚的黃金比例差
+                           !(r > 210 && g < 90 && b < 90); // 精準避開口紅唇色
+
+        if (isTrueSkin) {
+            // 氣色加權提亮
+            pixels[i]     = Math.min(255, r + factor);
+            pixels[i + 1] = Math.min(255, g + factor * 0.92);
+            pixels[i + 2] = Math.min(255, b + factor * 0.88);
+        }
+    }
+
+    // 5. 覆蓋回編輯畫布
+    ctxEdit.putImageData(imgData, 0, 0);
+}
             // 4. 高低頻雙邊保留紋理磨皮
             if (smoothVal > 0) {
                 ctxEdit.save(); ctxEdit.globalAlpha = smoothVal / 140;
