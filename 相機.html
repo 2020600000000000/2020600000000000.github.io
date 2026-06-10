@@ -475,91 +475,89 @@
                     tCtx.drawImage(capturedBlobImage, rightCheek.x*w-40, rightCheek.y*h-40, 40, 80, rightCheek.x*w - pushDist, rightCheek.y*h-40, 40, 80);
                     tCtx.restore();
                 }
-            }
+            
 
-            // 將變形完的基礎畫到主編輯區
-            ctxEdit.drawImage(tempCanvas, 0, 0);
-
-        // 3. 全局智慧膚色美白 (讓臉部、脖子、所有外露皮膚同步提亮，拉桿精準控制程度)
-if (whitenVal > 0) {
-    const w = canvasEdit.width;
-    const h = canvasEdit.height;
-
-    // 1. 直接取出乾淨原圖加工後的目前像素
-    const imgData = ctxEdit.getImageData(0, 0, w, h);
-    const pixels = imgData.data;
-
-    // 2. 🚀 拉桿美白程度控制（由 whitenVal 決定提亮幅度，每次都是全新計算）
-    const factor = (whitenVal / 100) * 40; 
-
-    // 3. 逐像素掃描整張照片
-    for (let i = 0; i < pixels.length; i += 4) {
-        let r = pixels[i];
-        let g = pixels[i + 1];
-        let b = pixels[i + 2];
-
-        // 🚀 【黃金膚色篩選公式】
-        // 這樣可以精準抓到你的臉、脖子、手臂，同時避開純黑的頭髮、深色衣服與背景
-        const isSkin = (r > 95 && g > 40 && b > 20) && 
-                       (r > g && r > b) && 
-                       ((Math.max(r, g, b) - Math.min(r, g, b)) > 15) && 
-                       (r - g > 15) &&
-                       !(r > 220 && g < 80 && b < 80); // 避開紅唇
-        }
-    }
-
-    // 5. 覆蓋回編輯畫布
-    ctxEdit.putImageData(imgData, 0, 0);
-}
-    // 4. 逐像素精準過濾
-    for (let i = 0; i < pixels.length; i += 4) {
-        // 幾何防禦線：只要遮罩不是純白（代表超出臉部邊界，如背景、頭髮、耳朵、脖子），一律不准動
-        if (maskPixels[i] < 255) continue;
-
-        let r = pixels[i];
-        let g = pixels[i + 1];
-        let b = pixels[i + 2];
-
-        // 🚀 【升級版：嚴格東亞人種膚色動態光譜判定公式】
-        // 透過更嚴格的 YCbCr/RGB 複合數學模型，把背景中類似皮膚的黃褐色、木頭牆壁、昏暗陰影徹底濾除
-        const isTrueSkin = (r > 105 && g > 55 && b > 30) && // 提高整體亮度門檻，防止暗部與陰影發白
-                           (r > g && r > b) && 
-                           ((Math.max(r, g, b) - Math.min(r, g, b)) > 20) && // 擴大色彩對比度，排除中性灰沉背景
-                           (r - g > 12) && // 鎖定黃皮膚與紅潤皮膚的黃金比例差
-                           !(r > 210 && g < 90 && b < 90); // 精準避開口紅唇色
-
-        if (isTrueSkin) {
-            // 氣色加權提亮
-            pixels[i]     = Math.min(255, r + factor);
-            pixels[i + 1] = Math.min(255, g + factor * 0.92);
-            pixels[i + 2] = Math.min(255, b + factor * 0.88);
-        }
-    }
-
-    // 5. 覆蓋回編輯畫布
-    ctxEdit.putImageData(imgData, 0, 0);
-}
-            // 4. 高低頻雙邊保留紋理磨皮
-            if (smoothVal > 0) {
-                ctxEdit.save(); ctxEdit.globalAlpha = smoothVal / 140;
-                ctxEdit.filter = `blur(${smoothVal / 15}px) brightness(1.02) contrast(0.98)`;
+                // 將變形完的基礎畫到主編輯區
                 ctxEdit.drawImage(tempCanvas, 0, 0);
-                ctxEdit.restore();
-            }
-
-            // 5. 妝容與貼紙疊加
-            if (faceLandmarksData) {
-                const cx = faceLandmarksData[4].x * canvasEdit.width; const cy = faceLandmarksData[4].y * canvasEdit.height;
-                if (currentMakeup === 'korean') {
-                    ctxEdit.save(); ctxEdit.fillStyle = "rgba(255, 130, 140, 0.22)"; ctxEdit.beginPath();
-                    ctxEdit.arc(cx-35, cy+15, 18, 0, Math.PI*2); ctxEdit.arc(cx+35, cy+15, 18, 0, Math.PI*2); ctxEdit.fill(); ctxEdit.restore();
-                } else if (currentMakeup === 'taiwanese') {
-                    ctxEdit.save(); ctxEdit.fillStyle = "rgba(255, 10, 40, 0.4)"; ctxEdit.beginPath();
-                    ctxEdit.arc(cx-40, cy+12, 22, 0, Math.PI*2); ctxEdit.arc(cx+40, cy+12, 22, 0, Math.PI*2); ctxEdit.fill(); ctxEdit.restore();
+    
+                // 3. 全局智慧膚色美白 (讓臉部、脖子、所有外露皮膚同步提亮，拉桿精準控制程度)
+                if (whitenVal > 0) {
+                    const w = canvasEdit.width;
+                    const h = canvasEdit.height;
+                
+                    // 1. 直接取出乾淨原圖加工後的目前像素
+                    const imgData = ctxEdit.getImageData(0, 0, w, h);
+                    const pixels = imgData.data;
+                
+                    // 2. 🚀 拉桿美白程度控制（由 whitenVal 決定提亮幅度，每次都是全新計算）
+                    const factor = (whitenVal / 100) * 40; 
+                
+                    // 3. 逐像素掃描整張照片
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        let r = pixels[i];
+                        let g = pixels[i + 1];
+                        let b = pixels[i + 2];
+                
+                        // 🚀 【黃金膚色篩選公式】
+                        // 這樣可以精準抓到你的臉、脖子、手臂，同時避開純黑的頭髮、深色衣服與背景
+                        const isSkin = (r > 95 && g > 40 && b > 20) && 
+                                       (r > g && r > b) && 
+                                       ((Math.max(r, g, b) - Math.min(r, g, b)) > 15) && 
+                                       (r - g > 15) &&
+                                       !(r > 220 && g < 80 && b < 80); // 避開紅唇
+                        }
+                    
+                
+                    // 4. 逐像素精準過濾
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        // 幾何防禦線：只要遮罩不是純白（代表超出臉部邊界，如背景、頭髮、耳朵、脖子），一律不准動
+                        if (maskPixels[i] < 255) continue;
+                
+                        let r = pixels[i];
+                        let g = pixels[i + 1];
+                        let b = pixels[i + 2];
+                
+                        // 🚀 【升級版：嚴格東亞人種膚色動態光譜判定公式】
+                        // 透過更嚴格的 YCbCr/RGB 複合數學模型，把背景中類似皮膚的黃褐色、木頭牆壁、昏暗陰影徹底濾除
+                        const isTrueSkin = (r > 105 && g > 55 && b > 30) && // 提高整體亮度門檻，防止暗部與陰影發白
+                                           (r > g && r > b) && 
+                                           ((Math.max(r, g, b) - Math.min(r, g, b)) > 20) && // 擴大色彩對比度，排除中性灰沉背景
+                                           (r - g > 12) && // 鎖定黃皮膚與紅潤皮膚的黃金比例差
+                                           !(r > 210 && g < 90 && b < 90); // 精準避開口紅唇色
+                
+                        if (isTrueSkin) {
+                            // 氣色加權提亮
+                            pixels[i]     = Math.min(255, r + factor);
+                            pixels[i + 1] = Math.min(255, g + factor * 0.92);
+                            pixels[i + 2] = Math.min(255, b + factor * 0.88);
+                        }
+                    }
+                
+                    // 5. 覆蓋回編輯畫布
+                    ctxEdit.putImageData(imgData, 0, 0);
                 }
-                if (currentSticker === 'glasses') {
-                    ctxEdit.save(); ctxEdit.strokeStyle = "#000"; ctxEdit.lineWidth = 4; ctxEdit.beginPath();
-                    ctxEdit.arc(cx-25, cy-10, 15, 0, Math.PI*2); ctxEdit.arc(cx+25, cy-10, 15, 0, Math.PI*2); ctxEdit.stroke(); ctxEdit.restore();
+                // 4. 高低頻雙邊保留紋理磨皮
+                if (smoothVal > 0) {
+                    ctxEdit.save(); ctxEdit.globalAlpha = smoothVal / 140;
+                    ctxEdit.filter = `blur(${smoothVal / 15}px) brightness(1.02) contrast(0.98)`;
+                    ctxEdit.drawImage(tempCanvas, 0, 0);
+                    ctxEdit.restore();
+                }
+    
+                // 5. 妝容與貼紙疊加
+                if (faceLandmarksData) {
+                    const cx = faceLandmarksData[4].x * canvasEdit.width; const cy = faceLandmarksData[4].y * canvasEdit.height;
+                    if (currentMakeup === 'korean') {
+                        ctxEdit.save(); ctxEdit.fillStyle = "rgba(255, 130, 140, 0.22)"; ctxEdit.beginPath();
+                        ctxEdit.arc(cx-35, cy+15, 18, 0, Math.PI*2); ctxEdit.arc(cx+35, cy+15, 18, 0, Math.PI*2); ctxEdit.fill(); ctxEdit.restore();
+                    } else if (currentMakeup === 'taiwanese') {
+                        ctxEdit.save(); ctxEdit.fillStyle = "rgba(255, 10, 40, 0.4)"; ctxEdit.beginPath();
+                        ctxEdit.arc(cx-40, cy+12, 22, 0, Math.PI*2); ctxEdit.arc(cx+40, cy+12, 22, 0, Math.PI*2); ctxEdit.fill(); ctxEdit.restore();
+                    }
+                    if (currentSticker === 'glasses') {
+                        ctxEdit.save(); ctxEdit.strokeStyle = "#000"; ctxEdit.lineWidth = 4; ctxEdit.beginPath();
+                        ctxEdit.arc(cx-25, cy-10, 15, 0, Math.PI*2); ctxEdit.arc(cx+25, cy-10, 15, 0, Math.PI*2); ctxEdit.stroke(); ctxEdit.restore();
+                    }
                 }
             }
         }
