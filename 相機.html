@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 旗艦級三庭五眼美顏相機</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
@@ -22,14 +22,15 @@
 
         /* 2. 拍照主介面 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
-        .countdown-overlay { font-size: 22px; font-weight: bold; color: #0071e3; margin-bottom: 15px; min-height: 35px; text-align: center; width: 100%; }
+        .countdown-overlay { font-size: 20px; font-weight: bold; color: #0071e3; margin-bottom: 15px; min-height: 35px; text-align: center; width: 100%; }
         
         .viewfinders { display: flex; flex-direction: row; gap: 15px; width: 100%; justify-content: center; margin-bottom: 15px; }
         .viewfinder-box { width: 440px; height: 550px; background-color: #000; border-radius: 12px; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         
         .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 8px rgba(255,255,255,0.9); font-size: 20px; color: #000; font-weight: bold; }
+        .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 8px rgba(255,255,255,0.9); font-size: 18px; color: #000; font-weight: bold; }
         
+        /* 九宮格線 */
         .grid-line-h1, .grid-line-h2, .grid-line-v1, .grid-line-v2 { position: absolute; background-color: rgba(255, 255, 255, 0.35); z-index: 8; pointer-events: none; }
         .grid-line-h1 { top: 33.3%; left: 0; width: 100%; height: 1px; }
         .grid-line-h2 { top: 66.6%; left: 0; width: 100%; height: 1px; }
@@ -41,7 +42,7 @@
             .viewfinder-box { width: 100%; flex: 1; height: auto; }
         }
 
-        /* 濾鏡滾動欄 */
+        /* 濾鏡欄 */
         .filter-scroller-container { width: 100%; background: #f5f5f7; padding: 12px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
         .filter-scroller { display: flex; gap: 12px; overflow-x: auto; width: 100%; padding-bottom: 5px; scroll-behavior: smooth; }
         .filter-item-box { flex: 0 0 90px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; }
@@ -79,24 +80,26 @@
     <div id="stage-intro" class="intro-stage">
         <h1 class="intro-title">AI 醫美級智慧美顏相機</h1>
         <p class="intro-desc">
-            👋 揮手換濾鏡 · ✌️ 比 YA 開啟微整 · 👌 比 OK 拍照<br>
+            👋 左右揮手換濾鏡 · ✌️ 比 YA 開關即時瓜子臉 · 👌 比 OK 倒數拍照<br>
             專業級皮膚美白與三庭五眼重塑技術
         </p>
         <button class="start-btn" onclick="enterCameraStage()">開始體驗</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="status-text" class="countdown-overlay">正在初始化基本相機...</div>
+        <div id="status-text" class="countdown-overlay">正在開啟鏡頭...</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
-                <span class="viewfinder-label" style="top: 15px;">原圖</span>
+                <span class="viewfinder-label" style="top: 15px;">原圖鏡頭</span>
                 <canvas id="canvas-raw"></canvas>
             </div>
             <div class="viewfinder-box">
                 <div class="grid-line-h1"></div><div class="grid-line-h2"></div>
                 <div class="grid-line-v1"></div><div class="grid-line-v2"></div>
-                <span class="viewfinder-label" style="top: 15px; background: rgba(255,255,255,0.6); padding: 2px 8px; border-radius: 5px;">AI 微整預覽</span>
+                <span class="viewfinder-label" style="top: 15px; background: rgba(255,255,255,0.7); padding: 4px 8px; border-radius: 5px; color: #000; line-height: 1.3;">
+                    AI 即時微整<br><span style="font-size:11px; font-weight:normal;">(✌️比YA開關即時瘦臉 · 👌比OK拍照)</span>
+                </span>
                 <canvas id="canvas-live-fx"></canvas>
             </div>
         </div>
@@ -123,11 +126,11 @@
 
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
-                <span class="slider-label">純皮膚美白 (環境隔離技術)</span>
+                <span class="slider-label">純皮膚美白</span>
                 <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
             <div class="slider-container">
-                <span class="slider-label">高低頻質感磨皮 (保留五官銳利)</span>
+                <span class="slider-label">高低頻質感磨皮</span>
                 <input type="range" id="slider-smooth" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
             <button class="confirm-btn" onclick="askToSave()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
@@ -175,38 +178,30 @@
 
         let showVFace = false; let isCountingDown = false; let capturedImage = null; let originalCapture = null;
         let faceData = null; let isFront = false; let lastWaveTime = 0;
+        let lastYaTime = 0;
 
         function initSize() { Object.values(canvases).forEach(c => { c.width = 480; c.height = 600; }); }
         initSize();
 
-        // 💥 【核心安全切換機制】強制先切換畫面，絕對不被鏡頭權限或 AI 腳本阻攔！
+        // 修正後的進入相機函式（修正語法錯誤）
         function enterCameraStage() {
-            document.getElementById('stage-intro').style.style.display = 'none'; // 隱藏第一頁
-            document.getElementById('stage-capture').style.display = 'flex';     // 顯示相機頁
+            document.getElementById('stage-intro').style.display = 'none'; // 正確的隱藏寫法
+            document.getElementById('stage-capture').style.display = 'flex';
             
-            // 嘗試啟動原生相機
             try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    document.getElementById('status-text').innerText = "⚠️ 您的瀏覽器不支援相機功能，請更換 Chrome/Safari。";
-                    return;
-                }
-
                 navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, frameRate: 30 } })
                     .then(stream => {
                         video.srcObject = stream;
                         video.onloadedmetadata = () => {
                             renderLoop();
-                            // 確定鏡頭動了，再用另一個 try 安全區去載入 AI
                             setTimeout(safeInitAI, 800);
                         };
                     }).catch(err => {
-                        document.getElementById('status-text').innerText = "⚠️ 請允許相機權限（或點擊右側畫面直接拍照）";
-                        console.error(err);
+                        document.getElementById('status-text').innerText = "⚠️ 請允許相機權限（或直接點擊畫面拍照）";
                     });
             } catch (e) {
-                document.getElementById('status-text').innerText = "系統錯誤，切換至手動拍照模式";
+                document.getElementById('status-text').innerText = "系統異常，啟用手動拍照";
             }
-            
             createThumbs();
         }
 
@@ -229,14 +224,8 @@
             requestAnimationFrame(renderLoop);
         }
 
-        // 用獨立的區塊包裹 AI，就算出錯網頁也不會壞掉
         function safeInitAI() {
             try {
-                if (typeof Hands === 'undefined' || typeof FaceMesh === 'undefined') {
-                    document.getElementById('status-text').innerText = "⚠️ AI 模組加載受阻，已啟用「直接點擊畫面拍照」模式";
-                    return;
-                }
-
                 const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
                 hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.75 });
                 hands.onResults(onHands);
@@ -245,29 +234,45 @@
                 faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
                 faceMesh.onResults(onFace);
 
-                document.getElementById('status-text').innerText = "✨ AI 偵測就緒：👌比OK拍照 · ✌️比YA開關微整";
+                document.getElementById('status-text').innerText = "✨ 👋揮手換濾鏡 · ✌️比YA開關瘦臉 · 👌比OK拍照";
                 setInterval(() => { if(video.readyState>=2) { try{ hands.send({image: video}); faceMesh.send({image: video}); }catch(e){} } }, 150);
             } catch (err) {
-                document.getElementById('status-text').innerText = "⚠️ 網路延遲，請直接點選畫面進行手動修圖";
+                document.getElementById('status-text').innerText = "⚠️ 載入受阻，支援點擊畫面拍照";
             }
         }
 
+        // 重新檢驗的手勢判斷，確保揮手與比YA完美觸發
         function onHands(res) {
             if (!res.multiHandLandmarks || res.multiHandLandmarks.length === 0) return;
             const now = Date.now();
             const pts = res.multiHandLandmarks[0].map(p => ({ x: 1 - p.x, y: p.y }));
 
-            if (Math.abs(pts[0].x - (this.lastX||pts[0].x)) > 0.08) {
-                if (now - lastWaveTime < 1000) { selectFilter((currentFilterIndex+1)%filters.length); lastWaveTime = now; }
-                this.lastX = pts[0].x;
+            // 1. 揮手更換濾鏡
+            if (this.lastX === undefined) this.lastX = pts[0].x;
+            const diffX = pts[0].x - this.lastX;
+            this.lastX = pts[0].x;
+            if (Math.abs(diffX) > 0.07) {
+                if (now - lastWaveTime > 800) { 
+                    selectFilter((currentFilterIndex + 1) % filters.length); 
+                    lastWaveTime = now; 
+                }
+                return;
             }
 
-            if (pts[8].y < pts[6].y && pts[12].y < pts[10].y && pts[16].y > pts[14].y && (now-this.lyt > 2000)) {
-                showVFace = !showVFace; this.lyt = now;
+            // 2. 比 YA (食指與中指伸直，無名指小指彎曲)
+            if (pts[8].y < pts[6].y && pts[12].y < pts[10].y && pts[16].y > pts[14].y) {
+                if (now - lastYaTime > 2000) {
+                    showVFace = !showVFace; 
+                    lastYaTime = now;
+                    document.getElementById('status-text').innerText = showVFace ? "✌️ 已開啟即時黃金比例瓜子臉" : "✌️ 已關閉即時瓜子臉";
+                    setTimeout(() => { if(!isCountingDown) document.getElementById('status-text').innerText = "✨ 👋揮手換濾鏡 · ✌️比YA開關瘦臉 · 👌比OK拍照"; }, 1500);
+                }
+                return;
             }
 
-            const okDist = Math.sqrt(Math.pow(pts[4].x-pts[8].x,2)+Math.pow(pts[4].y-pts[8].y,2));
-            if (okDist < 0.045 && pts[12].y < pts[10].y && !isCountingDown && now-lastWaveTime>800) {
+            // 3. 比 OK 拍照
+            const okDist = Math.sqrt(Math.pow(pts[4].x - pts[8].x, 2) + Math.pow(pts[4].y - pts[8].y, 2));
+            if (okDist < 0.045 && pts[12].y < pts[10].y && !isCountingDown && (now - lastWaveTime > 800)) {
                 startCountdown();
             }
         }
@@ -285,7 +290,7 @@
             const w = canvases.fx.width, h = canvases.fx.height;
             const temp = document.createElement('canvas'); temp.width = w; temp.height = h;
             const tctx = temp.getContext('2d'); tctx.drawImage(videoSrc, 0, 0, w, h);
-            const lj = pts[172], rj = pts[397]; const shift = 12;
+            const lj = pts[172], rj = pts[397]; const shift = 15; // 稍微加大內推感
             for(let i=0; i<8; i++) {
                 tctx.save(); tctx.beginPath(); tctx.arc(lj.x*w, lj.y*h-40+i*12, 45, 0, Math.PI*2); tctx.clip(); tctx.drawImage(videoSrc, shift, 0); tctx.restore();
                 tctx.save(); tctx.beginPath(); tctx.arc(rj.x*w, rj.y*h-40+i*12, 45, 0, Math.PI*2); tctx.clip(); tctx.drawImage(videoSrc, -shift, 0); tctx.restore();
@@ -314,7 +319,7 @@
         function startCountdown() {
             isCountingDown = true; let count = 5;
             const timer = setInterval(() => {
-                document.getElementById('status-text').innerText = `📸 拍照倒數 ${count} 秒...`;
+                document.getElementById('status-text').innerText = `📸 偵測到 OK 手勢！倒數 ${count} 秒拍照...`;
                 if (count-- <= 0) { clearInterval(timer); takePhoto(); }
             }, 1000);
         }
