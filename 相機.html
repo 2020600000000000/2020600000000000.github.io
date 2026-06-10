@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 旗艦級三庭五眼美顏相機</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous" defer></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
         body { background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 10px; overflow-x: hidden; }
         
-        /* 1. 介紹頁 (防止 AI 載入時網頁卡死) */
+        /* 1. 介紹頁 */
         .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: 80vh; border: 1px solid #ddd; border-radius: 12px; background: #fff; padding: 20px; text-align: center; }
         .intro-title { font-size: 32px; font-weight: bold; margin-bottom: 20px; }
         .intro-desc { font-size: 16px; color: #666; margin-bottom: 40px; line-height: 1.6; }
@@ -23,17 +23,13 @@
         /* 2. 拍照主介面 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
         .countdown-overlay { font-size: 22px; font-weight: bold; color: #0071e3; margin-bottom: 15px; min-height: 35px; text-align: center; width: 100%; }
-        .countdown-overlay.warning { color: #ff3b30; } 
         
-        /* 雙視窗排版：電腦左右、手機上下 */
         .viewfinders { display: flex; flex-direction: row; gap: 15px; width: 100%; justify-content: center; margin-bottom: 15px; }
         .viewfinder-box { width: 440px; height: 550px; background-color: #000; border-radius: 12px; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         
-        /* 鏡頭畫面：全部實施鏡像 (Mirror) */
         .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 8px rgba(255,255,255,0.9); font-size: 20px; color: #000; font-weight: bold; }
         
-        /* 九宮格輔助線 */
         .grid-line-h1, .grid-line-h2, .grid-line-v1, .grid-line-v2 { position: absolute; background-color: rgba(255, 255, 255, 0.35); z-index: 8; pointer-events: none; }
         .grid-line-h1 { top: 33.3%; left: 0; width: 100%; height: 1px; }
         .grid-line-h2 { top: 66.6%; left: 0; width: 100%; height: 1px; }
@@ -43,7 +39,6 @@
         @media (max-width: 850px) or (orientation: portrait) {
             .viewfinders { flex-direction: column; height: 60vh; }
             .viewfinder-box { width: 100%; flex: 1; height: auto; }
-            .viewfinder-label { font-size: 16px; }
         }
 
         /* 濾鏡滾動欄 */
@@ -61,7 +56,7 @@
         .compare-btn { position: absolute; top: 15px; right: 15px; background-color: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; z-index: 15; display: flex; justify-content: center; align-items: center; }
 
         .menu-row { display: flex; gap: 8px; justify-content: center; width: 100%; margin-bottom: 15px; flex-wrap: wrap; }
-        .btn-item { padding: 12px 15px; background-color: #e5e5ea; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-item { padding: 12px 15px; background-color: #e5e5ea; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; }
         .btn-item.active { background-color: #0071e3; color: #fff; }
         
         .sub-panel { width: 100%; display: none; flex-direction: column; align-items: center; background: #f9f9f9; padding: 15px; border-radius: 12px; }
@@ -91,7 +86,7 @@
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="status-text" class="countdown-overlay">正在啟動相機...</div>
+        <div id="status-text" class="countdown-overlay">正在初始化基本相機...</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
@@ -117,7 +112,6 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
             <canvas id="canvas-edit-preview"></canvas>
-            <div id="current-edit-label" class="edit-label" style="display:none;">細部修飾</div>
         </div>
         
         <div class="menu-row">
@@ -182,37 +176,47 @@
         let showVFace = false; let isCountingDown = false; let capturedImage = null; let originalCapture = null;
         let faceData = null; let isFront = false; let lastWaveTime = 0;
 
-        // 初始化畫布解析度 (RWD 友好)
         function initSize() { Object.values(canvases).forEach(c => { c.width = 480; c.height = 600; }); }
         initSize();
 
-        // 啟動相機流程 (解耦模式防止卡死)
+        // 💥 【核心安全切換機制】強制先切換畫面，絕對不被鏡頭權限或 AI 腳本阻攔！
         function enterCameraStage() {
-            document.getElementById('stage-intro').style.display = 'none';
-            document.getElementById('stage-capture').style.display = 'flex';
+            document.getElementById('stage-intro').style.style.display = 'none'; // 隱藏第一頁
+            document.getElementById('stage-capture').style.display = 'flex';     // 顯示相機頁
             
-            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, frameRate: 30 } })
-                .then(stream => {
-                    video.srcObject = stream;
-                    video.onloadedmetadata = () => {
-                        renderLoop();
-                        setTimeout(initAI, 500); // 延遲載入 AI 模型，保證預覽先動起來
-                    };
-                }).catch(e => alert("無法取得相機：" + e));
+            // 嘗試啟動原生相機
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    document.getElementById('status-text').innerText = "⚠️ 您的瀏覽器不支援相機功能，請更換 Chrome/Safari。";
+                    return;
+                }
+
+                navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, frameRate: 30 } })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        video.onloadedmetadata = () => {
+                            renderLoop();
+                            // 確定鏡頭動了，再用另一個 try 安全區去載入 AI
+                            setTimeout(safeInitAI, 800);
+                        };
+                    }).catch(err => {
+                        document.getElementById('status-text').innerText = "⚠️ 請允許相機權限（或點擊右側畫面直接拍照）";
+                        console.error(err);
+                    });
+            } catch (e) {
+                document.getElementById('status-text').innerText = "系統錯誤，切換至手動拍照模式";
+            }
             
             createThumbs();
         }
 
-        // 核心渲染迴圈：處理鏡像與即時微整
         function renderLoop() {
             if (video.readyState >= 2) {
                 const w = canvases.fx.width, h = canvases.fx.height;
                 
-                // 1. 原鏡頭畫布 (鏡像)
                 ctxs.raw.save(); ctxs.raw.translate(w, 0); ctxs.raw.scale(-1, 1);
                 ctxs.raw.drawImage(video, 0, 0, w, h); ctxs.raw.restore();
 
-                // 2. 修圖預覽畫布 (鏡像 + AI 微整)
                 ctxs.fx.save(); ctxs.fx.translate(w, 0); ctxs.fx.scale(-1, 1);
                 if (showVFace && faceData && isFront) {
                     drawVFaceWarp(ctxs.fx, video, faceData);
@@ -225,38 +229,43 @@
             requestAnimationFrame(renderLoop);
         }
 
-        // AI 初始化
-        function initAI() {
-            const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-            hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.75 });
-            hands.onResults(onHands);
+        // 用獨立的區塊包裹 AI，就算出錯網頁也不會壞掉
+        function safeInitAI() {
+            try {
+                if (typeof Hands === 'undefined' || typeof FaceMesh === 'undefined') {
+                    document.getElementById('status-text').innerText = "⚠️ AI 模組加載受阻，已啟用「直接點擊畫面拍照」模式";
+                    return;
+                }
 
-            const faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
-            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
-            faceMesh.onResults(onFace);
+                const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+                hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.75 });
+                hands.onResults(onHands);
 
-            document.getElementById('status-text').innerText = "AI 模組已就緒 · 請開始體驗";
-            setInterval(() => { if(video.readyState>=2) { hands.send({image: video}); faceMesh.send({image: video}); } }, 130);
+                const faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+                faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
+                faceMesh.onResults(onFace);
+
+                document.getElementById('status-text').innerText = "✨ AI 偵測就緒：👌比OK拍照 · ✌️比YA開關微整";
+                setInterval(() => { if(video.readyState>=2) { try{ hands.send({image: video}); faceMesh.send({image: video}); }catch(e){} } }, 150);
+            } catch (err) {
+                document.getElementById('status-text').innerText = "⚠️ 網路延遲，請直接點選畫面進行手動修圖";
+            }
         }
 
         function onHands(res) {
             if (!res.multiHandLandmarks || res.multiHandLandmarks.length === 0) return;
             const now = Date.now();
-            // 點位鏡像轉換 (1-x)
             const pts = res.multiHandLandmarks[0].map(p => ({ x: 1 - p.x, y: p.y }));
 
-            // 1. 揮手更換濾鏡
             if (Math.abs(pts[0].x - (this.lastX||pts[0].x)) > 0.08) {
                 if (now - lastWaveTime < 1000) { selectFilter((currentFilterIndex+1)%filters.length); lastWaveTime = now; }
                 this.lastX = pts[0].x;
             }
 
-            // 2. 比 YA (V手勢) 切換微整
             if (pts[8].y < pts[6].y && pts[12].y < pts[10].y && pts[16].y > pts[14].y && (now-this.lyt > 2000)) {
                 showVFace = !showVFace; this.lyt = now;
             }
 
-            // 3. 比 OK 拍照 (防誤觸：中指必須伸直)
             const okDist = Math.sqrt(Math.pow(pts[4].x-pts[8].x,2)+Math.pow(pts[4].y-pts[8].y,2));
             if (okDist < 0.045 && pts[12].y < pts[10].y && !isCountingDown && now-lastWaveTime>800) {
                 startCountdown();
@@ -272,28 +281,20 @@
             } else { faceData = null; isFront = false; }
         }
 
-        // 局部 V 臉瓜子臉重塑演算法
         function drawVFaceWarp(ctx, videoSrc, pts) {
             const w = canvases.fx.width, h = canvases.fx.height;
             const temp = document.createElement('canvas'); temp.width = w; temp.height = h;
-            const tctx = temp.getContext('2d');
-            tctx.drawImage(videoSrc, 0, 0, w, h);
-
-            const lj = pts[172], rj = pts[397]; // 下顎點
-            const shift = 12; // 內推係數
-
+            const tctx = temp.getContext('2d'); tctx.drawImage(videoSrc, 0, 0, w, h);
+            const lj = pts[172], rj = pts[397]; const shift = 12;
             for(let i=0; i<8; i++) {
-                tctx.save(); tctx.beginPath(); tctx.arc(lj.x*w, lj.y*h-40+i*12, 45, 0, Math.PI*2); tctx.clip();
-                tctx.drawImage(videoSrc, shift, 0); tctx.restore();
-                tctx.save(); tctx.beginPath(); tctx.arc(rj.x*w, rj.y*h-40+i*12, 45, 0, Math.PI*2); tctx.clip();
-                tctx.drawImage(videoSrc, -shift, 0); tctx.restore();
+                tctx.save(); tctx.beginPath(); tctx.arc(lj.x*w, lj.y*h-40+i*12, 45, 0, Math.PI*2); tctx.clip(); tctx.drawImage(videoSrc, shift, 0); tctx.restore();
+                tctx.save(); tctx.beginPath(); tctx.arc(rj.x*w, rj.y*h-40+i*12, 45, 0, Math.PI*2); tctx.clip(); tctx.drawImage(videoSrc, -shift, 0); tctx.restore();
             }
             ctx.drawImage(temp, 0, 0);
         }
 
         function selectFilter(idx) {
-            currentFilterIndex = idx;
-            createThumbs(); // 更新縮圖啟動狀態
+            currentFilterIndex = idx; createThumbs();
             const item = document.getElementById(`f-${idx}`);
             if(item) item.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
@@ -301,16 +302,11 @@
         function createThumbs() {
             const sc = document.getElementById('filterScroller'); sc.innerHTML = '';
             filters.forEach((name, i) => {
-                const box = document.createElement('div');
-                box.className = `filter-item-box ${i===currentFilterIndex?'active':''}`;
+                const box = document.createElement('div'); box.className = `filter-item-box ${i===currentFilterIndex?'active':''}`;
                 box.id = `f-${i}`; box.onclick = () => selectFilter(i);
-                const cvs = document.createElement('canvas');
-                cvs.width = 90; cvs.height = 110; cvs.className = 'filter-thumb-canvas';
-                const tctx = cvs.getContext('2d');
-                tctx.translate(90, 0); tctx.scale(-1, 1);
-                tctx.drawImage(video, 0,0,90,110);
-                cvs.style.filter = filterCSSMap[name];
-                box.innerHTML = `<div class="filter-thumb-name">${name}</div>`;
+                const cvs = document.createElement('canvas'); cvs.width = 90; cvs.height = 110; cvs.className = 'filter-thumb-canvas';
+                const tctx = cvs.getContext('2d'); tctx.translate(90, 0); tctx.scale(-1, 1); tctx.drawImage(video, 0,0,90,110);
+                cvs.style.filter = filterCSSMap[name]; box.innerHTML = `<div class="filter-thumb-name">${name}</div>`;
                 box.prepend(cvs); sc.appendChild(box);
             });
         }
@@ -318,116 +314,80 @@
         function startCountdown() {
             isCountingDown = true; let count = 5;
             const timer = setInterval(() => {
-                document.getElementById('status-text').innerText = `👌 偵測到 OK！拍照倒數 ${count} 秒...`;
+                document.getElementById('status-text').innerText = `📸 拍照倒數 ${count} 秒...`;
                 if (count-- <= 0) { clearInterval(timer); takePhoto(); }
             }, 1000);
         }
 
         function takePhoto() {
-            originalCapture = document.createElement('canvas');
-            originalCapture.width = canvases.fx.width; originalCapture.height = canvases.fx.height;
-            const octx = originalCapture.getContext('2d');
-            octx.translate(480,0); octx.scale(-1,1); octx.drawImage(video,0,0,480,600);
+            originalCapture = document.createElement('canvas'); originalCapture.width = 480; originalCapture.height = 600;
+            const octx = originalCapture.getContext('2d'); octx.translate(480,0); octx.scale(-1,1); octx.drawImage(video,0,0,480,600);
 
-            capturedImage = document.createElement('canvas');
-            capturedImage.width = 480; capturedImage.height = 600;
-            const sctx = capturedImage.getContext('2d');
-            sctx.filter = filterCSSMap[filters[currentFilterIndex]];
-            sctx.translate(480,0); sctx.scale(-1,1);
-            if(showVFace && faceData && isFront) drawVFaceWarp(sctx, video, faceData);
-            else sctx.drawImage(video,0,0,480,600);
+            capturedImage = document.createElement('canvas'); capturedImage.width = 480; capturedImage.height = 600;
+            const sctx = capturedImage.getContext('2d'); sctx.filter = filterCSSMap[filters[currentFilterIndex]]; sctx.translate(480,0); sctx.scale(-1,1);
+            if(showVFace && faceData && isFront) drawVFaceWarp(sctx, video, faceData); else sctx.drawImage(video,0,0,480,600);
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
-            openSubPanel('skin');
-            isCountingDown = false;
+            openSubPanel('skin'); isCountingDown = false;
         }
 
         function openSubPanel(p) {
             document.querySelectorAll('.sub-panel').forEach(el => el.style.display='none');
-            document.getElementById(`panel-${p}`).style.display='flex';
-            applyEditEffects();
+            document.getElementById(`panel-${p}`).style.display='flex'; applyEditEffects();
         }
 
-        // ==========================================
-        // 核心後製：純皮膚美白與五官瓜子臉位移
-        // ==========================================
         function applyEditEffects() {
             if(!capturedImage) return;
-            const w = 480, h = 600;
-            ctxs.edit.clearRect(0,0,w,h);
-            
+            const w = 480, h = 600; ctxs.edit.clearRect(0,0,w,h);
             const wV = parseInt(document.getElementById('slider-whiten').value);
             const sV = parseInt(document.getElementById('slider-smooth').value);
             const gV = parseInt(document.getElementById('slider-bigEyes').value);
             const mV = parseInt(document.getElementById('slider-slimFace').value);
 
-            // 1. 骨架處理
             const geoC = document.createElement('canvas'); geoC.width=w; geoC.height=h;
             const gctx = geoC.getContext('2d'); gctx.drawImage(capturedImage, 0, 0);
 
             if(faceData) {
-                // 瓜子臉內推
                 if(mV > 0) {
                     const push = (mV/100)*15;
                     for(let i=0; i<10; i++) {
-                        gctx.save(); gctx.beginPath(); gctx.arc(faceData[172].x*w, faceData[172].y*h-40+i*10, 45, 0, Math.PI*2); gctx.clip();
-                        gctx.drawImage(capturedImage, push, 0); gctx.restore();
-                        gctx.save(); gctx.beginPath(); gctx.arc(faceData[397].x*w, faceData[397].y*h-40+i*10, 45, 0, Math.PI*2); gctx.clip();
-                        gctx.drawImage(capturedImage, -push, 0); gctx.restore();
+                        gctx.save(); gctx.beginPath(); gctx.arc(faceData[172].x*w, faceData[172].y*h-40+i*10, 45, 0, Math.PI*2); gctx.clip(); gctx.drawImage(capturedImage, push, 0); gctx.restore();
+                        gctx.save(); gctx.beginPath(); gctx.arc(faceData[397].x*w, faceData[397].y*h-40+i*10, 45, 0, Math.PI*2); gctx.clip(); gctx.drawImage(capturedImage, -push, 0); gctx.restore();
                     }
                 }
-                // 五官平移 (三庭五眼)
                 if(gV > 0) {
                     const shift = (w*0.24 - (faceData[473].x-faceData[468].x)*w) * (gV/100) * 0.45;
-                    gctx.save(); gctx.beginPath(); gctx.arc(faceData[468].x*w, faceData[468].y*h, 40, 0, Math.PI*2); gctx.clip();
-                    gctx.drawImage(capturedImage, -shift, 0); gctx.restore();
-                    gctx.save(); gctx.beginPath(); gctx.arc(faceData[473].x*w, faceData[473].y*h, 40, 0, Math.PI*2); gctx.clip();
-                    gctx.drawImage(capturedImage, shift, 0); gctx.restore();
+                    gctx.save(); gctx.beginPath(); gctx.arc(faceData[468].x*w, faceData[468].y*h, 40, 0, Math.PI*2); gctx.clip(); gctx.drawImage(capturedImage, -shift, 0); gctx.restore();
+                    gctx.save(); gctx.beginPath(); gctx.arc(faceData[473].x*w, faceData[473].y*h, 40, 0, Math.PI*2); gctx.clip(); gctx.drawImage(capturedImage, shift, 0); gctx.restore();
                 }
             }
             ctxs.edit.drawImage(geoC, 0, 0);
 
-            // 2. 膚色偵測美白 (不影響背景衣服)
             if(wV > 0 && faceData) {
-                const img = ctxs.edit.getImageData(0,0,w,h);
-                const pix = img.data;
-                const factor = (wV/100)*40;
+                const img = ctxs.edit.getImageData(0,0,w,h); const pix = img.data; const factor = (wV/100)*40;
                 for(let i=0; i<pix.length; i+=4) {
                     let r=pix[i], g=pix[i+1], b=pix[i+2];
-                    // 膚色判定公式
                     if(r>95 && g>40 && b>20 && r>g && r>b && (Math.max(r,g,b)-Math.min(r,g,b)>15)) {
                         pix[i]=Math.min(255,r+factor); pix[i+1]=Math.min(255,g+factor*0.9); pix[i+2]=Math.min(255,b+factor*0.8);
                     }
                 }
                 ctxs.edit.putImageData(img, 0, 0);
             }
-
-            // 3. 高低頻磨皮
             if(sV > 0) {
-                ctxs.edit.save(); ctxs.edit.globalAlpha = sV/130;
-                ctxs.edit.filter = `blur(${sV/14}px) brightness(1.02)`;
+                ctxs.edit.save(); ctxs.edit.globalAlpha = sV/130; ctxs.edit.filter = `blur(${sV/14}px) brightness(1.02)`;
                 ctxs.edit.drawImage(geoC, 0, 0); ctxs.edit.restore();
             }
         }
 
-        function showOriginal(is) { 
-            if(is) { ctxs.edit.drawImage(originalCapture, 0, 0); } 
-            else { applyEditEffects(); }
-        }
-
+        function showOriginal(is) { if(is) ctxs.edit.drawImage(originalCapture, 0, 0); else applyEditEffects(); }
         function setMakeup(s) { alert("智慧妝容風格已套用：" + s); }
         function setSticker(t) { alert("智慧追蹤貼紙已生成"); }
-
-        // 存檔詢問機制
         function askToSave() {
             if(confirm("✨ 是否要將這張 AI 完美比例美顏照片保存至您的裝置？")) {
-                const link = document.createElement('a');
-                link.download = `AI_Beauty_${Date.now()}.png`;
-                link.href = canvases.edit.toDataURL('image/png');
-                link.click();
-                alert("🎉 照片儲存成功！網頁即將重置。");
-                location.reload();
+                const link = document.createElement('a'); link.download = `AI_Beauty_${Date.now()}.png`;
+                link.href = canvases.edit.toDataURL('image/png'); link.click();
+                alert("🎉 照片儲存成功！"); location.reload();
             }
         }
 
