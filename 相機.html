@@ -505,12 +505,6 @@ if (whitenVal > 0) {
                        ((Math.max(r, g, b) - Math.min(r, g, b)) > 15) && 
                        (r - g > 15) &&
                        !(r > 220 && g < 80 && b < 80); // 避開紅唇
-
-        if (isSkin) {
-            // 4. 僅對皮膚區域進行黃金比例提亮（白裡透紅，絕不發灰）
-            pixels[i]     = Math.min(255, r + factor);        // 紅色調
-            pixels[i + 1] = Math.min(255, g + factor * 0.92); // 綠色調
-            pixels[i + 2] = Math.min(255, b + factor * 0.85); // 藍色調
         }
     }
 
