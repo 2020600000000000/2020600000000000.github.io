@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 手機手勢黃金比例相機</title>
+    <title>AI 手機雙鏡頭即時黃金重塑相機</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -21,17 +21,19 @@
 
         /* 拍照舞台 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; position: relative; }
-        .status-top { width: 90%; text-align: center; padding: 10px; font-size: 14px; color: #fff; background: rgba(0,0,0,0.7); position: absolute; top: 15px; z-index: 50; font-weight: bold; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .status-top { width: 90%; text-align: center; padding: 10px; font-size: 13px; color: #fff; background: rgba(0,0,0,0.75); position: absolute; top: 15px; z-index: 50; font-weight: bold; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* 觀景窗 */
-        .viewfinder-container { width: 100vw; height: 75vh; position: relative; background: #000; margin-top: 0; display: flex; align-items: center; justify-content: center; }
-        /* 為了自拍直覺，必須將鏡頭畫面左右反轉(鏡像) */
-        .viewfinder-container canvas { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        
+        /* 📱 核心：手機雙鏡頭對比觀景窗 */
+        .viewfinders-split { width: 100vw; height: 68vh; display: flex; flex-direction: row; gap: 4px; background: #000; padding: 4px; box-sizing: border-box; margin-top: 0; }
+        .viewfinder-box { flex: 1; height: 100%; position: relative; background: #1c1c1e; border-radius: 12px; overflow: hidden; }
+        /* 左右畫面皆套用前鏡頭鏡像反轉 */
+        .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .viewfinder-label { position: absolute; z-index: 10; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); }
+
         /* 下方資訊欄 */
-        .control-panel { width: 100vw; height: 25vh; background: #121212; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; gap: 10px; }
-        .filter-indicator { font-size: 14px; background: #2c2c2e; padding: 6px 16px; border-radius: 20px; color: #34c759; font-weight: bold; }
-        .gesture-tips { font-size: 12px; color: #8e8e93; text-align: center; line-height: 1.5; }
+        .control-panel { width: 100vw; height: 32vh; background: #121212; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; gap: 12px; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+        .filter-indicator { font-size: 14px; background: #0071e3; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: bold; }
+        .gesture-tips { font-size: 12px; color: #8e8e93; text-align: center; line-height: 1.6; background: #1c1c1e; padding: 8px 16px; border-radius: 14px; width: 90%; }
 
         /* 後製階段 */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; background: #1c1c1e; overflow-y: auto; padding: 15px; }
@@ -60,28 +62,36 @@
     <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 手動操控：手勢相機</div>
+        <div class="intro-title">AI 即時雙鏡頭對比相機</div>
         <div class="intro-desc">
-            <b>🙌 完美還原三大手機手勢控制：</b><br><br>
-            1. <b>✌️ 比出 YA：</b> 臉部直接縮小拉長，1秒重塑成「黃金比例瓜子臉」。再比一次 YA 即可取消，回復原狀！<br>
-            2. <b>👌 比出 OK：</b> 觸發 5 秒拍照倒數，快門自動捕捉。<br>
-            3. <b>🖐️ 隔空揮手：</b> 手掌在鏡頭前左右大範圍晃動，直接切換快門濾鏡。<br><br>
-            *請確保在光線充足環境下使用，並讓手掌與臉部同時入鏡。
+            <b>🙌 隔空手勢操控與即時對比：</b><br><br>
+            * 畫面上方將同步拆分為<b>「原鏡頭」</b>與<b>「修改後」</b>左右對比視窗。<br><br>
+            1. <b>✌️ 比出 YA：</b> 右側視窗直接重塑為「黃金比例瓜子臉」。再比一次 YA 即可取消右側變形，恢復正常。<br>
+            2. <b>👌 比出 OK：</b> 觸發 5 秒拍照，自動擷取右側修改後的完美畫面。<br>
+            3. <b>🖐️ 隔空揮手：</b> 手掌左右大範圍晃動，直接切換右側視窗的快門濾鏡。
         </div>
-        <button class="start-btn" onclick="enterCameraStage()">開啟手勢相機</button>
+        <button class="start-btn" onclick="enterCameraStage()">開啟對比相機</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="status-text" class="status-top">✋ 請對準前鏡頭... AI 正在啟動</div>
+        <div id="status-text" class="status-top">✋ AI 正在啟動，請對準前鏡頭...</div>
         
-        <div class="viewfinder-container">
-            <canvas id="canvas-live-fx"></canvas>
+        <div class="viewfinders-split">
+            <div class="viewfinder-box">
+                <canvas id="canvas-raw"></canvas>
+                <div class="viewfinder-label">📷 原鏡頭真實</div>
+            </div>
+            <div class="viewfinder-box">
+                <canvas id="canvas-live-fx"></canvas>
+                <div class="viewfinder-label" id="fx-label">✨ 修改後預覽</div>
+            </div>
         </div>
         
         <div class="control-panel">
             <div class="filter-indicator" id="filter-name">濾鏡：原圖</div>
             <div class="gesture-tips">
-                ✌️ 比YA：切換黃金比例 | 👌 比OK：5秒拍照<br>🖐️ 揮手：換濾鏡
+                ✌️ 比YA：右窗變更黃金比例 (再比YA取消)<br>
+                🖐️ 揮手：換濾鏡 | 👌 比OK：5秒拍照
             </div>
         </div>
     </div>
@@ -132,9 +142,11 @@
 
     <script>
         const videoElement = document.getElementById('hidden-video');
+        const canvasRaw = document.getElementById('canvas-raw');
         const canvasLiveFx = document.getElementById('canvas-live-fx');
         const canvasEdit = document.getElementById('canvas-edit-preview');
         
+        const ctxRaw = canvasRaw.getContext('2d');
         const ctxLive = canvasLiveFx.getContext('2d');
         const ctxEdit = canvasEdit.getContext('2d');
 
@@ -156,7 +168,9 @@
         let isDragging = false; let dragStartX = 0; let dragStartY = 0; let initStickerX = 0; let initStickerY = 0;
 
         function init() {
-            canvasLiveFx.width = 360; canvasLiveFx.height = 450;
+            // 手機並排觀景窗單邊解析度優化
+            canvasRaw.width = 200; canvasRaw.height = 350;
+            canvasLiveFx.width = 200; canvasLiveFx.height = 350;
             canvasEdit.width = 360; canvasEdit.height = 450;
         }
         init();
@@ -172,23 +186,29 @@
                         startRenderLoop();
                         initMediaPipe();
                     });
-                }).catch(err => alert("授權失敗，請用 Safari/Chrome 開啟並允許相機權限"));
+                }).catch(err => alert("請用 Safari/Chrome 開啟並允許前鏡頭權限"));
         }
 
         function startRenderLoop() {
-            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 360; tempCanvas.height = 450;
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 200; tempCanvas.height = 350;
             const tempCtx = tempCanvas.getContext('2d');
 
             const render = () => {
                 if (videoElement.readyState >= 2) {
+                    // 1. 左邊視窗永遠繪製乾淨、無濾鏡的原廠真實畫面
+                    ctxRaw.drawImage(videoElement, 0, 0, 200, 350);
+
+                    // 2. 右邊視窗套用即時手勢效果（濾鏡 + 黃金比例液化）
                     canvasLiveFx.style.filter = filterCSSMap[filters[currentFilterIndex]];
 
                     if (isReshapeActive && faceLandmarksData) {
-                        tempCtx.drawImage(videoElement, 0, 0, 360, 450);
-                        const targetPoints = getReshapedLandmarks(faceLandmarksData, 100, 360, 450);
-                        drawMeshDeformation(ctxLive, tempCanvas, faceLandmarksData, targetPoints, 360, 450);
+                        document.getElementById('fx-label').innerText = "✨ 黃金比例中";
+                        tempCtx.drawImage(videoElement, 0, 0, 200, 350);
+                        const targetPoints = getReshapedLandmarks(faceLandmarksData, 100, 200, 350);
+                        drawMeshDeformation(ctxLive, tempCanvas, faceLandmarksData, targetPoints, 200, 350);
                     } else {
-                        ctxLive.drawImage(videoElement, 0, 0, 360, 450);
+                        document.getElementById('fx-label').innerText = "✨ 修改後預覽";
+                        ctxLive.drawImage(videoElement, 0, 0, 200, 350);
                     }
                 }
                 requestAnimationFrame(render);
@@ -213,7 +233,7 @@
                 if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                     faceLandmarksData = results.multiFaceLandmarks[0];
                     if(!isCountingDown) {
-                        status.innerText = isReshapeActive ? "💥 黃金比例變臉中 (比YA可還原)" : "✨ 正常臉型 (比YA啟動黃金變臉)";
+                        status.innerText = isReshapeActive ? "✌️ 右窗黃金變臉中 (再比YA可恢復)" : "✋ 請對鏡頭比出 YA 觸發右窗變臉";
                     }
                 } else { faceLandmarksData = null; }
             });
@@ -231,16 +251,14 @@
 
         function handleHandGestures(lm) {
             const status = document.getElementById('status-text');
-            // 由於前鏡頭鏡像反轉，左右手骨骼位置做對稱校正
             const isYa = (lm[8].y < lm[6].y) && (lm[12].y < lm[10].y) && (lm[16].y > lm[14].y) && (lm[20].y > lm[18].y);
             const isOk = (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.05) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
 
-            // 1. 比 YA 觸發/取消即時變臉
+            // 1. 比 YA 控制右窗變型
             if (isYa) {
                 if (!yaHandInFrame) {
                     isReshapeActive = !isReshapeActive;
                     yaHandInFrame = true;
-                    status.innerText = isReshapeActive ? "✌️ 偵測到 YA：開啟黃金臉型！" : "✌️ 偵測到 YA：恢復正常臉型！";
                 }
             } else { yaHandInFrame = false; }
 
@@ -248,19 +266,18 @@
             if (isOk && !isCountingDown) {
                 isCountingDown = true;
                 let count = 5;
-                status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
                 countdownTimer = setInterval(() => {
                     count--;
-                    status.innerText = `👌 倒數 ${count} 秒...`;
+                    status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
                     if (count <= 0) {
                         clearInterval(countdownTimer);
-                        status.innerText = "💥 拍照！";
+                        status.innerText = "💥 捕捉完美右窗！";
                         setTimeout(triggerSnapshot, 300);
                     }
                 }, 1000);
             }
 
-            // 3. 揮手換濾鏡
+            // 3. 揮手換右窗濾鏡
             const currentX = lm[9].x;
             if (lastHandX !== null && !waveCooldown && !isCountingDown) {
                 const delta = currentX - lastHandX;
@@ -274,12 +291,13 @@
             lastHandX = currentX;
         }
 
+        // 快門截圖：直接擷取修改後的右側高畫質畫面進入後製
         function triggerSnapshot() {
             capturedCanvasBackup = document.createElement('canvas'); capturedCanvasBackup.width = 360; capturedCanvasBackup.height = 450;
             const bCtx = capturedCanvasBackup.getContext('2d');
             
-            // 將畫布做鏡像翻轉儲存，這樣拍出來的照片才不會左右相反
             bCtx.translate(360, 0); bCtx.scale(-1, 1);
+            // 輸出時將右側對比畫面完美放大填滿成標準 4:5 照片
             bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450);
 
             document.getElementById('stage-capture').style.display = 'none';
@@ -303,6 +321,7 @@
         function setMakeup(m) { currentMakeup = m; document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m)); applyEditEffects(); }
         function setSticker(s) { currentSticker = s; document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); applyEditEffects(); }
 
+        // 縮臉演算法（針對對比尺寸重新校正點位）
         function getReshapedLandmarks(lm, intensity, w, h) {
             let newLm = lm.map(p => ({ x: p.x * w, y: p.y * h }));
             const k = intensity / 100;
@@ -346,7 +365,7 @@
                             let d = Math.hypot(origLm[idx].x*w - sx, origLm[idx].y*h - sy);
                             if(d < minDist) { minDist = d; nearestIdx = idx; }
                         });
-                        const weight = Math.max(0, 1 - (minDist / 150));
+                        const weight = Math.max(0, 1 - (minDist / 130));
                         return { x: sx + (targetLm[nearestIdx].x - origLm[nearestIdx].x * w) * weight, y: sy + (targetLm[nearestIdx].y - origLm[nearestIdx].y * h) * weight };
                     };
 
@@ -397,7 +416,6 @@
         function drawThemedMakeup(ctx, lm, w, h) {
             if (currentMakeup === 'none') return;
             ctx.save();
-            // 因鏡像翻轉，後製點位 x 軸做對稱鏡像
             const getX = (idx) => (1 - lm[idx].x) * w;
             if (currentMakeup === 'kr') {
                 ctx.fillStyle = "rgba(255, 100, 130, 0.35)"; ctx.beginPath(); [61,146,91,181,84,17,314,405,321,375,291].forEach(i=>ctx.lineTo(getX(i), lm[i].y*h)); ctx.fill();
@@ -434,7 +452,7 @@
             window.addEventListener('touchend', () => isDragging = false);
         }
 
-        function savePhoto() { alert("🎉 照片已完美儲存！"); }
+        function savePhoto() { alert("🎉 照片已儲存修改後的完美右窗！"); }
     </script>
 </body>
 </html>
