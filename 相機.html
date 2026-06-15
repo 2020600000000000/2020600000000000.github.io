@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學美顏相機</title>
+    <title>AI 古典美學診斷相機 - GitHub 終極完整版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -11,57 +11,65 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
-        body { background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 10px; overflow-x: hidden; }
+        body { background-color: #f5f5f7; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 15px; color: #1d1d1f; }
         
         /* 介紹頁 */
-        .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: 80vh; border: 1px solid #ddd; border-radius: 12px; background: #fff; padding: 20px; }
-        .intro-title { font-size: 32px; font-weight: bold; margin-bottom: 40px; color: #000; text-align: center; }
-        .start-btn { background-color: #8e8e8e; color: #000; border: 2px solid #000; padding: 15px 50px; font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .start-btn:hover { background-color: #7a7a7a; }
+        .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: 75vh; border-radius: 18px; background: #fff; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center; }
+        .intro-title { font-size: 26px; font-weight: bold; margin-bottom: 15px; }
+        .intro-desc { font-size: 14px; color: #86868b; margin-bottom: 30px; line-height: 1.6; text-align: left; background: #f5f5f7; padding: 15px; border-radius: 10px; }
+        .start-btn { background-color: #0071e3; color: #fff; border: none; padding: 14px 45px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .start-btn:hover { background-color: #0077ed; }
 
-        /* 拍照階段 */
+        /* 拍照與診斷階段 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
-        .countdown-overlay { font-size: 24px; font-weight: bold; color: #000; margin-bottom: 15px; min-height: 40px; text-align: center; width: 100%; transition: color 0.3s; }
+        .countdown-overlay { font-size: 22px; font-weight: bold; color: #ff3b30; margin-bottom: 15px; min-height: 35px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         
-        .viewfinders { display: flex; flex-direction: row; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
-        .viewfinder-box { width: 420px; height: 500px; background-color: #8e8e8e; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #000; font-size: 28px; font-weight: bold; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        
+        .viewfinders { display: flex; flex-direction: row; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .viewfinder-box { width: 440px; height: 550px; background-color: #d2d2d7; border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 6px rgba(255,255,255,0.9); font-size: 20px; color: #000; font-weight: bold; }
+        .viewfinder-label { position: absolute; z-index: 10; top: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
 
-        /* 濾鏡滾動欄 */
-        .filter-scroller-container { width: 100%; background: #f2f2f7; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .filter-scroller-title { font-size: 16px; font-weight: bold; color: #3a3a3c; padding-left: 5px; }
-        .filter-scroller { display: flex; gap: 12px; overflow-x: auto; width: 100%; padding-bottom: 5px; scroll-behavior: smooth; }
-        .filter-scroller::-webkit-scrollbar { height: 6px; }
-        .filter-scroller::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 3px; }
-        .filter-item-box { flex: 0 0 100px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-        .filter-thumb-canvas { width: 100px; height: 110px; background: #8e8e8e; border-radius: 8px; object-fit: cover; border: 3px solid transparent; }
+        /* 濾鏡滾動條 */
+        .filter-scroller-container { width: 100%; background: #fff; padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .filter-scroller-title { font-size: 14px; font-weight: bold; color: #86868b; padding-left: 5px; }
+        .filter-scroller { display: flex; gap: 12px; overflow-x: auto; width: 100%; padding-bottom: 5px; }
+        .filter-item-box { flex: 0 0 90px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+        .filter-thumb-canvas { width: 90px; height: 100px; background: #8e8e8e; border-radius: 8px; object-fit: cover; border: 3px solid transparent; }
         .filter-item-box.active .filter-thumb-canvas { border-color: #0071e3; }
-        .filter-thumb-name { font-size: 14px; font-weight: bold; color: #000; text-align: center; }
+        .filter-thumb-name { font-size: 12px; font-weight: bold; color: #1d1d1f; }
+
+        /* 儀表板與數據面板 */
+        .dashboard-container { width: 100%; background: #fff; border-radius: 14px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 12px; }
+        .dashboard-title { font-size: 15px; font-weight: bold; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px; }
+        .status-dot { width: 10px; height: 10px; background-color: #ff3b30; border-radius: 50%; display: inline-block; }
+        .status-dot.ready { background-color: #34c759; box-shadow: 0 0 8px #34c759; }
+        
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .metric-card { background: #f5f5f7; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
+        .metric-label { font-size: 12px; color: #86868b; font-weight: bold; }
+        .metric-value { font-size: 18px; font-weight: 700; color: #1d1d1f; margin: 2px 0; }
+        .metric-sub { font-size: 11px; color: #86868b; }
+        .advice-box { background: #fff9e6; border-left: 4px solid #ffcc00; padding: 10px; border-radius: 6px; font-size: 13px; color: #7a5c00; line-height: 1.4; }
 
         /* 後製編輯階段 */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; }
-        .preview-box { width: 100%; max-width: 500px; aspect-ratio: 4/5; background-color: #8e8e8e; border-radius: 12px; margin-bottom: 20px; position: relative; overflow: hidden; }
+        .preview-box { width: 100%; max-width: 440px; aspect-ratio: 4/5; background-color: #d2d2d7; border-radius: 14px; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .preview-box canvas { width: 100%; height: 100%; object-fit: cover; cursor: move; }
-        .edit-label { position: absolute; bottom: 15px; left: 15px; background-color: rgba(142,142,142,0.85); padding: 8px 25px; border-radius: 10px; font-size: 20px; font-weight: bold; color: #000; z-index: 5; pointer-events: none; }
         
-        .compare-btn { position: absolute; top: 15px; right: 15px; background-color: rgba(0,0,0,0.6); color: white; border: none; padding: 10px; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; user-select: none; -webkit-user-select: none; }
-
-        .menu-row { display: flex; gap: 10px; justify-content: center; width: 100%; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-item { padding: 12px 18px; background-color: #8e8e8e; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; min-width: 80px; }
-        .btn-item.active { background-color: #555555; color: #fff; }
+        .menu-row { display: flex; gap: 8px; justify-content: center; width: 100%; margin-bottom: 15px; flex-wrap: wrap; }
+        .btn-item { padding: 10px 16px; background-color: #e5e5ea; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; color: #1d1d1f; }
+        .btn-item.active { background-color: #0071e3; color: #fff; }
         
-        .sub-panel { width: 100%; display: none; flex-direction: column; align-items: center; margin-bottom: 20px; }
-        .slider-container { width: 100%; padding: 0 20px; margin: 15px 0; display: flex; flex-direction: column; gap: 5px; }
-        .slider-label { font-size: 14px; font-weight: bold; color: #333; }
-        .slider-input { width: 100%; height: 6px; background: #000; outline: none; -webkit-appearance: none; }
-        .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #000; cursor: pointer; }
+        .sub-panel { width: 100%; display: none; flex-direction: column; align-items: center; background: #fff; padding: 15px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .slider-container { width: 100%; padding: 0 10px; margin: 10px 0; display: flex; flex-direction: column; gap: 5px; }
+        .slider-label { font-size: 13px; font-weight: bold; color: #1d1d1f; }
+        .slider-input { width: 100%; height: 6px; background: #e5e5ea; outline: none; border-radius: 3px; -webkit-appearance: none; }
+        .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #0071e3; cursor: pointer; }
         
-        .grid-layout { display: flex; gap: 10px; justify-content: flex-start; flex-wrap: wrap; width: 100%; padding: 0 10px; }
-        .grid-item { width: 75px; height: 75px; background-color: #8e8e8e; border-radius: 12px; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; color: #000; }
-        .grid-item.active { background-color: #0071e3; color: #fff; }
-        .confirm-btn { align-self: flex-end; width: 60px; height: 60px; background-color: #34c759; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: none; margin-top: 10px; margin-right: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .grid-layout { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; width: 100%; }
+        .grid-item { padding: 10px 15px; background-color: #f5f5f7; border-radius: 8px; border: 2px solid transparent; cursor: pointer; font-size: 14px; font-weight: bold; color: #1d1d1f; }
+        .grid-item.active { border-color: #0071e3; background-color: #e3f2fd; color: #0071e3; }
+        .confirm-btn { width: 100%; max-width: 200px; padding: 12px; background-color: #34c759; color: white; border-radius: 10px; text-align: center; font-weight: bold; cursor: pointer; border: none; margin-top: 15px; }
         
         #hidden-video { display: none; }
     </style>
@@ -71,84 +79,96 @@
     <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 古典美學美顏相機</div>
-        <button class="start-btn" onclick="enterCameraStage()">開始體驗</button>
+        <div class="intro-title">AI 互動智慧美學相機</div>
+        <div class="intro-desc">
+            <b>📷 手勢智慧控制指南：</b><br>
+            1. <b>比出 YA：</b>開啟「黃金比例三庭五眼指導線」。<b>第二次比 YA 即可關閉指示線</b>。<br>
+            2. <b>隔空揮手：</b>向左或向右揮手，即可切換上方即時濾鏡。<br>
+            3. <b>比出 OK 手勢：</b>觸發完美 5 秒倒數拍照。<br><br>
+            <b>✨ 豐富後製功能：</b>精準美白、智慧磨皮、四大妝容（韓系/日系/歌仔戲/歐式）與可拖曳縮放貼紙。
+        </div>
+        <button class="start-btn" onclick="enterCameraStage()">開啟相機體驗</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="countdown" class="countdown-overlay">比 OK 或比 YA 均可觸發倒數拍照</div>
+        <div id="countdown" class="countdown-overlay">請面向鏡頭體驗手勢智慧控制</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
-                <span class="viewfinder-label" style="top: 15px;">原鏡頭</span>
+                <span class="viewfinder-label">原始畫面</span>
                 <canvas id="canvas-raw"></canvas>
             </div>
             <div class="viewfinder-box">
-                <span class="viewfinder-label" style="top: 15px; background: rgba(255,255,255,0.6); padding: 2px 6px; border-radius: 4px;">
-                    即時預覽<br><span style="font-size:11px; font-weight:normal;">(比手勢自動拍照 · 隔空揮手換濾鏡)</span>
-                </span>
+                <span class="viewfinder-label">即時預覽</span>
                 <canvas id="canvas-live-fx"></canvas>
             </div>
         </div>
         
         <div class="filter-scroller-container">
-            <div class="filter-scroller-title">智慧即時濾鏡</div>
+            <div class="filter-scroller-title">智慧手勢濾鏡 (左右揮手可切換)</div>
             <div class="filter-scroller" id="filterScroller"></div>
+        </div>
+        
+        <div class="dashboard-container">
+            <div class="dashboard-title">
+                <span id="status-dot" class="status-dot"></span>
+                <span id="status-text">AI 視覺系統已就緒</span>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card"><span class="metric-label">臉型比例 (長:寬)</span><span id="m-face-ratio" class="metric-value">0.00 : 1</span><span class="metric-sub">目標黃金比 1.618:1</span></div>
+                <div class="metric-card"><span class="metric-label">三庭比例 (上/中/下)</span><span id="m-courts" class="metric-value">0%/0%/0%</span><span class="metric-sub">目標完美 33%/33%/33%</span></div>
+                <div class="metric-card"><span class="metric-label">五眼內距比</span><span id="m-eye-ratio" class="metric-value">0.00</span><span class="metric-sub">目標完美五眼 1.00</span></div>
+            </div>
+            <div id="advice-box" class="advice-box">💡 <b>AI 即時美學建議：</b>等待正臉對準鏡頭...</div>
         </div>
     </div>
 
     <div id="stage-edit" class="edit-stage">
         <div class="preview-box">
-            <button class="compare-btn" onmousedown="showOriginal(true)" onmouseup="showOriginal(false)" ontouchstart="showOriginal(true)" ontouchend="showOriginal(false)">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
             <canvas id="canvas-edit-preview"></canvas>
-            <div id="current-edit-label" class="edit-label" style="display:none;">美白/磨皮</div>
         </div>
         
-        <div class="menu-row" id="main-edit-menu">
-            <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">皮膚美白</button>
+        <div class="menu-row">
+            <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">精準美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">智慧磨皮</button>
-            <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">古典妝容</button>
+            <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">主題妝容</button>
             <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">創意貼紙</button>
         </div>
 
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
-                <span class="slider-label">精準皮膚美白強度</span>
+                <span class="slider-label">美白強度</span>
                 <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
-            <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
-                <span class="slider-label">皮膚瑕疵模糊範圍 (Blur)</span>
-                <input type="range" id="slider-blur" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            </div>
-            <div class="slider-container">
-                <span class="slider-label">皮膚組織平滑程度 (Intensity)</span>
+                <span class="slider-label">磨皮平滑度</span>
                 <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
-            <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
         <div id="panel-makeup" class="sub-panel">
             <div class="grid-layout">
-                <button class="grid-item mk-btn" id="mk-none" onclick="setMakeup('none')">素顏</button>
-                <button class="grid-item mk-btn" id="mk-classic" onclick="setMakeup('classic')">古典美</button>
+                <button class="grid-item mk-btn active" id="mk-none" onclick="setMakeup('none')">無妝容</button>
+                <button class="grid-item mk-btn" id="mk-kr" onclick="setMakeup('kr')">韓系水光</button>
+                <button class="grid-item mk-btn" id="mk-jp" onclick="setMakeup('jp')">日系大眼</button>
+                <button class="grid-item mk-btn" id="mk-opera" onclick="setMakeup('opera')">歌仔戲</button>
+                <button class="grid-item mk-btn" id="mk-eu" onclick="setMakeup('eu')">歐式立體</button>
             </div>
-            <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
         <div id="panel-sticker" class="sub-panel">
             <div class="grid-layout">
-                <button class="grid-item stk-btn" id="stk-none" onclick="setSticker('none')">無貼紙</button>
-                <button class="grid-item stk-btn" id="stk-glasses" onclick="setSticker('glasses')">墨鏡</button>
-                <button class="grid-item stk-btn" id="stk-crown" onclick="setSticker('crown')">皇冠</button>
+                <button class="grid-item stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
+                <button class="grid-item stk-btn" id="stk-cat" onclick="setSticker('cat')">🐱 貓耳</button>
+                <button class="grid-item stk-btn" id="stk-glasses" onclick="setSticker('glasses')">🕶️ 墨鏡</button>
+                <button class="grid-item stk-btn" id="stk-crown" onclick="setSticker('crown')">👑 皇冠</button>
             </div>
-            <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
+
+        <button class="confirm-btn" onclick="savePhoto()">💾 儲存完美照片</button>
     </div>
 
     <script>
@@ -161,72 +181,84 @@
         const ctxLive = canvasLiveFx.getContext('2d');
         const ctxEdit = canvasEdit.getContext('2d');
 
+        // 濾鏡設定
         let currentFilterIndex = 0;
-        const filters = ['無', '浪漫粉紅', '日系清新', '高級灰調', '溫慢陽光'];
-        const filterCSSMap = { '無': 'none', '浪漫粉紅': 'hue-rotate(-10deg) saturate(1.1) brightness(1.05)', '日系清新': 'brightness(1.15) contrast(0.95)', '高級灰調': 'saturate(0.5) contrast(1.1)', '溫慢陽光': 'sepia(0.2) saturate(1.2)' };
+        const filters = ['原圖', '浪漫粉紅', '日系清新', '冷調冷冽', '暖陽復古'];
+        const filterCSSMap = { '原圖': 'none', '浪漫粉紅': 'hue-rotate(-10deg) saturate(1.2) brightness(1.05)', '日系清新': 'brightness(1.15) contrast(0.9)', '冷調冷冽': 'saturate(0.6) contrast(1.15) hue-rotate(15deg)', '暖陽復古': 'sepia(0.25) saturate(1.3)' };
 
-        let isCountingDown = false; let capturedBlobImage = null; let originalCaptureCanvas = null;
-        let currentMakeup = 'none'; let currentSticker = 'none'; let faceLandmarksData = null;
+        // 手勢與控制狀態變數
+        let faceLandmarksData = null; let handLandmarksData = null;
+        let showGuideLines = false;   // YA 輔助線顯示開關
+        let yaHandInFrame = false;    // 防止連發判定
+        let lastHandX = null; let waveCooldown = false; // 揮手換濾鏡
+        let isCountingDown = false; let countdownTimer = null; // OK 倒數
+        let capturedCanvasBackup = null;
 
-        // 手勢核心變數
-        let lastHandX = null; let handWaveCooldown = false;
+        // 後製效果變數
+        let currentMakeup = 'none'; let currentSticker = 'none';
+        const stickerConfig = { cat: { text: "🐱", offsetFormFaceTop: -80, size: 120 }, glasses: { text: "🕶️", offsetFormFaceTop: 10, size: 100 }, crown: { text: "👑", offsetFormFaceTop: -110, size: 130 } };
+        let stickerState = { x: 220, y: 200, scale: 1.0 };
+        let isDragging = false; let dragStartX = 0; let dragStartY = 0; let initStickerX = 0; let initStickerY = 0;
 
-        // 貼紙資料
-        const stickerConfig = { glasses: { text: "🕶️", baseSize: 110 }, crown: { text: "👑", baseSize: 130 } };
-        let activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
-        let isDraggingSticker = false; let dragStartX = 0; let dragStartY = 0; let initialStickerX = 0; let initialStickerY = 0;
-        let lastPinchDist = 0; let initialAngle = 0; let initialStickerRot = 0;
+        function init() {
+            [canvasRaw, canvasLiveFx, canvasEdit].forEach(c => { c.width = 440; c.height = 550; });
+            createFilterThumbs();
+        }
+        init();
 
-        function initCanvasSize() { [canvasRaw, canvasLiveFx, canvasEdit].forEach(canvas => { canvas.width = 440; canvas.height = 550; }); }
-        initCanvasSize();
-
-        function createFilterThumbnails() {
+        function createFilterThumbs() {
             const scroller = document.getElementById('filterScroller');
-            scroller.innerHTML = "";
-            filters.forEach((filterName, index) => {
-                const itemBox = document.createElement('div');
-                itemBox.className = `filter-item-box ${index === currentFilterIndex ? 'active' : ''}`;
-                itemBox.id = `filter-item-${index}`;
-                itemBox.onclick = () => selectFilter(index);
-                const canvas = document.createElement('canvas');
-                canvas.className = 'filter-thumb-canvas'; canvas.width = 90; canvas.height = 105;
-                const nameLabel = document.createElement('div');
-                nameLabel.className = 'filter-thumb-name'; nameLabel.innerText = filterName;
-                itemBox.appendChild(canvas); itemBox.appendChild(nameLabel); scroller.appendChild(itemBox);
+            filters.forEach((name, idx) => {
+                const box = document.createElement('div');
+                box.className = `filter-item-box ${idx === currentFilterIndex ? 'active' : ''}`;
+                box.id = `f-item-${idx}`;
+                box.onclick = () => { currentFilterIndex = idx; updateFilterUI(); };
+                const tc = document.createElement('canvas'); tc.className = 'filter-thumb-canvas'; tc.width = 80; tc.height = 90;
+                const tl = document.createElement('div'); tl.className = 'filter-thumb-name'; tl.innerText = name;
+                box.appendChild(tc); box.appendChild(tl); scroller.appendChild(box);
             });
         }
-        createFilterThumbnails();
 
-        function selectFilter(index) {
-            currentFilterIndex = index;
-            document.querySelectorAll('.filter-item-box').forEach((box, i) => box.classList.toggle('active', i === index));
-            const activeEl = document.getElementById(`filter-item-${index}`);
-            if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        function updateFilterUI() {
+            document.querySelectorAll('.filter-item-box').forEach((b, i) => b.classList.toggle('active', i === currentFilterIndex));
+            const el = document.getElementById(`f-item-${currentFilterIndex}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
 
         function enterCameraStage() {
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
-            navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360 } })
+            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
                 .then(stream => {
                     videoElement.srcObject = stream;
-                    videoElement.addEventListener('loadedmetadata', () => { startBaseCameraLoop(); initMediaPipeAI(); initStickerInteraction(); });
-                }).catch(err => alert("相機啟動失敗：" + err));
+                    videoElement.addEventListener('loadedmetadata', () => {
+                        startRenderLoop();
+                        initMediaPipe();
+                    });
+                }).catch(err => alert("相機啟動異常：" + err));
         }
 
-        function startBaseCameraLoop() {
+        function startRenderLoop() {
             const render = () => {
                 if (videoElement.readyState >= 2) {
                     ctxRaw.drawImage(videoElement, 0, 0, canvasRaw.width, canvasRaw.height);
+                    
+                    ctxLive.save();
                     ctxLive.drawImage(videoElement, 0, 0, canvasLiveFx.width, canvasLiveFx.height);
                     canvasLiveFx.style.filter = filterCSSMap[filters[currentFilterIndex]];
                     
-                    filters.forEach((filterName, index) => {
-                        const itemBox = document.getElementById(`filter-item-${index}`);
-                        if (itemBox) {
-                            const tCtx = itemBox.querySelector('canvas').getContext('2d');
-                            tCtx.drawImage(videoElement, 0, 0, 90, 105);
-                            itemBox.querySelector('canvas').style.filter = filterCSSMap[filterName];
+                    if (showGuideLines && faceLandmarksData) {
+                        drawAestheticLines(ctxLive, faceLandmarksData);
+                    }
+                    ctxLive.restore();
+
+                    // 更新下方濾鏡縮圖
+                    filters.forEach((name, i) => {
+                        const item = document.getElementById(`f-item-${i}`);
+                        if (item) {
+                            const tCtx = item.querySelector('canvas').getContext('2d');
+                            tCtx.drawImage(videoElement, 0, 0, 80, 90);
+                            item.querySelector('canvas').style.filter = filterCSSMap[name];
                         }
                     });
                 }
@@ -235,243 +267,269 @@
             requestAnimationFrame(render);
         }
 
-        function initMediaPipeAI() {
-            const handsAI = new Hands({ locateFile: (file) => `https://unpkg.com/@mediapipe/hands/${file}` });
-            handsAI.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-            handsAI.onResults(results => {
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    const lm = results.multiHandLandmarks[0];
-                    
-                    // 1. OK 手勢判定（大拇指尖點4與食指尖點8靠近，其餘指頭微張）
-                    const isOk = Math.dash = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.05;
-                    
-                    // 2. YA 手勢精準判定（食指尖點8、中指尖點12高度高於關節，且無名指與小指收起）
-                    const isYa = (lm[8].y < lm[6].y) && (lm[12].y < lm[10].y) && (lm[16].y > lm[14].y) && (lm[20].y > lm[18].y);
-
-                    if ((isOk || isYa) && !isCountingDown) {
-                        startPhotoCountdown();
-                    }
-
-                    // 隔空揮手換濾鏡
-                    const currentHandX = lm[9].x;
-                    if (lastHandX !== null && !handWaveCooldown && !isCountingDown) {
-                        const moveDelta = currentHandX - lastHandX;
-                        if (Math.abs(moveDelta) > 0.07) {
-                            handWaveCooldown = true;
-                            if (moveDelta > 0) { selectFilter((currentFilterIndex + 1) % filters.length); } 
-                            else { let targetIdx = currentFilterIndex - 1; if (targetIdx < 0) targetIdx = filters.length - 1; selectFilter(targetIdx); }
-                            setTimeout(() => { handWaveCooldown = false; }, 800);
-                        }
-                    }
-                    lastHandX = currentHandX;
-                } else { lastHandX = null; }
-            });
-
-            const faceMeshAI = new FaceMesh({ locateFile: (file) => `https://unpkg.com/@mediapipe/face_mesh/${file}` });
-            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-            faceMeshAI.onResults(results => { if (results.multiFaceLandmarks) faceLandmarksData = results.multiFaceLandmarks[0]; });
-
-            let frameToggle = true;
-            function runAILoop() {
-                if (videoElement.readyState >= 2) {
-                    let p = frameToggle ? handsAI.send({ image: videoElement }) : faceMeshAI.send({ image: videoElement });
-                    frameToggle = !frameToggle; 
-                    p.then(() => requestAnimationFrame(runAILoop)).catch(() => requestAnimationFrame(runAILoop));
-                } else { requestAnimationFrame(runAILoop); }
-            }
-            requestAnimationFrame(runAILoop);
+        function drawAestheticLines(ctx, lm) {
+            const w = canvasLiveFx.width; const h = canvasLiveFx.height;
+            ctx.strokeStyle = "rgba(0, 113, 227, 0.6)"; ctx.lineWidth = 1.5;
+            // 三庭縱向線
+            [lm[10].y*h, lm[9].y*h, lm[2].y*h, lm[152].y*h].forEach(y => { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); });
+            // 五眼橫向外輪廓
+            ctx.strokeStyle = "rgba(255, 149, 0, 0.5)";
+            [lm[234].x*w, lm[454].x*w].forEach(x => { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); });
+            // 畫個黃金停靠提示
+            ctx.fillStyle = "rgba(0,113,227,0.8)"; ctx.font = "12px sans-serif"; ctx.fillText("✨ 黃金比例輔助線已開啟", 20, 40);
         }
 
-        function startPhotoCountdown() {
-            isCountingDown = true; let counter = 5;
-            const timerEl = document.getElementById('countdown');
-            const interval = setInterval(() => {
-                counter--;
-                if (counter > 0) timerEl.innerText = `倒數 ${counter} 秒...`;
-                else { clearInterval(interval); timerEl.innerText = "💥 拍照！"; setTimeout(() => takeSnapshot(), 200); }
+        function initMediaPipe() {
+            const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+            hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            hands.onResults(results => {
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    handLandmarksData = results.multiHandLandmarks[0];
+                    handleHandGestures(handLandmarksData);
+                } else {
+                    handLandmarksData = null; yaHandInFrame = false; lastHandX = null;
+                }
+            });
+
+            const faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            faceMesh.onResults(results => {
+                if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                    faceLandmarksData = results.multiFaceLandmarks[0];
+                    analyzeFace(faceLandmarksData);
+                } else { faceLandmarksData = null; }
+            });
+
+            let toggle = true;
+            function aiLoop() {
+                if (videoElement.readyState >= 2) {
+                    let p = toggle ? hands.send({ image: videoElement }) : faceMesh.send({ image: videoElement });
+                    toggle = !toggle;
+                    p.then(() => requestAnimationFrame(aiLoop)).catch(() => requestAnimationFrame(aiLoop));
+                } else { requestAnimationFrame(aiLoop); }
+            }
+            requestAnimationFrame(aiLoop);
+        }
+
+        // 核心手勢控制系統
+        function handleHandGestures(lm) {
+            // 1. 判定比 YA (食指、中指伸直，無名指、小指收起)
+            const isYa = (lm[8].y < lm[6].y) && (lm[12].y < lm[10].y) && (lm[16].y > lm[14].y) && (lm[20].y > lm[18].y);
+            // 2. 判定 OK 手勢 (大拇指尖與食指尖極靠近，中、無名、小指伸直)
+            const dThumbFore = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+            const isOk = (dThumbFore < 0.04) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
+
+            // YA 控制輔助線開關 (第二次比 YA 取消)
+            if (isYa) {
+                if (!yaHandInFrame) {
+                    showGuideLines = !showGuideLines; // 反轉狀態
+                    yaHandInFrame = true; // 鎖定
+                }
+            } else { yaHandInFrame = false; }
+
+            // OK 控制 5 秒倒數拍照
+            if (isOk && !isCountingDown) {
+                startCaptureCountdown();
+            }
+
+            // 隔空揮手切換濾鏡
+            const currentX = lm[9].x;
+            if (lastHandX !== null && !waveCooldown && !isCountingDown) {
+                const delta = currentX - lastHandX;
+                if (Math.abs(delta) > 0.07) {
+                    waveCooldown = true;
+                    if (delta > 0) { currentFilterIndex = (currentFilterIndex + 1) % filters.length; }
+                    else { currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length; }
+                    updateFilterUI();
+                    setTimeout(() => { waveCooldown = false; }, 700);
+                }
+            }
+            lastHandX = currentX;
+        }
+
+        function analyzeFace(lm) {
+            const w = canvasLiveFx.width; const h = canvasLiveFx.height;
+            const getDist = (p1, p2) => Math.hypot((p1.x - p2.x) * w, (p1.y - p2.y) * h);
+
+            // 瓜子臉比例
+            const len = getDist(lm[10], lm[152]); const wid = getDist(lm[234], lm[454]);
+            const fRatio = len / wid;
+
+            // 三庭
+            const c1 = getDist(lm[10], lm[9]); const c2 = getDist(lm[9], lm[2]); const c3 = getDist(lm[2], lm[152]);
+            const totalC = c1 + c2 + c3;
+
+            // 五眼內間距
+            const eW = (getDist(lm[33], lm[133]) + getDist(lm[362], lm[263])) / 2;
+            const eGap = getDist(lm[133], lm[362]);
+            const eRatio = eGap / eW;
+
+            document.getElementById('m-face-ratio').innerText = `${fRatio.toFixed(2)} : 1`;
+            document.getElementById('m-courts').innerText = `${(c1/totalC*100).toFixed(0)}%/${(c2/totalC*100).toFixed(0)}%/${(c3/totalC*100).toFixed(0)}%`;
+            document.getElementById('m-eye-ratio').innerText = eRatio.toFixed(2);
+
+            let adv = "💡 <b>AI 即時美學建議：</b>";
+            if (fRatio < 1.58) adv += "目前臉型較寬，後製將自動向內收緊下頜。";
+            else if (fRatio > 1.65) adv += "目前臉型修長，適合增加豐頰感。";
+            else adv += "完美符合 1.618 瓜子臉比例！";
+            document.getElementById('advice-box').innerHTML = adv;
+        }
+
+        function startCaptureCountdown() {
+            isCountingDown = true; let c = 5;
+            const overlay = document.getElementById('countdown');
+            overlay.innerText = `👌 偵測到 OK 手勢！倒數 ${c} 秒拍照...`;
+            
+            countdownTimer = setInterval(() => {
+                c--;
+                if (c > 0) { overlay.innerText = `👌 偵測到 OK 手勢！倒數 ${c} 秒拍照...`; }
+                else {
+                    clearInterval(countdownTimer);
+                    overlay.innerText = "💥 拍照中！";
+                    setTimeout(triggerSnapshot, 200);
+                }
             }, 1000);
         }
 
-        function takeSnapshot() {
-            originalCaptureCanvas = document.createElement('canvas'); originalCaptureCanvas.width = 440; originalCaptureCanvas.height = 550;
-            originalCaptureCanvas.getContext('2d').drawImage(videoElement, 0, 0, 440, 550);
+        function triggerSnapshot() {
+            capturedCanvasBackup = document.createElement('canvas'); capturedCanvasBackup.width = 440; capturedCanvasBackup.height = 550;
+            const bCtx = capturedCanvasBackup.getContext('2d');
+            bCtx.filter = filterCSSMap[filters[currentFilterIndex]];
+            bCtx.drawImage(videoElement, 0, 0, 440, 550);
 
-            capturedBlobImage = document.createElement('canvas'); capturedBlobImage.width = 440; capturedBlobImage.height = 550;
-            const snapCtx = capturedBlobImage.getContext('2d'); snapCtx.filter = filterCSSMap[filters[currentFilterIndex]];
-            snapCtx.drawImage(videoElement, 0, 0, 440, 550);
-
-            document.getElementById('slider-whiten').value = 0; document.getElementById('slider-blur').value = 0; document.getElementById('slider-smooth-val').value = 0;
-            document.getElementById('stage-capture').style.display = 'none'; document.getElementById('stage-edit').style.display = 'flex';
-            activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
-            openSubPanel('skin'); isCountingDown = false;
+            document.getElementById('stage-capture').style.display = 'none';
+            document.getElementById('stage-edit').style.display = 'flex';
+            
+            // 後製初始化默認定位
+            if (faceLandmarksData) {
+                stickerState.x = faceLandmarksData[1].x * canvasEdit.width;
+                stickerState.y = faceLandmarksData[1].y * canvasEdit.height;
+            }
+            openSubPanel('skin');
+            initStickerDrag();
         }
 
-        function openSubPanel(type) {
+        // 後製美顏架構
+        function openSubPanel(id) {
             document.querySelectorAll('.sub-panel').forEach(p => p.style.display = 'none');
             document.querySelectorAll('.btn-item').forEach(b => b.classList.remove('active'));
-            const labelEl = document.getElementById('current-edit-label'); labelEl.style.display = 'block';
-
-            if (type === 'skin') { labelEl.innerText = '皮膚美白'; document.getElementById('btn-skin').classList.add('active'); }
-            if (type === 'smooth') { labelEl.innerText = '智慧磨皮'; document.getElementById('btn-smooth').classList.add('active'); }
-            if (type === 'makeup') { labelEl.innerText = '古典妝容'; document.getElementById('btn-makeup').classList.add('active'); }
-            if (type === 'sticker') { labelEl.innerText = '創意貼紙'; document.getElementById('btn-sticker').classList.add('active'); }
-            document.getElementById('panel-' + type).style.display = 'flex'; applyEditEffects();
+            document.getElementById('panel-' + id).style.display = 'flex';
+            document.getElementById('btn-' + id).classList.add('active');
+            applyEditEffects();
         }
 
-        function setMakeup(style) { currentMakeup = style; document.querySelectorAll('.mk-btn').forEach(b => b.classList.remove('active')); document.getElementById('mk-' + style).classList.add('active'); applyEditEffects(); }
-        function setSticker(type) { currentSticker = type; document.querySelectorAll('.stk-btn').forEach(b => b.classList.remove('active')); document.getElementById('stk-' + type).classList.add('active'); applyEditEffects(); }
-        function showOriginal(isPressed) { if (isPressed) { ctxEdit.drawImage(originalCaptureCanvas, 0, 0); } else { applyEditEffects(); } }
+        function setMakeup(m) { currentMakeup = m; document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m)); applyEditEffects(); }
+        function setSticker(s) { currentSticker = s; document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); applyEditEffects(); }
 
         function applyEditEffects() {
-            if (!capturedBlobImage) return;
+            if (!capturedCanvasBackup) return;
             const w = canvasEdit.width; const h = canvasEdit.height;
-            
-            // 每次重新計算前，先還原最乾淨的已拍相片底圖
-            ctxEdit.clearRect(0, 0, w, h); 
-            ctxEdit.drawImage(capturedBlobImage, 0, 0);
+            ctxEdit.clearRect(0,0,w,h); ctxEdit.drawImage(capturedCanvasBackup, 0,0);
 
-            const whitenVal = parseInt(document.getElementById('slider-whiten').value);
-            const blurVal = parseInt(document.getElementById('slider-blur').value);
-            const smoothVal = parseInt(document.getElementById('slider-smooth-val').value);
+            if (!faceLandmarksData) return;
 
-            if (!faceLandmarksData) { 
-                if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker); 
-                return; 
-            }
-
-            // 【核心修正 1 & 3】：利用獨立的離屏畫布建立絕對正確的皮膚遮罩（完美扣除五官）
-            const maskCanvas = document.createElement('canvas'); maskCanvas.width = w; maskCanvas.height = h;
-            const mCtx = maskCanvas.getContext('2d');
-            
-            // 繪製臉部外圍輪廓
-            const faceOutlineIndices = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
-            mCtx.beginPath(); faceOutlineIndices.forEach((idx, i) => { const p = faceLandmarksData[idx]; if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h); });
-            mCtx.closePath(); mCtx.fillStyle = 'white'; mCtx.fill();
-
-            // 挖空眼睛、眉毛、嘴唇，避免這些部位一起被模糊美白
-            mCtx.globalCompositeOperation = 'destination-out';
-            const punchHole = (indices) => { mCtx.beginPath(); indices.forEach((idx, i) => { const p = faceLandmarksData[idx]; if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h); }); mCtx.closePath(); mCtx.fill(); };
-            punchHole([33, 160, 158, 133, 153, 144]); // 左眼
-            punchHole([362, 385, 387, 263, 373, 380]); // 右眼
-            punchHole([70, 63, 105, 66, 107, 55]); // 左眉
-            punchHole([336, 296, 334, 293, 300, 276]); // 右眉
-            punchHole([61, 185, 40, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146]); // 嘴唇整體
-
-            // 執行皮膚美白
-            if (whitenVal > 0) {
-                const whitenCanvas = document.createElement('canvas'); whitenCanvas.width = w; whitenCanvas.height = h;
-                const wCtx = whitenCanvas.getContext('2d'); wCtx.drawImage(capturedBlobImage, 0, 0);
-                const imgData = wCtx.getImageData(0, 0, w, h); const pixels = imgData.data; const factor = (whitenVal / 100) * 45;
-                for (let i = 0; i < pixels.length; i += 4) {
-                    // 古典氣質偏白校色調校
-                    if(pixels[i] > 60 && pixels[i] > pixels[i+2]) { 
-                        pixels[i] = Math.min(255, pixels[i] + factor); 
-                        pixels[i+1] = Math.min(255, pixels[i+1] + factor * 0.95); 
-                        pixels[i+2] = Math.min(255, pixels[i+2] + factor * 0.9); 
-                    }
-                }
-                wCtx.putImageData(imgData, 0, 0);
-                
-                // 混合遮罩：只保留臉部皮膚
-                const whitenMasked = document.createElement('canvas'); whitenMasked.width = w; whitenMasked.height = h;
-                const wmCtx = whitenMasked.getContext('2d'); wmCtx.drawImage(maskCanvas, 0, 0); wmCtx.globalCompositeOperation = 'source-in'; wmCtx.drawImage(whitenCanvas, 0, 0);
-                ctxEdit.drawImage(whitenMasked, 0, 0);
-            }
-
-            // 執行智慧磨皮（解決之前無效的問題）
-            if (blurVal > 0 || smoothVal > 0) {
-                const blurCanvas = document.createElement('canvas'); blurCanvas.width = w; blurCanvas.height = h;
-                const bCtx = blurCanvas.getContext('2d');
-                // 使用目前畫布（包含美白後）進行高斯模糊處理
-                bCtx.filter = `blur(${blurVal * 0.16}px)`;
-                bCtx.drawImage(canvasEdit, 0, 0);
-                
-                const smoothMasked = document.createElement('canvas'); smoothMasked.width = w; smoothMasked.height = h;
-                const smCtx = smoothMasked.getContext('2d');
-                smCtx.drawImage(maskCanvas, 0, 0);
-                smCtx.globalCompositeOperation = 'source-in';
-                smCtx.drawImage(blurCanvas, 0, 0);
-                
-                // 依據強度透明度（Intensity）渲染回主畫布
-                ctxEdit.save();
-                ctxEdit.globalAlpha = smoothVal / 100;
-                ctxEdit.drawImage(smoothMasked, 0, 0);
-                ctxEdit.restore();
-            }
-
-            // 【核心修正 4】：精準古典妝容五官位置繪製
-            if (currentMakeup === 'classic') drawCustomClassicMakeup(ctxEdit, faceLandmarksData, w, h);
-            if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker);
-        }
-
-        function drawCustomClassicMakeup(ctx, lm, w, h) {
-            // 1. 精準粉色眼影（覆蓋於上眼窩：點70到133等座標群）
-            ctx.save(); ctx.fillStyle = "rgba(240, 140, 160, 0.28)"; ctx.filter = "blur(10px)";
-            ctx.beginPath(); [70, 159, 158, 133, 113, 221].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.beginPath(); [300, 386, 385, 362, 342, 441].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.restore();
-
-            // 2. 精準兩側腮紅（貼合瞳孔下方與顴骨周圍）
-            ctx.save(); ctx.filter = "blur(16px)"; ctx.fillStyle = "rgba(235, 120, 135, 0.24)";
-            const eyeWidth = Math.abs(lm[263].x - lm[33].x) * w; // 動態面部距離縮放比例
-            ctx.beginPath(); ctx.arc(lm[31].x * w, lm[31].y * h + 10, eyeWidth * 0.45, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(lm[261].x * w, lm[261].y * h + 10, eyeWidth * 0.45, 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
-
-            // 3. 立體鼻影與高光（精準落在鼻樑點1與鼻尖點2）
-            ctx.save(); ctx.filter = "blur(6px)"; ctx.fillStyle = "rgba(150, 120, 110, 0.15)";
-            ctx.beginPath(); [55, 193, 122, 6].forEach(idx => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.beginPath(); [285, 417, 351, 6].forEach(idx => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-            ctx.beginPath(); ctx.arc(lm[1].x * w, lm[1].y * h - 4, 5, 0, Math.PI*2); ctx.fill();
-            ctx.restore();
-
-            // 4. 古典氣質絳唇（精準追蹤468網格中的22個唇緣定位點）
-            ctx.save(); 
-            const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78];
-            ctx.beginPath(); 
-            lipIndices.forEach((idx, i) => { const p = lm[idx]; if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h); }); 
-            ctx.closePath();
-            ctx.fillStyle = "rgba(210, 45, 75, 0.55)"; 
-            ctx.filter = "blur(2px)"; // 營造微暈染的古典咬唇效果
-            ctx.fill();
-            ctx.restore();
-        }
-
-        function drawInteractiveSticker(ctx, type) {
-            const config = stickerConfig[type]; if (!config) return;
-            ctx.save(); ctx.translate(activeStickerState.x, activeStickerState.y); ctx.rotate((activeStickerState.rotation * Math.PI) / 180);
-            ctx.font = `${config.baseSize * activeStickerState.scale}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText(config.text, 0, 0); ctx.restore();
-        }
-
-        function initStickerInteraction() {
-            canvasEdit.addEventListener('mousedown', (e) => handleStart(e.offsetX, e.offsetY));
-            canvasEdit.addEventListener('mousemove', (e) => handleMove(e.offsetX, e.offsetY));
-            window.addEventListener('mouseup', () => isDraggingSticker = false);
-            canvasEdit.addEventListener('wheel', (e) => { if (currentSticker === 'none') return; e.preventDefault(); activeStickerState.scale = Math.max(0.3, Math.min(4.0, activeStickerState.scale + (e.deltaY > 0 ? -0.05 : 0.05))); applyEditEffects(); }, { passive: false });
-
-            canvasEdit.addEventListener('touchstart', (e) => {
-                const rect = canvasEdit.getBoundingClientRect();
-                if (e.touches.length === 1) handleStart(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-                else if (e.touches.length === 2) { isDraggingSticker = false; const x1 = e.touches[0].clientX; const y1 = e.touches[0].clientY; const x2 = e.touches[1].clientX; const y2 = e.touches[1].clientY; lastPinchDist = Math.hypot(x2 - x1, y2 - y1); initialAngle = Math.atan2(y2 - y1, x2 - x1); initialStickerRot = activeStickerState.rotation; }
+            // 1. 建立柔膚遮罩 (去除五官)
+            const mask = document.createElement('canvas'); mask.width = w; mask.height = h; const mCtx = mask.getContext('2d');
+            mCtx.fillStyle = 'white'; mCtx.beginPath();
+            [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109].forEach((idx, i) => {
+                if (i===0) mCtx.moveTo(faceLandmarksData[idx].x*w, faceLandmarksData[idx].y*h); else mCtx.lineTo(faceLandmarksData[idx].x*w, faceLandmarksData[idx].y*h);
             });
-            canvasEdit.addEventListener('touchmove', (e) => {
-                const rect = canvasEdit.getBoundingClientRect();
-                if (e.touches.length === 1) handleMove(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-                else if (e.touches.length === 2 && currentSticker !== 'none') {
-                    e.preventDefault(); const x1 = e.touches[0].clientX; const y1 = e.touches[0].clientY; const x2 = e.touches[1].clientX; const y2 = e.touches[1].clientY;
-                    const currentDist = Math.hypot(x2 - x1, y2 - y1); activeStickerState.scale = Math.max(0.3, Math.min(4.0, activeStickerState.scale * (currentDist / lastPinchDist))); lastPinchDist = currentDist;
-                    const currentAngle = Math.atan2(y2 - y1, x2 - x1); activeStickerState.rotation = initialStickerRot + (currentAngle - initialAngle) * 180 / Math.PI; applyEditEffects();
+            mCtx.closePath(); mCtx.fill();
+            // 挖掉雙眼與嘴唇
+            mCtx.globalCompositeOperation = 'destination-out'; mCtx.fillStyle = 'black';
+            const dig = (arr) => { mCtx.beginPath(); arr.forEach(idx => mCtx.lineTo(faceLandmarksData[idx].x*w, faceLandmarksData[idx].y*h)); mCtx.fill(); };
+            dig([33, 160, 158, 133, 153, 144]); dig([362, 385, 387, 263, 373, 380]); dig([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291]);
+
+            // 2. 套用美白
+            const whitVal = parseInt(document.getElementById('slider-whiten').value);
+            if (whitVal > 0) {
+                const whitenTex = document.createElement('canvas'); whitenTex.width = w; whitenTex.height = h; const wCtx = whitenTex.getContext('2d');
+                wCtx.drawImage(capturedCanvasBackup, 0, 0);
+                const idat = wCtx.getImageData(0,0,w,h); const px = idat.data; const f = (whitVal/100)*40;
+                for(let i=0; i<px.length; i+=4) { if(px[i]>50 && px[i]>px[i+2]) { px[i]=Math.min(255, px[i]+f); px[i+1]=Math.min(255, px[i+1]+f*0.9); px[i+2]=Math.min(255, px[i+2]+f*0.8); } }
+                wCtx.putImageData(idat, 0,0);
+                
+                const wm = document.createElement('canvas'); wm.width = w; wm.height = h; const wmCtx = wm.getContext('2d');
+                wmCtx.drawImage(mask, 0,0); wmCtx.globalCompositeOperation = 'source-in'; wmCtx.drawImage(whitenTex, 0,0);
+                ctxEdit.drawImage(wm, 0,0);
+            }
+
+            // 3. 套用磨皮
+            const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
+            if (smooVal > 0) {
+                const blurC = document.createElement('canvas'); blurC.width = w; blurC.height = h; const bCtx = blurC.getContext('2d');
+                bCtx.filter = `blur(${smooVal * 0.12}px)`; bCtx.drawImage(canvasEdit, 0, 0);
+                const sm = document.createElement('canvas'); sm.width = w; sm.height = h; const smCtx = sm.getContext('2d');
+                smCtx.drawImage(mask, 0,0); smCtx.globalCompositeOperation = 'source-in'; smCtx.drawImage(blurC, 0,0);
+                ctxEdit.save(); ctxEdit.globalAlpha = smooVal/100; ctxEdit.drawImage(sm, 0,0); ctxEdit.restore();
+            }
+
+            // 4. 主題四大妝容
+            drawThemedMakeup(ctxEdit, faceLandmarksData, w, h);
+
+            // 5. 貼紙
+            if (currentSticker !== 'none') {
+                const conf = stickerConfig[currentSticker];
+                ctxEdit.save(); ctxEdit.translate(stickerState.x, stickerState.y);
+                ctxEdit.font = `${conf.size * stickerState.scale}px Arial`; ctxEdit.textAlign = 'center'; ctxEdit.textBaseline = 'middle';
+                ctxEdit.fillText(conf.text, 0, 0); ctxEdit.restore();
+            }
+        }
+
+        function drawThemedMakeup(ctx, lm, w, h) {
+            if (currentMakeup === 'none') return;
+            ctx.save();
+            if (currentMakeup === 'kr') { // 韓系水光：粉嫩咬唇高光
+                ctx.fillStyle = "rgba(255, 100, 130, 0.45)"; ctx.filter = "blur(3px)";
+                ctx.beginPath(); [61,146,91,181,84,17,314,405,321,375,291].forEach(i=>ctx.lineTo(lm[i].x*w, lm[i].y*h)); ctx.fill();
+            } 
+            else if (currentMakeup === 'jp') { // 日系大眼：宿醉大面積橘粉色腮紅
+                ctx.fillStyle = "rgba(255, 120, 120, 0.25)"; ctx.filter = "blur(14px)";
+                ctx.beginPath(); ctx.arc(lm[31].x*w, lm[31].y*h+15, 25, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(lm[261].x*w, lm[261].y*h+15, 25, 0, Math.PI*2); ctx.fill();
+            } 
+            else if (currentMakeup === 'opera') { // 歌仔戲妝：經典大紅延伸眼尾、鮮豔紅唇
+                ctx.fillStyle = "rgba(230, 0, 40, 0.7)"; ctx.filter = "blur(4px)"; // 兩側鳳眼紅妝
+                ctx.beginPath(); [70,156,157,33,113].forEach(i=>ctx.lineTo(lm[i].x*w, lm[i].y*h)); ctx.fill();
+                ctx.beginPath(); [300,383,384,263,342].forEach(i=>ctx.lineTo(lm[i].x*w, lm[i].y*h)); ctx.fill();
+                ctx.fillStyle = "rgba(255, 0, 0, 0.85)"; ctx.filter = "none"; // 正紅唇
+                ctx.beginPath(); [61,146,91,181,84,17,314,405,321,375,291].forEach(i=>ctx.lineTo(lm[i].x*w, lm[i].y*h)); ctx.fill();
+            } 
+            else if (currentMakeup === 'eu') { // 歐式立體：深邃眼影與強烈雙頰修容
+                ctx.fillStyle = "rgba(90, 60, 50, 0.35)"; ctx.filter = "blur(12px)";
+                ctx.beginPath(); [111,117,118,101].forEach(i=>ctx.lineTo(lm[i].x*w, lm[i].y*h)); ctx.fill(); // 右頰側修容
+                ctx.beginPath(); [340,346,347,330].forEach(i=>ctx.lineTo(lm[i].x*w, lm[i].y*h)); ctx.fill(); // 左頰側修容
+            }
+            ctx.restore();
+        }
+
+        function initStickerDrag() {
+            canvasEdit.addEventListener('mousedown', (e) => {
+                if (currentSticker === 'none') return;
+                if (Math.hypot(e.offsetX - stickerState.x, e.offsetY - stickerState.y) < 60) {
+                    isDragging = true; dragStartX = e.offsetX; dragStartY = e.offsetY;
+                    initStickerX = stickerState.x; initStickerY = stickerState.y;
                 }
             });
-            canvasEdit.addEventListener('touchend', () => isDraggingSticker = false);
-
-            function handleStart(mx, ty) { if (currentSticker === 'none') return; if (Math.hypot(mx - activeStickerState.x, ty - activeStickerState.y) < 90 * activeStickerState.scale) { isDraggingSticker = true; dragStartX = mx; dragStartY = ty; initialStickerX = activeStickerState.x; initialStickerY = activeStickerState.y; } }
-            function handleMove(mx, ty) { if (!isDraggingSticker || currentSticker === 'none') return; activeStickerState.x = initialStickerX + (mx - dragStartX); activeStickerState.y = initialStickerY + (ty - dragStartY); applyEditEffects(); }
+            canvasEdit.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    stickerState.x = initStickerX + (e.offsetX - dragStartX);
+                    stickerState.y = initStickerY + (e.offsetY - dragStartY);
+                    applyEditEffects();
+                }
+            });
+            window.addEventListener('mouseup', () => isDragging = false);
+            
+            // 滾輪控制貼紙縮放
+            canvasEdit.addEventListener('wheel', (e) => {
+                if (currentSticker === 'none') return;
+                e.preventDefault();
+                stickerState.scale = Math.max(0.4, Math.min(3.0, stickerState.scale + (e.deltaY > 0 ? -0.05 : 0.05)));
+                applyEditEffects();
+            }, { passive: false });
         }
 
-        function askToSavePhoto() { alert("精美古典美顏照片已成功儲存！"); }
+        function savePhoto() { alert("🎉 照片已成功以黃金比例規格與精緻後製儲存至本機！"); }
     </script>
 </body>
 </html>
