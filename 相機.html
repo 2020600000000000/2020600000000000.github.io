@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 智慧美顏相機</title>
+    <title>AI 智慧美顏相機 - GitHub 優化版</title>
     
+    <!-- 引入最穩定版本的 MediaPipe 基礎工具 -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -21,7 +22,7 @@
 
         /* 拍照階段 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
-        .countdown-overlay { font-size: 24px; font-weight: bold; color: #000; margin-bottom: 15px; min-height: 40px; text-align: center; width: 100%; transition: color 0.3s; }
+        .countdown-overlay { font-size: 20px; font-weight: bold; color: #000; margin-bottom: 15px; min-height: 40px; text-align: center; width: 100%; line-height: 1.4; }
         
         .viewfinders { display: flex; flex-direction: row; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
         .viewfinder-box { width: 420px; height: 500px; background-color: #8e8e8e; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #000; font-size: 28px; font-weight: bold; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -30,7 +31,7 @@
         .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 6px rgba(255,255,255,0.9); font-size: 20px; color: #000; font-weight: bold; }
 
         /* 黃金比例狀態提示條 */
-        .ratio-toast { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.75); color: #fff; padding: 6px 15px; border-radius: 20px; font-size: 14px; z-index: 20; display: none; }
+        .ratio-toast { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 15px; z-index: 20; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
         /* 濾鏡滾動欄 */
         .filter-scroller-container { width: 100%; background: #f2f2f7; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -49,7 +50,7 @@
         .preview-box canvas { width: 100%; height: 100%; object-fit: cover; cursor: move; }
         .edit-label { position: absolute; bottom: 15px; left: 15px; background-color: rgba(142,142,142,0.85); padding: 8px 25px; border-radius: 10px; font-size: 20px; font-weight: bold; color: #000; z-index: 5; pointer-events: none; }
         
-        .compare-btn { position: absolute; top: 15px; right: 15px; background-color: rgba(0,0,0,0.6); color: white; border: none; padding: 10px; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; user-select: none; -webkit-user-select: none; }
+        .compare-btn { position: absolute; top: 15px; right: 15px; background-color: rgba(0,0,0,0.6); color: white; border: none; padding: 10px; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; user-select: none; }
 
         /* 四大功能選單 */
         .menu-row { display: flex; gap: 10px; justify-content: center; width: 100%; margin-bottom: 20px; flex-wrap: wrap; }
@@ -74,13 +75,15 @@
 
     <video id="hidden-video" autoplay playsinline muted></video>
 
+    <!-- 介紹頁 -->
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 智慧美顏相機</div>
         <button class="start-btn" onclick="enterCameraStage()">開始體驗</button>
     </div>
 
+    <!-- 拍照階段 -->
     <div id="stage-capture" class="camera-stage">
-        <div id="countdown" class="countdown-overlay">比 OK 倒數拍照 / 比 YA 塑形黃金比例瓜子臉 / 揮手換濾鏡</div>
+        <div id="countdown" class="countdown-overlay">👌 比 OK 倒數拍照<br>✌️ 比 YA 塑形黃金比例瓜子臉<br>👋 左右揮手切換濾鏡</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
@@ -102,6 +105,7 @@
         </div>
     </div>
 
+    <!-- 後製編輯功能頁 -->
     <div id="stage-edit" class="edit-stage">
         <div class="preview-box">
             <button class="compare-btn" onmousedown="showOriginal(true)" onmouseup="showOriginal(false)" ontouchstart="showOriginal(true)" ontouchend="showOriginal(false)">
@@ -111,6 +115,7 @@
             <div id="current-edit-label" class="edit-label" style="display:none;">美白</div>
         </div>
         
+        <!-- 四大功能按鈕列 -->
         <div class="menu-row" id="main-edit-menu">
             <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">1. 美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">2. 磨皮</button>
@@ -118,6 +123,7 @@
             <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">4. 貼紙</button>
         </div>
 
+        <!-- 1. 皮膚美白面板 -->
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
                 <span class="slider-label">皮膚美白程度 (僅限皮膚變白)</span>
@@ -126,6 +132,7 @@
             <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
+        <!-- 2. 智慧磨皮面板 -->
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
                 <span class="slider-label">皮膚瑕疵模糊範圍 (Blur)</span>
@@ -138,6 +145,7 @@
             <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
+        <!-- 3. 智慧妝容面板 -->
         <div id="panel-makeup" class="sub-panel">
             <div class="grid-layout">
                 <button class="grid-item mk-btn" id="mk-none" onclick="setMakeup('none')">素顏</button>
@@ -146,6 +154,7 @@
             <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
+        <!-- 4. 創意貼紙面板 -->
         <div id="panel-sticker" class="sub-panel">
             <div class="grid-layout">
                 <button class="grid-item stk-btn" id="stk-none" onclick="setSticker('none')">無貼紙</button>
@@ -173,12 +182,11 @@
         let isCountingDown = false; let capturedBlobImage = null; let originalCaptureCanvas = null;
         let currentMakeup = 'none'; let currentSticker = 'none'; let faceLandmarksData = null;
 
-        // 智慧拍照手勢輔助變數
+        // 手勢優化感應變數
         let lastHandX = null; let handWaveCooldown = false;
-        let isGoldenRatioMode = false; // 黃金比例瓜子臉開關
+        let isGoldenRatioMode = false;
         let yaGestureCooldown = false;
 
-        // 貼紙資料
         const stickerConfig = { glasses: { text: "🕶️", baseSize: 110 }, crown: { text: "👑", baseSize: 130 } };
         let activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
         let isDraggingSticker = false; let dragStartX = 0; let dragStartY = 0; let initialStickerX = 0; let initialStickerY = 0;
@@ -214,26 +222,26 @@
             navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360 } })
                 .then(stream => {
                     videoElement.srcObject = stream;
-                    videoElement.addEventListener('loadedmetadata', () => { startBaseCameraLoop(); initMediaPipeAI(); initStickerInteraction(); });
-                }).catch(err => alert("無法獲取相機：" + err));
+                    videoElement.addEventListener('loadedmetadata', () => { 
+                        startBaseCameraLoop(); 
+                        initMediaPipeAI(); 
+                        initStickerInteraction(); 
+                    });
+                }).catch(err => alert("無法獲取相機，請檢查瀏覽器鏡頭權限：" + err));
         }
 
-        // 處理即時畫面渲染
         function startBaseCameraLoop() {
             const render = () => {
                 if (videoElement.readyState >= 2) {
                     ctxRaw.drawImage(videoElement, 0, 0, canvasRaw.width, canvasRaw.height);
-                    
                     ctxLive.clearRect(0, 0, canvasLiveFx.width, canvasLiveFx.height);
                     
-                    // 如果開啟黃金比例瓜子臉，就對 Canvas 進行 2D 骨骼網格液化推臉
                     if (isGoldenRatioMode && faceLandmarksData) {
                         applyLiquifyFaceWarp(ctxLive, videoElement, faceLandmarksData, canvasLiveFx.width, canvasLiveFx.height);
                     } else {
                         ctxLive.drawImage(videoElement, 0, 0, canvasLiveFx.width, canvasLiveFx.height);
                     }
                     
-                    // 疊加濾鏡
                     canvasLiveFx.style.filter = filterCSSMap[filters[currentFilterIndex]];
                     
                     filters.forEach((filterName, index) => {
@@ -250,30 +258,23 @@
             requestAnimationFrame(render);
         }
 
-        // ===================================================
-        // 核心：黃金比例瓜子臉液化變形演算法 (Triangle Warp)
-        // ===================================================
+        // 黃金比例瓜子臉 2D 網格變形演算法
         function applyLiquifyFaceWarp(ctx, sourceImg, lm, w, h) {
-            // 定義核心控制點，將寬下巴骨骼往內收、往下拉長，塑形完美瓜子臉
-            // 建立簡易網格切片，將臉頰外圍組織向中心軸收縮
             ctx.drawImage(sourceImg, 0, 0, w, h);
             
-            // 獲取關鍵核心點：左臉廓(132)、右臉廓(361)、下巴尖(152)、額頭(10)、鼻尖(1)
             const pLeft = { x: lm[132].x * w, y: lm[132].y * h };
             const pRight = { x: lm[361].x * w, y: lm[361].y * h };
             const pChin = { x: lm[152].x * w, y: lm[152].y * h };
             const pCenter = { x: lm[1].x * w, y: lm[1].y * h };
 
-            // 計算收縮幅度
             const faceWidth = pRight.x - pLeft.x;
-            const slimFactor = faceWidth * 0.12; // 往內推移的黃金比例距離
+            const slimFactor = faceWidth * 0.14; // 收縮黃金比例
 
-            // 創建一塊暫存 Canvas 進行局部液化裁切推移
             const buffer = document.createElement('canvas'); buffer.width = w; buffer.height = h;
             const bCtx = buffer.getContext('2d');
             bCtx.drawImage(ctx.canvas, 0, 0);
 
-            // 左臉頰往內推
+            // 左臉推移
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pLeft.x - 30, pLeft.y - 80);
@@ -281,10 +282,10 @@
             ctx.lineTo(pChin.x, pChin.y + 20);
             ctx.closePath();
             ctx.clip();
-            ctx.drawImage(buffer, slimFactor, 0); // 圖像向右位移
+            ctx.drawImage(buffer, slimFactor, 0);
             ctx.restore();
 
-            // 右臉頰往內推
+            // 右臉推移
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pRight.x + 30, pRight.y - 80);
@@ -292,10 +293,10 @@
             ctx.lineTo(pChin.x, pChin.y + 20);
             ctx.closePath();
             ctx.clip();
-            ctx.drawImage(buffer, -slimFactor, 0); // 圖像向左位移
+            ctx.drawImage(buffer, -slimFactor, 0);
             ctx.restore();
             
-            // 下巴稍微拉尖
+            // 下巴稍微微調拉尖
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pLeft.x, pLeft.y);
@@ -303,28 +304,31 @@
             ctx.lineTo(pChin.x, pChin.y + 30);
             ctx.closePath();
             ctx.clip();
-            ctx.drawImage(buffer, 0, faceWidth * 0.04); // 微微向下延伸
+            ctx.drawImage(buffer, 0, faceWidth * 0.05);
             ctx.restore();
         }
 
         function initMediaPipeAI() {
-            const handsAI = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}` });
-            handsAI.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6 });
+            // 修正：修正 WASM 與資產路徑至 jsdelivr 統一目錄，徹底解決 GitHub CORS 問題
+            const handsAI = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+            handsAI.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.4, minTrackingConfidence: 0.4 });
+            
             handsAI.onResults(results => {
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
                     
-                    // 1. 智慧拍照：比 OK 判定 (大拇指 4 與 食指 8 碰觸)
-                    if (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.04 && !isCountingDown) {
+                    // 1. 放寬比 OK 拍照判定門檻 (距離從 0.04 放寬至 0.08，大幅提升感應速度)
+                    const okDist = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+                    if (okDist < 0.08 && !isCountingDown) {
                         startPhotoCountdown();
                         return;
                     }
 
-                    // 2. 智慧黃金比例：比 YA 判定 (食指 8、中指 12 伸直，無名指 16 彎曲)
+                    // 2. 優化比 YA 判定 (食指 8、中指 12 伸直，無名指 16 彎曲)
                     const isYa = lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y > lm[14].y;
                     if (isYa && !yaGestureCooldown && !isCountingDown) {
                         yaGestureCooldown = true;
-                        isGoldenRatioMode = !isGoldenRatioMode; // 切換狀態
+                        isGoldenRatioMode = !isGoldenRatioMode;
                         
                         const toast = document.getElementById('ratio-toast-box');
                         if (isGoldenRatioMode) {
@@ -335,18 +339,20 @@
                             toast.style.display = "block";
                             setTimeout(() => { if(!isGoldenRatioMode) toast.style.display="none"; }, 1500);
                         }
-                        
-                        setTimeout(() => { yaGestureCooldown = false; }, 1200);
+                        setTimeout(() => { yaGestureCooldown = false; }, 1500);
                     }
 
-                    // 3. 智慧濾鏡：隔空左右揮手 (手掌 9 號點橫移)
+                    // 3. 放寬隔空左右揮手切換濾鏡靈敏度 (從 0.07 放寬至 0.04)
                     const currentHandX = lm[9].x;
                     if (lastHandX !== null && !handWaveCooldown && !isCountingDown && !isYa) {
                         const moveDelta = currentHandX - lastHandX;
-                        if (Math.abs(moveDelta) > 0.07) {
+                        if (Math.abs(moveDelta) > 0.04) {
                             handWaveCooldown = true;
-                            if (moveDelta > 0) { selectFilter((currentFilterIndex + 1) % filters.length); } 
-                            else { selectFilter((currentFilterIndex - 1 + filters.length) % filters.length); }
+                            if (moveDelta > 0) { 
+                                selectFilter((currentFilterIndex + 1) % filters.length); 
+                            } else { 
+                                selectFilter((currentFilterIndex - 1 + filters.length) % filters.length); 
+                            }
                             setTimeout(() => { handWaveCooldown = false; }, 800);
                         }
                     }
@@ -356,16 +362,24 @@
                 }
             });
 
-            const faceMeshAI = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}` });
-            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
+            // 修正：Face Mesh 同樣修正路徑
+            const faceMeshAI = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+            faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.4, minTrackingConfidence: 0.4 });
             faceMeshAI.onResults(results => { if (results.multiFaceLandmarks) faceLandmarksData = results.multiFaceLandmarks[0]; });
 
-            setInterval(async () => {
+            // 修正：捨棄不穩定的 setInterval，全面改用動畫影格高速驅動 AI 運算
+            function runAILoop() {
                 if (videoElement.readyState >= 2) {
-                    await handsAI.send({ image: videoElement });
-                    await faceMeshAI.send({ image: videoElement });
+                    Promise.all([
+                        handsAI.send({ image: videoElement }),
+                        faceMeshAI.send({ image: videoElement })
+                    ]).then(() => requestAnimationFrame(runAILoop))
+                      .catch(() => requestAnimationFrame(runAILoop));
+                } else {
+                    requestAnimationFrame(runAILoop);
                 }
-            }, 150);
+            }
+            requestAnimationFrame(runAILoop);
         }
 
         function startPhotoCountdown() {
@@ -373,8 +387,8 @@
             const timerEl = document.getElementById('countdown');
             const interval = setInterval(() => {
                 counter--;
-                if (counter > 0) timerEl.innerText = `倒數 ${counter} 秒...`;
-                else { clearInterval(interval); timerEl.innerText = "💥 拍照！"; setTimeout(() => takeSnapshot(), 200); }
+                if (counter > 0) timerEl.innerHTML = `💥 偵測到拍照手勢！<br>倒數 ${counter} 秒...`;
+                else { clearInterval(interval); timerEl.innerHTML = "📸 拍照中！"; setTimeout(() => takeSnapshot(), 200); }
             }, 1000);
         }
 
@@ -383,7 +397,6 @@
             originalCaptureCanvas.width = 440; originalCaptureCanvas.height = 550;
             originalCaptureCanvas.getContext('2d').drawImage(videoElement, 0, 0, 440, 550);
 
-            // 拍下來的靜態照片，如果當時有開黃金比例，直接把液化完的成果存成基底照片
             capturedBlobImage = document.createElement('canvas');
             capturedBlobImage.width = 440; capturedBlobImage.height = 550;
             const snapCtx = capturedBlobImage.getContext('2d');
@@ -403,6 +416,8 @@
             document.getElementById('stage-edit').style.display = 'flex';
             activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
             openSubPanel('skin');
+            isCountingDown = false;
+            document.getElementById('countdown').innerHTML = "👌 比 OK 倒數拍照<br>✌️ 比 YA 塑形黃金比例瓜子臉<br>👋 左右揮手切換濾鏡";
         }
 
         function openSubPanel(type) {
@@ -439,9 +454,6 @@
             if (isPressed) { ctxEdit.drawImage(originalCaptureCanvas, 0, 0); } else { applyEditEffects(); }
         }
 
-        // ==========================================
-        // 四大後製編輯面板處理引擎
-        // ==========================================
         function applyEditEffects() {
             if (!capturedBlobImage) return;
             const w = canvasEdit.width; const h = canvasEdit.height;
@@ -476,11 +488,11 @@
                 });
                 mCtx.closePath(); mCtx.fill();
             };
-            punchHole([33, 160, 158, 133, 153, 144]); // 左眼
-            punchHole([362, 385, 387, 263, 373, 380]); // 右眼
-            punchHole([70, 63, 105, 66, 107, 55]); // 左眉
-            punchHole([336, 296, 334, 293, 300, 276]); // 右眉
-            punchHole([61, 185, 40, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146]); // 嘴唇
+            punchHole([33, 160, 158, 133, 153, 144]);
+            punchHole([362, 385, 387, 263, 373, 380]);
+            punchHole([70, 63, 105, 66, 107, 55]);
+            punchHole([336, 296, 334, 293, 300, 276]);
+            punchHole([61, 185, 40, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146]);
 
             // 1. 美白
             if (whitenVal > 0) {
