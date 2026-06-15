@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 智慧美顏相機 - GitHub 優化版</title>
+    <title>AI 智慧美顏相機 - GitHub 終極修正版</title>
     
-    <!-- 引入最穩定版本的 MediaPipe 基礎工具 -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -75,15 +74,13 @@
 
     <video id="hidden-video" autoplay playsinline muted></video>
 
-    <!-- 介紹頁 -->
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 智慧美顏相機</div>
         <button class="start-btn" onclick="enterCameraStage()">開始體驗</button>
     </div>
 
-    <!-- 拍照階段 -->
     <div id="stage-capture" class="camera-stage">
-        <div id="countdown" class="countdown-overlay">👌 比 OK 倒數拍照<br>✌️ 比 YA 塑形黃金比例瓜子臉<br>👋 左右揮手切換濾鏡</div>
+        <div id="countdown" class="countdown-overlay">👌 比 OK 倒數拍照<br>✌️ 比 YA 變形黃金比例瓜子臉<br>👋 左右揮手換濾鏡 (手向左滑換左邊、向右滑換右邊)</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
@@ -105,7 +102,6 @@
         </div>
     </div>
 
-    <!-- 後製編輯功能頁 -->
     <div id="stage-edit" class="edit-stage">
         <div class="preview-box">
             <button class="compare-btn" onmousedown="showOriginal(true)" onmouseup="showOriginal(false)" ontouchstart="showOriginal(true)" ontouchend="showOriginal(false)">
@@ -115,7 +111,6 @@
             <div id="current-edit-label" class="edit-label" style="display:none;">美白</div>
         </div>
         
-        <!-- 四大功能按鈕列 -->
         <div class="menu-row" id="main-edit-menu">
             <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">1. 美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">2. 磨皮</button>
@@ -123,7 +118,6 @@
             <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">4. 貼紙</button>
         </div>
 
-        <!-- 1. 皮膚美白面板 -->
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
                 <span class="slider-label">皮膚美白程度 (僅限皮膚變白)</span>
@@ -132,7 +126,6 @@
             <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
-        <!-- 2. 智慧磨皮面板 -->
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
                 <span class="slider-label">皮膚瑕疵模糊範圍 (Blur)</span>
@@ -145,7 +138,6 @@
             <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
-        <!-- 3. 智慧妝容面板 -->
         <div id="panel-makeup" class="sub-panel">
             <div class="grid-layout">
                 <button class="grid-item mk-btn" id="mk-none" onclick="setMakeup('none')">素顏</button>
@@ -154,7 +146,6 @@
             <button class="confirm-btn" onclick="askToSavePhoto()"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
 
-        <!-- 4. 創意貼紙面板 -->
         <div id="panel-sticker" class="sub-panel">
             <div class="grid-layout">
                 <button class="grid-item stk-btn" id="stk-none" onclick="setSticker('none')">無貼紙</button>
@@ -182,10 +173,9 @@
         let isCountingDown = false; let capturedBlobImage = null; let originalCaptureCanvas = null;
         let currentMakeup = 'none'; let currentSticker = 'none'; let faceLandmarksData = null;
 
-        // 手勢優化感應變數
+        // 手勢核心變數
         let lastHandX = null; let handWaveCooldown = false;
-        let isGoldenRatioMode = false;
-        let yaGestureCooldown = false;
+        let isGoldenRatioMode = false; let yaGestureCooldown = false;
 
         const stickerConfig = { glasses: { text: "🕶️", baseSize: 110 }, crown: { text: "👑", baseSize: 130 } };
         let activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
@@ -197,6 +187,7 @@
 
         function createFilterThumbnails() {
             const scroller = document.getElementById('filterScroller');
+            scroller.innerHTML = "";
             filters.forEach((filterName, index) => {
                 const itemBox = document.createElement('div');
                 itemBox.className = `filter-item-box ${index === currentFilterIndex ? 'active' : ''}`;
@@ -214,6 +205,12 @@
         function selectFilter(index) {
             currentFilterIndex = index;
             document.querySelectorAll('.filter-item-box').forEach((box, i) => box.classList.toggle('active', i === index));
+            
+            // 讓下方滾動條跟著自動對齊置中
+            const activeEl = document.getElementById(`filter-item-${index}`);
+            if (activeEl) {
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
 
         function enterCameraStage() {
@@ -227,7 +224,7 @@
                         initMediaPipeAI(); 
                         initStickerInteraction(); 
                     });
-                }).catch(err => alert("無法獲取相機，請檢查瀏覽器鏡頭權限：" + err));
+                }).catch(err => alert("鏡頭被瀏覽器安全性阻擋，請確認權限：" + err));
         }
 
         function startBaseCameraLoop() {
@@ -258,7 +255,7 @@
             requestAnimationFrame(render);
         }
 
-        // 黃金比例瓜子臉 2D 網格變形演算法
+        // 黃金比例瓜子臉即時推移演算法
         function applyLiquifyFaceWarp(ctx, sourceImg, lm, w, h) {
             ctx.drawImage(sourceImg, 0, 0, w, h);
             
@@ -268,13 +265,12 @@
             const pCenter = { x: lm[1].x * w, y: lm[1].y * h };
 
             const faceWidth = pRight.x - pLeft.x;
-            const slimFactor = faceWidth * 0.14; // 收縮黃金比例
+            const slimFactor = faceWidth * 0.14; 
 
             const buffer = document.createElement('canvas'); buffer.width = w; buffer.height = h;
             const bCtx = buffer.getContext('2d');
             bCtx.drawImage(ctx.canvas, 0, 0);
 
-            // 左臉推移
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pLeft.x - 30, pLeft.y - 80);
@@ -285,7 +281,6 @@
             ctx.drawImage(buffer, slimFactor, 0);
             ctx.restore();
 
-            // 右臉推移
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pRight.x + 30, pRight.y - 80);
@@ -296,7 +291,6 @@
             ctx.drawImage(buffer, -slimFactor, 0);
             ctx.restore();
             
-            // 下巴稍微微調拉尖
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pLeft.x, pLeft.y);
@@ -309,22 +303,23 @@
         }
 
         function initMediaPipeAI() {
-            // 修正：修正 WASM 與資產路徑至 jsdelivr 統一目錄，徹底解決 GitHub CORS 問題
-            const handsAI = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+            // 【關鍵修正】：改用 unpkg 的高相容性路徑，強迫 GitHub Pages 完美解鎖跨域模型下載
+            const locateConfig = { locateFile: (file) => `https://unpkg.com/@mediapipe/hands/${file}` };
+            const handsAI = new Hands(locateConfig);
             handsAI.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.4, minTrackingConfidence: 0.4 });
             
             handsAI.onResults(results => {
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
                     
-                    // 1. 放寬比 OK 拍照判定門檻 (距離從 0.04 放寬至 0.08，大幅提升感應速度)
+                    // 1. 比 OK 拍照 (放寬門檻)
                     const okDist = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
-                    if (okDist < 0.08 && !isCountingDown) {
+                    if (okDist < 0.09 && !isCountingDown) {
                         startPhotoCountdown();
                         return;
                     }
 
-                    // 2. 優化比 YA 判定 (食指 8、中指 12 伸直，無名指 16 彎曲)
+                    // 2. 比 YA 切換黃金比例瓜子臉
                     const isYa = lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y > lm[14].y;
                     if (isYa && !yaGestureCooldown && !isCountingDown) {
                         yaGestureCooldown = true;
@@ -342,18 +337,24 @@
                         setTimeout(() => { yaGestureCooldown = false; }, 1500);
                     }
 
-                    // 3. 放寬隔空左右揮手切換濾鏡靈敏度 (從 0.07 放寬至 0.04)
+                    // 3. 【關鍵修正】：左右揮手邏輯調整
+                    // 手向左滑（手從右到左，moveDelta 為負），換左邊（上一個濾鏡）
+                    // 手向右滑（手從左到右，moveDelta 為正），換右邊（下一個濾鏡）
                     const currentHandX = lm[9].x;
                     if (lastHandX !== null && !handWaveCooldown && !isCountingDown && !isYa) {
                         const moveDelta = currentHandX - lastHandX;
-                        if (Math.abs(moveDelta) > 0.04) {
+                        if (Math.abs(moveDelta) > 0.035) { // 提高揮手靈敏度
                             handWaveCooldown = true;
-                            if (moveDelta > 0) { 
-                                selectFilter((currentFilterIndex + 1) % filters.length); 
+                            if (moveDelta < 0) { 
+                                // 向左揮：切換到左邊（上一個濾鏡）
+                                let targetIdx = currentFilterIndex - 1;
+                                if (targetIdx < 0) targetIdx = filters.length - 1;
+                                selectFilter(targetIdx);
                             } else { 
-                                selectFilter((currentFilterIndex - 1 + filters.length) % filters.length); 
+                                // 向右揮：切換到右邊（下一個濾鏡）
+                                selectFilter((currentFilterIndex + 1) % filters.length);
                             }
-                            setTimeout(() => { handWaveCooldown = false; }, 800);
+                            setTimeout(() => { handWaveCooldown = false; }, 700); // 縮短冷卻，更流暢
                         }
                     }
                     lastHandX = currentHandX;
@@ -362,12 +363,12 @@
                 }
             });
 
-            // 修正：Face Mesh 同樣修正路徑
-            const faceMeshAI = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+            // 【關鍵修正】：Face Mesh 同步修正為高相容性 GitHub 專用路徑
+            const faceMeshAI = new FaceMesh({ locateFile: (file) => `https://unpkg.com/@mediapipe/face_mesh/${file}` });
             faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.4, minTrackingConfidence: 0.4 });
             faceMeshAI.onResults(results => { if (results.multiFaceLandmarks) faceLandmarksData = results.multiFaceLandmarks[0]; });
 
-            // 修正：捨棄不穩定的 setInterval，全面改用動畫影格高速驅動 AI 運算
+            // 啟動全自動影格追蹤
             function runAILoop() {
                 if (videoElement.readyState >= 2) {
                     Promise.all([
@@ -417,7 +418,7 @@
             activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
             openSubPanel('skin');
             isCountingDown = false;
-            document.getElementById('countdown').innerHTML = "👌 比 OK 倒數拍照<br>✌️ 比 YA 塑形黃金比例瓜子臉<br>👋 左右揮手切換濾鏡";
+            document.getElementById('countdown').innerHTML = "👌 比 OK 倒數拍照<br>✌️ 比 YA 變形黃金比例瓜子臉<br>👋 左右揮手換濾鏡 (手向左滑換左邊、向右滑換右邊)";
         }
 
         function openSubPanel(type) {
@@ -538,7 +539,7 @@
                 ctxEdit.restore();
             }
 
-            // 3. 智慧古典妝容
+            // 3. 智慧古典美妝容
             if (currentMakeup === 'classic') {
                 drawCustomClassicMakeup(ctxEdit, faceLandmarksData, w, h);
             }
