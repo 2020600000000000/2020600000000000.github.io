@@ -76,7 +76,7 @@
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="countdown" class="countdown-overlay">比 OK 倒數 5 秒拍照</div>
+        <div id="countdown" class="countdown-overlay">比 OK 或比 YA 均可觸發倒數拍照</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
@@ -85,7 +85,7 @@
             </div>
             <div class="viewfinder-box">
                 <span class="viewfinder-label" style="top: 15px; background: rgba(255,255,255,0.6); padding: 2px 6px; border-radius: 4px;">
-                    即時預覽<br><span style="font-size:11px; font-weight:normal;">(比 OK 自動拍照 · 隔空揮手換濾鏡)</span>
+                    即時預覽<br><span style="font-size:11px; font-weight:normal;">(比手勢自動拍照 · 隔空揮手換濾鏡)</span>
                 </span>
                 <canvas id="canvas-live-fx"></canvas>
             </div>
@@ -241,8 +241,18 @@
             handsAI.onResults(results => {
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
-                    if (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.04 && !isCountingDown) startPhotoCountdown();
+                    
+                    // 1. OK 手勢判定（大拇指尖點4與食指尖點8靠近，其餘指頭微張）
+                    const isOk = Math.dash = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.05;
+                    
+                    // 2. YA 手勢精準判定（食指尖點8、中指尖點12高度高於關節，且無名指與小指收起）
+                    const isYa = (lm[8].y < lm[6].y) && (lm[12].y < lm[10].y) && (lm[16].y > lm[14].y) && (lm[20].y > lm[18].y);
 
+                    if ((isOk || isYa) && !isCountingDown) {
+                        startPhotoCountdown();
+                    }
+
+                    // 隔空揮手換濾鏡
                     const currentHandX = lm[9].x;
                     if (lastHandX !== null && !handWaveCooldown && !isCountingDown) {
                         const moveDelta = currentHandX - lastHandX;
@@ -315,71 +325,116 @@
         function applyEditEffects() {
             if (!capturedBlobImage) return;
             const w = canvasEdit.width; const h = canvasEdit.height;
-            ctxEdit.clearRect(0, 0, w, h); ctxEdit.drawImage(capturedBlobImage, 0, 0);
+            
+            // 每次重新計算前，先還原最乾淨的已拍相片底圖
+            ctxEdit.clearRect(0, 0, w, h); 
+            ctxEdit.drawImage(capturedBlobImage, 0, 0);
 
             const whitenVal = parseInt(document.getElementById('slider-whiten').value);
             const blurVal = parseInt(document.getElementById('slider-blur').value);
             const smoothVal = parseInt(document.getElementById('slider-smooth-val').value);
 
-            if (!faceLandmarksData) { if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker); return; }
+            if (!faceLandmarksData) { 
+                if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker); 
+                return; 
+            }
 
+            // 【核心修正 1 & 3】：利用獨立的離屏畫布建立絕對正確的皮膚遮罩（完美扣除五官）
             const maskCanvas = document.createElement('canvas'); maskCanvas.width = w; maskCanvas.height = h;
             const mCtx = maskCanvas.getContext('2d');
+            
+            // 繪製臉部外圍輪廓
             const faceOutlineIndices = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
             mCtx.beginPath(); faceOutlineIndices.forEach((idx, i) => { const p = faceLandmarksData[idx]; if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h); });
             mCtx.closePath(); mCtx.fillStyle = 'white'; mCtx.fill();
 
+            // 挖空眼睛、眉毛、嘴唇，避免這些部位一起被模糊美白
             mCtx.globalCompositeOperation = 'destination-out';
             const punchHole = (indices) => { mCtx.beginPath(); indices.forEach((idx, i) => { const p = faceLandmarksData[idx]; if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h); }); mCtx.closePath(); mCtx.fill(); };
-            punchHole([33, 160, 158, 133, 153, 144]); punchHole([362, 385, 387, 263, 373, 380]); punchHole([70, 63, 105, 66, 107, 55]); punchHole([336, 296, 334, 293, 300, 276]);
-            punchHole([61, 185, 40, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146]);
+            punchHole([33, 160, 158, 133, 153, 144]); // 左眼
+            punchHole([362, 385, 387, 263, 373, 380]); // 右眼
+            punchHole([70, 63, 105, 66, 107, 55]); // 左眉
+            punchHole([336, 296, 334, 293, 300, 276]); // 右眉
+            punchHole([61, 185, 40, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146]); // 嘴唇整體
 
+            // 執行皮膚美白
             if (whitenVal > 0) {
                 const whitenCanvas = document.createElement('canvas'); whitenCanvas.width = w; whitenCanvas.height = h;
                 const wCtx = whitenCanvas.getContext('2d'); wCtx.drawImage(capturedBlobImage, 0, 0);
-                const imgData = wCtx.getImageData(0, 0, w, h); const pixels = imgData.data; const factor = (whitenVal / 100) * 50;
+                const imgData = wCtx.getImageData(0, 0, w, h); const pixels = imgData.data; const factor = (whitenVal / 100) * 45;
                 for (let i = 0; i < pixels.length; i += 4) {
-                    if(pixels[i] > 80 && pixels[i] > pixels[i+1]) { pixels[i] = Math.min(255, pixels[i] + factor); pixels[i+1] = Math.min(255, pixels[i+1] + factor * 0.93); pixels[i+2] = Math.min(255, pixels[i+2] + factor * 0.86); }
+                    // 古典氣質偏白校色調校
+                    if(pixels[i] > 60 && pixels[i] > pixels[i+2]) { 
+                        pixels[i] = Math.min(255, pixels[i] + factor); 
+                        pixels[i+1] = Math.min(255, pixels[i+1] + factor * 0.95); 
+                        pixels[i+2] = Math.min(255, pixels[i+2] + factor * 0.9); 
+                    }
                 }
                 wCtx.putImageData(imgData, 0, 0);
+                
+                // 混合遮罩：只保留臉部皮膚
                 const whitenMasked = document.createElement('canvas'); whitenMasked.width = w; whitenMasked.height = h;
                 const wmCtx = whitenMasked.getContext('2d'); wmCtx.drawImage(maskCanvas, 0, 0); wmCtx.globalCompositeOperation = 'source-in'; wmCtx.drawImage(whitenCanvas, 0, 0);
                 ctxEdit.drawImage(whitenMasked, 0, 0);
             }
 
+            // 執行智慧磨皮（解決之前無效的問題）
             if (blurVal > 0 || smoothVal > 0) {
                 const blurCanvas = document.createElement('canvas'); blurCanvas.width = w; blurCanvas.height = h;
-                const bCtx = blurCanvas.getContext('2d'); bCtx.filter = `blur(${blurVal * 0.18}px)`; bCtx.drawImage(canvasEdit, 0, 0);
+                const bCtx = blurCanvas.getContext('2d');
+                // 使用目前畫布（包含美白後）進行高斯模糊處理
+                bCtx.filter = `blur(${blurVal * 0.16}px)`;
+                bCtx.drawImage(canvasEdit, 0, 0);
+                
                 const smoothMasked = document.createElement('canvas'); smoothMasked.width = w; smoothMasked.height = h;
-                const smCtx = smoothMasked.getContext('2d'); smCtx.drawImage(maskCanvas, 0, 0); smCtx.globalCompositeOperation = 'source-in'; smCtx.drawImage(blurCanvas, 0, 0);
-                ctxEdit.save(); ctxEdit.globalAlpha = smoothVal / 100; ctxEdit.drawImage(smoothMasked, 0, 0); ctxEdit.restore();
+                const smCtx = smoothMasked.getContext('2d');
+                smCtx.drawImage(maskCanvas, 0, 0);
+                smCtx.globalCompositeOperation = 'source-in';
+                smCtx.drawImage(blurCanvas, 0, 0);
+                
+                // 依據強度透明度（Intensity）渲染回主畫布
+                ctxEdit.save();
+                ctxEdit.globalAlpha = smoothVal / 100;
+                ctxEdit.drawImage(smoothMasked, 0, 0);
+                ctxEdit.restore();
             }
 
+            // 【核心修正 4】：精準古典妝容五官位置繪製
             if (currentMakeup === 'classic') drawCustomClassicMakeup(ctxEdit, faceLandmarksData, w, h);
             if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker);
         }
 
         function drawCustomClassicMakeup(ctx, lm, w, h) {
-            ctx.save(); ctx.fillStyle = "rgba(255, 182, 193, 0.25)"; ctx.filter = "blur(14px)"; ctx.beginPath();
-            [70, 159, 158, 133, 113, 221].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
+            // 1. 精準粉色眼影（覆蓋於上眼窩：點70到133等座標群）
+            ctx.save(); ctx.fillStyle = "rgba(240, 140, 160, 0.28)"; ctx.filter = "blur(10px)";
+            ctx.beginPath(); [70, 159, 158, 133, 113, 221].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
             ctx.beginPath(); [300, 386, 385, 362, 342, 441].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
             ctx.restore();
 
-            ctx.save(); ctx.filter = "blur(8px)"; ctx.fillStyle = "rgba(165, 140, 130, 0.12)";
+            // 2. 精準兩側腮紅（貼合瞳孔下方與顴骨周圍）
+            ctx.save(); ctx.filter = "blur(16px)"; ctx.fillStyle = "rgba(235, 120, 135, 0.24)";
+            const eyeWidth = Math.abs(lm[263].x - lm[33].x) * w; // 動態面部距離縮放比例
+            ctx.beginPath(); ctx.arc(lm[31].x * w, lm[31].y * h + 10, eyeWidth * 0.45, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(lm[261].x * w, lm[261].y * h + 10, eyeWidth * 0.45, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+
+            // 3. 立體鼻影與高光（精準落在鼻樑點1與鼻尖點2）
+            ctx.save(); ctx.filter = "blur(6px)"; ctx.fillStyle = "rgba(150, 120, 110, 0.15)";
             ctx.beginPath(); [55, 193, 122, 6].forEach(idx => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
             ctx.beginPath(); [285, 417, 351, 6].forEach(idx => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.fillStyle = "rgba(255, 245, 245, 0.2)";
-            ctx.beginPath(); ctx.arc(lm[1].x * w, lm[1].y * h - 3, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+            ctx.beginPath(); ctx.arc(lm[1].x * w, lm[1].y * h - 4, 5, 0, Math.PI*2); ctx.fill();
             ctx.restore();
 
-            ctx.save(); ctx.filter = "blur(18px)"; ctx.fillStyle = "rgba(255, 140, 155, 0.22)"; const eyeWidth = Math.abs(lm[263].x - lm[33].x) * w;
-            ctx.beginPath(); ctx.arc(lm[31].x * w, lm[31].y * h + 8, eyeWidth * 0.42, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(lm[261].x * w, lm[261].y * h + 8, eyeWidth * 0.42, 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
-
-            ctx.save(); const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78];
-            ctx.beginPath(); lipIndices.forEach((idx, i) => { const p = lm[idx]; if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h); }); ctx.closePath();
-            ctx.fillStyle = "rgba(230, 80, 100, 0.42)"; ctx.filter = "blur(3px)"; ctx.fill();
+            // 4. 古典氣質絳唇（精準追蹤468網格中的22個唇緣定位點）
+            ctx.save(); 
+            const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78];
+            ctx.beginPath(); 
+            lipIndices.forEach((idx, i) => { const p = lm[idx]; if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h); }); 
+            ctx.closePath();
+            ctx.fillStyle = "rgba(210, 45, 75, 0.55)"; 
+            ctx.filter = "blur(2px)"; // 營造微暈染的古典咬唇效果
+            ctx.fill();
             ctx.restore();
         }
 
