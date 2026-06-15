@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學重塑相機 - GitHub 終極黃金比例版</title>
+    <title>AI 即時黃金比例重塑相機 - GitHub 頂配版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -18,8 +18,7 @@
         .intro-title { font-size: 26px; font-weight: bold; margin-bottom: 15px; }
         .intro-desc { font-size: 14px; color: #86868b; margin-bottom: 30px; line-height: 1.6; text-align: left; background: #f5f5f7; padding: 15px; border-radius: 10px; }
         .start-btn { background-color: #0071e3; color: #fff; border: none; padding: 14px 45px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .start-btn:hover { background-color: #0077ed; }
-
+        
         /* 拍照階段 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
         .countdown-overlay { font-size: 22px; font-weight: bold; color: #ff3b30; margin-bottom: 15px; min-height: 35px; text-align: center; }
@@ -66,35 +65,36 @@
     <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 智能黃金比例臉型重塑相機</div>
+        <div class="intro-title">AI 即時黃金比例重塑相機</div>
         <div class="intro-desc">
-            <b>📷 核心功能：</b><br>
-            拍攝照片後，系統將不只給予建議，而是<b>直接透過網格重塑技術將臉部微調成符合 $1.618:1$ 瓜子臉與三庭五眼古典比例</b>！<br><br>
-            <b>🎮 手勢智慧控制：</b><br>
-            1. <b>比出 YA：</b>開啟/關閉三庭五眼輔助指導線（第二次比 YA 自動取消）。<br>
-            2. <b>隔空揮手：</b>向左或向右揮手快速切換預覽濾鏡。<br>
-            3. <b>比出 OK：</b>觸發 5 秒完美倒數拍照。<br><br>
-            <b>✨ 後製功能：</b>自動黃金臉型、精準美白、磨皮、四大妝容（含歌仔戲）與可拖曳貼紙。
+            <b>🔥 核心震撼功能：</b><br>
+            不用等到拍完照！在預覽時<b>比出 YA，鏡頭裡的你的臉會「直接縮小、拉長」變成符合 1.618:1 的完美瓜子臉與三庭五眼！</b><br>
+            <b>第二次比出 YA，即時變形效果立刻取消</b>，回復原本真實臉型！<br><br>
+            <b>🎮 手勢控制：</b><br>
+            1. <b>比出 YA：</b>即時將臉部骨骼重塑成黃金比例（再次比 YA 取消）。<br>
+            2. <b>隔空揮手：</b>左右揮手直接切換鏡頭預覽濾鏡。<br>
+            3. <b>比出 OK：</b>觸發 5 秒快門倒數拍照。<br><br>
+            <b>✨ 後製增強：</b>精準美白、智慧磨皮、四大妝容（含歌仔戲）與拖曳貼紙。
         </div>
         <button class="start-btn" onclick="enterCameraStage()">開啟相機體驗</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="countdown" class="countdown-overlay">請面向鏡頭體驗手勢控制</div>
+        <div id="countdown" class="countdown-overlay">請對鏡頭比 YA 體驗「即時黃金變臉」</div>
         
         <div class="viewfinders">
             <div class="viewfinder-box">
-                <span class="viewfinder-label">原始畫面</span>
+                <span class="viewfinder-label">原始真實畫面</span>
                 <canvas id="canvas-raw"></canvas>
             </div>
             <div class="viewfinder-box">
-                <span class="viewfinder-label">即時預覽 (揮手可換濾鏡)</span>
+                <span class="viewfinder-label" id="live-label">即時預覽 (未啟用 AR 變臉)</span>
                 <canvas id="canvas-live-fx"></canvas>
             </div>
         </div>
         
         <div class="filter-scroller-container">
-            <div class="filter-scroller-title">快門濾鏡選擇</div>
+            <div class="filter-scroller-title">快門濾鏡選擇 (揮手可換)</div>
             <div class="filter-scroller" id="filterScroller"></div>
         </div>
     </div>
@@ -105,18 +105,10 @@
         </div>
         
         <div class="menu-row">
-            <button class="btn-item" id="btn-reshape" onclick="openSubPanel('reshape')">黃金臉型重塑</button>
             <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">精準美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">智慧磨皮</button>
             <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">主題妝容</button>
             <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">創意貼紙</button>
-        </div>
-
-        <div id="panel-reshape" class="sub-panel">
-            <div class="slider-container">
-                <span class="slider-label">1.618 瓜子臉與三庭五眼重塑強度</span>
-                <input type="range" id="slider-reshape-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            </div>
         </div>
 
         <div id="panel-skin" class="sub-panel">
@@ -171,7 +163,8 @@
         const filterCSSMap = { '原圖': 'none', '浪漫粉紅': 'hue-rotate(-10deg) saturate(1.2) brightness(1.05)', '日系清新': 'brightness(1.15) contrast(0.9)', '冷調冷冽': 'saturate(0.6) contrast(1.15) hue-rotate(15deg)', '暖陽復古': 'sepia(0.25) saturate(1.3)' };
 
         let faceLandmarksData = null; let handLandmarksData = null;
-        let showGuideLines = false; let yaHandInFrame = false;
+        let isReshapeActive = false;  // 控制即時變臉的開關
+        let yaHandInFrame = false;    // 防止連發鎖定
         let lastHandX = null; let waveCooldown = false;
         let isCountingDown = false; let countdownTimer = null;
         let capturedCanvasBackup = null;
@@ -220,16 +213,36 @@
                 }).catch(err => alert("相機啟動異常：" + err));
         }
 
+        // ========================================================
+        // 核心震撼突破：即時相機渲染迴圈（即時執行黃金液化）
+        // ========================================================
         function startRenderLoop() {
+            // 建立一個隱藏的暫存畫布，用來抓取未變形前的乾淨相機影格
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 440; tempCanvas.height = 550;
+            const tempCtx = tempCanvas.getContext('2d');
+
             const render = () => {
                 if (videoElement.readyState >= 2) {
+                    // 1. 先畫左側真實原始畫面
                     ctxRaw.drawImage(videoElement, 0, 0, canvasRaw.width, canvasRaw.height);
-                    ctxLive.save();
-                    ctxLive.drawImage(videoElement, 0, 0, canvasLiveFx.width, canvasLiveFx.height);
+                    
+                    // 2. 準備右側預覽畫面
                     canvasLiveFx.style.filter = filterCSSMap[filters[currentFilterIndex]];
-                    if (showGuideLines && faceLandmarksData) drawAestheticLines(ctxLive, faceLandmarksData);
-                    ctxLive.restore();
 
+                    if (isReshapeActive && faceLandmarksData) {
+                        document.getElementById('live-label').innerText = "✨ 即時預覽 (💥 黃金比例重塑中)";
+                        // 先將真實影格畫到暫存區
+                        tempCtx.drawImage(videoElement, 0, 0, 440, 550);
+                        // 計算即時重塑的特徵點 (強度全開 100)
+                        const targetPoints = getReshapedLandmarks(faceLandmarksData, 100, 440, 550);
+                        // 直接在右側 Canvas 上執行每影格三角變形液化
+                        drawMeshDeformation(ctxLive, tempCanvas, faceLandmarksData, targetPoints, 440, 550);
+                    } else {
+                        document.getElementById('live-label').innerText = "即時預覽 (未啟用 AR 變臉)";
+                        ctxLive.drawImage(videoElement, 0, 0, canvasLiveFx.width, canvasLiveFx.height);
+                    }
+
+                    // 3. 同步更新下方濾鏡列表的縮圖
                     filters.forEach((name, i) => {
                         const item = document.getElementById(`f-item-${i}`);
                         if (item) {
@@ -242,14 +255,6 @@
                 requestAnimationFrame(render);
             };
             requestAnimationFrame(render);
-        }
-
-        function drawAestheticLines(ctx, lm) {
-            const w = canvasLiveFx.width; const h = canvasLiveFx.height;
-            ctx.strokeStyle = "rgba(0, 113, 227, 0.6)"; ctx.lineWidth = 1.5;
-            [lm[10].y*h, lm[9].y*h, lm[2].y*h, lm[152].y*h].forEach(y => { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); });
-            ctx.strokeStyle = "rgba(255, 149, 0, 0.5)";
-            [lm[234].x*w, lm[454].x*w].forEach(x => { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); });
         }
 
         function initMediaPipe() {
@@ -266,7 +271,7 @@
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
             faceMesh.onResults(results => {
                 if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                    faceLandmarksData = Math.JSON = results.multiFaceLandmarks[0];
+                    faceLandmarksData = results.multiFaceLandmarks[0];
                 } else { faceLandmarksData = null; }
             });
 
@@ -280,13 +285,24 @@
             requestAnimationFrame(aiLoop);
         }
 
+        // 手勢判斷中心
         function handleHandGestures(lm) {
             const isYa = (lm[8].y < lm[6].y) && (lm[12].y < lm[10].y) && (lm[16].y > lm[14].y) && (lm[20].y > lm[18].y);
             const isOk = (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.04) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
 
-            if (isYa) { if (!yaHandInFrame) { showGuideLines = !showGuideLines; yaHandInFrame = true; } } else { yaHandInFrame = false; }
+            // 比 YA 控制「直接即時變臉」開關
+            if (isYa) {
+                if (!yaHandInFrame) {
+                    isReshapeActive = !isReshapeActive; // 切換狀態
+                    yaHandInFrame = true; // 鎖定直到放開
+                    const overlay = document.getElementById('countdown');
+                    overlay.innerText = isReshapeActive ? "✌️ 黃金比例即時重塑已開啟！" : "✌️ 已取消黃金重塑，恢復原狀。";
+                }
+            } else { yaHandInFrame = false; }
+
             if (isOk && !isCountingDown) startCaptureCountdown();
 
+            // 隔空揮手換濾鏡
             const currentX = lm[9].x;
             if (lastHandX !== null && !waveCooldown && !isCountingDown) {
                 const delta = currentX - lastHandX;
@@ -308,11 +324,12 @@
             }, 1000);
         }
 
+        // 快門拍照：直接把當前即時預覽畫布（可能已變臉）保存到後製區
         function triggerSnapshot() {
             capturedCanvasBackup = document.createElement('canvas'); capturedCanvasBackup.width = 440; capturedCanvasBackup.height = 550;
             const bCtx = capturedCanvasBackup.getContext('2d');
-            bCtx.filter = filterCSSMap[filters[currentFilterIndex]];
-            bCtx.drawImage(videoElement, 0, 0, 440, 550);
+            // 直接抓取當下正在即時顯示的預覽畫面（內含濾鏡與黃金比例變型）
+            bCtx.drawImage(canvasLiveFx, 0, 0, 440, 550);
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
@@ -321,7 +338,7 @@
                 stickerState.x = faceLandmarksData[1].x * canvasEdit.width;
                 stickerState.y = faceLandmarksData[1].y * canvasEdit.height;
             }
-            openSubPanel('reshape'); initStickerDrag();
+            openSubPanel('skin'); initStickerDrag();
         }
 
         function openSubPanel(id) {
@@ -335,51 +352,28 @@
         function setMakeup(m) { currentMakeup = m; document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m)); applyEditEffects(); }
         function setSticker(s) { currentSticker = s; document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); applyEditEffects(); }
 
-        // ========================================================
-        // 核心突破：黃金比例一鍵重塑與液化演算法 (三角形網格形變)
-        // ========================================================
+        // 醫美級臉型演算點位推算
         function getReshapedLandmarks(lm, intensity, w, h) {
-            // 複製一份原始特徵點
             let newLm = lm.map(p => ({ x: p.x * w, y: p.y * h }));
-            if (intensity === 0) return newLm;
+            const k = intensity / 100;
+            const fCenter = newLm[1].x; const pTop = newLm[10].y; const pMid = newLm[9].y; const pBot = newLm[2].y; const pChin = newLm[152].y;
+            const currentLength = pChin - pTop; const targetWidth = currentLength / 1.618;
 
-            const k = intensity / 100; // 形變權重 (0 ~ 1)
-            
-            // 1. 取得中心參考線與特徵值
-            const fCenter = newLm[1].x; // 臉部中軸 X 座標
-            const pTop = newLm[10].y;   // 髮際線 Y
-            const pMid = newLm[9].y;    // 眉骨 Y
-            const pBot = newLm[2].y;    // 鼻底 Y
-            const pChin = newLm[152].y; // 下巴尖端 Y
-
-            const currentLength = pChin - pTop;
-            const targetWidth = currentLength / 1.618; // 1.618 黃金比例目標臉寬
-
-            // 2. 對 468 個特徵點進行重塑計算
             for (let i = 0; i < newLm.length; i++) {
                 let pt = newLm[i];
-
-                // --- 橫向調整：下頜骨與面頰收緊 (塑造瓜子臉) ---
-                // 索引 234(右邊緣), 454(左邊緣) 以及所有下頜外圍特徵點
                 if (pt.y > pMid) { 
                     const distToCenter = pt.x - fCenter;
-                    // 計算目標位置：往中心推，使其外輪廓最大寬度逼近 targetWidth
-                    const targetX = fCenter + (distToCenter * (targetWidth / (w * 0.6))); 
-                    pt.x = pt.x + (targetX - pt.x) * k * 0.45; // 漸進微調
+                    const targetX = fCenter + (distToCenter * (targetWidth / (w * 0.65))); 
+                    pt.x = pt.x + (targetX - pt.x) * k * 0.5;
                 }
-
-                // --- 縱向調整：三庭均衡化 (1/3 : 1/3 : 1/3) ---
                 const idealCourtLen = currentLength / 3;
                 if (pt.y > pTop && pt.y <= pMid) {
-                    // 上庭點：向理想眉骨高度靠攏
                     let targetY = pTop + ((pt.y - pTop) / (pMid - pTop)) * idealCourtLen;
                     pt.y = pt.y + (targetY - pt.y) * k * 0.5;
                 } else if (pt.y > pMid && pt.y <= pBot) {
-                    // 中庭點
                     let targetY = (pTop + idealCourtLen) + ((pt.y - pMid) / (pBot - pMid)) * idealCourtLen;
                     pt.y = pt.y + (targetY - pt.y) * k * 0.5;
                 } else if (pt.y > pBot) {
-                    // 下庭點 (含下巴與嘴唇)
                     let targetY = (pTop + idealCourtLen * 2) + ((pt.y - pBot) / (pChin - pBot)) * idealCourtLen;
                     pt.y = pt.y + (targetY - pt.y) * k * 0.5;
                 }
@@ -387,28 +381,23 @@
             return newLm;
         }
 
+        // 核心網格變形演算法 (16x20 網格仿射變換)
         function drawMeshDeformation(ctx, origCanvas, origLm, targetLm, w, h) {
-            // 利用簡易分區網格內插拉伸
-            // 為了效能與 Canvas 2D 極限，我們將畫面切為 16x20 格進行圖像局部紋理變形（Texture Mapping）
             const rows = 20; const cols = 16;
             ctx.clearRect(0, 0, w, h);
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    // 計算網格四個頂點的標準化坐標
                     const srcX1 = (c / cols) * w; const srcY1 = (r / rows) * h;
                     const srcX2 = ((c + 1) / cols) * w; const srcY2 = ((r + 1) / rows) * h;
 
-                    // 找出離這四個角最近的臉部特徵點位移
                     const getOffset = (sx, sy) => {
                         let nearestIdx = 1; let minDist = Infinity;
-                        // 快速抽樣檢查幾個核心臉部外圍點即可
                         [10,152,234,454,1,9,2,33,263,365,136,397].forEach(idx => {
                             let d = Math.hypot(origLm[idx].x*w - sx, origLm[idx].y*h - sy);
                             if(d < minDist) { minDist = d; nearestIdx = idx; }
                         });
-                        // 位移量影響力隨距離衰減
-                        const weight = Math.max(0, 1 - (minDist / 120));
+                        const weight = Math.max(0, 1 - (minDist / 130));
                         const dx = (targetLm[nearestIdx].x - origLm[nearestIdx].x * w) * weight;
                         const dy = (targetLm[nearestIdx].y - origLm[nearestIdx].y * h) * weight;
                         return { x: sx + dx, y: sy + dy };
@@ -417,15 +406,12 @@
                     const p1 = getOffset(srcX1, srcY1); const p2 = getOffset(srcX2, srcY1);
                     const p3 = getOffset(srcX1, srcY2); const p4 = getOffset(srcX2, srcY2);
 
-                    // 繪製三角形 1 (p1, p2, p3)
                     ctx.save(); ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.clip();
-                    // 利用 2D 仿射變換矩陣形變像素
                     const t1 = (p2.x - p1.x) / (srcX2 - srcX1); const t2 = (p2.y - p1.y) / (srcX2 - srcX1);
                     const t3 = (p3.x - p1.x) / (srcY2 - srcY1); const t4 = (p3.y - p1.y) / (srcY2 - srcY1);
                     ctx.transform(t1, t2, t3, t4, p1.x - srcX1 * t1 - srcY1 * t3, p1.y - srcX1 * t2 - srcY1 * t4);
                     ctx.drawImage(origCanvas, 0, 0); ctx.restore();
 
-                    // 繪製三角形 2 (p2, p4, p3)
                     ctx.save(); ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.clip();
                     const t1b = (p4.x - p3.x) / (srcX2 - srcX1); const t2b = (p4.y - p3.y) / (srcX2 - srcX1);
                     const t3b = (p4.x - p2.x) / (srcY2 - srcY1); const t4b = (p4.y - p2.y) / (srcY2 - srcY1);
@@ -435,22 +421,15 @@
             }
         }
 
+        // 後製美顏套用
         function applyEditEffects() {
             if (!capturedCanvasBackup) return;
             const w = canvasEdit.width; const h = canvasEdit.height;
-            
-            // 1. 優先執行：自動黃金比例臉型液化重塑
-            const reshapeVal = parseInt(document.getElementById('slider-reshape-val').value);
-            if (reshapeVal > 0 && faceLandmarksData) {
-                const targetPoints = getReshapedLandmarks(faceLandmarksData, reshapeVal, w, h);
-                drawMeshDeformation(ctxEdit, capturedCanvasBackup, faceLandmarksData, targetPoints, w, h);
-            } else {
-                ctxEdit.clearRect(0, 0, w, h); ctxEdit.drawImage(capturedCanvasBackup, 0, 0);
-            }
+            ctxEdit.clearRect(0,0,w,h); ctxEdit.drawImage(capturedCanvasBackup, 0,0);
 
             if (!faceLandmarksData) return;
 
-            // 建立美顏圖層遮罩 (柔化肌膚)
+            // 建立美顏遮罩
             const mask = document.createElement('canvas'); mask.width = w; mask.height = h; const mCtx = mask.getContext('2d');
             mCtx.fillStyle = 'white'; mCtx.beginPath();
             [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109].forEach((idx, i) => {
@@ -461,7 +440,7 @@
             const dig = (arr) => { mCtx.beginPath(); arr.forEach(idx => mCtx.lineTo(faceLandmarksData[idx].x*w, faceLandmarksData[idx].y*h)); mCtx.fill(); };
             dig([33, 160, 158, 133, 153, 144]); dig([362, 385, 387, 263, 373, 380]); dig([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291]);
 
-            // 2. 精準美白
+            // 美白
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             if (whitVal > 0) {
                 const whitenTex = document.createElement('canvas'); whitenTex.width = w; whitenTex.height = h; const wCtx = whitenTex.getContext('2d');
@@ -474,7 +453,7 @@
                 ctxEdit.drawImage(wm, 0,0);
             }
 
-            // 3. 智慧磨皮
+            // 磨皮
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
             if (smooVal > 0) {
                 const blurC = document.createElement('canvas'); blurC.width = w; blurC.height = h; const bCtx = blurC.getContext('2d');
@@ -484,10 +463,10 @@
                 ctxEdit.save(); ctxEdit.globalAlpha = smooVal/100; ctxEdit.drawImage(sm, 0,0); ctxEdit.restore();
             }
 
-            // 4. 四大主題妝容
+            // 妝容
             drawThemedMakeup(ctxEdit, faceLandmarksData, w, h);
 
-            // 5. 創意貼紙
+            // 貼紙
             if (currentSticker !== 'none') {
                 const conf = stickerConfig[currentSticker];
                 ctxEdit.save(); ctxEdit.translate(stickerState.x, stickerState.y);
@@ -543,7 +522,7 @@
             }, { passive: false });
         }
 
-        function savePhoto() { alert("🎉 照片已依 1.618 黃金面容網格重塑技術與精緻後製儲存成功！"); }
+        function savePhoto() { alert("🎉 照片儲存成功！"); }
     </script>
 </body>
 </html>
