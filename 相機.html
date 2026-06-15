@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 智慧美顏相機 - GitHub 終極修正版</title>
+    <title>AI 智慧美顏相機 - 輕量抗崩潰版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -13,13 +13,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
         body { background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 10px; overflow-x: hidden; }
         
-        /* 介紹頁 */
         .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: 80vh; border: 1px solid #ddd; border-radius: 12px; background: #fff; padding: 20px; }
         .intro-title { font-size: 32px; font-weight: bold; margin-bottom: 40px; color: #000; text-align: center; }
         .start-btn { background-color: #8e8e8e; color: #000; border: 2px solid #000; padding: 15px 50px; font-size: 22px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .start-btn:hover { background-color: #7a7a7a; }
 
-        /* 拍照階段 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; }
         .countdown-overlay { font-size: 20px; font-weight: bold; color: #000; margin-bottom: 15px; min-height: 40px; text-align: center; width: 100%; line-height: 1.4; }
         
@@ -29,10 +27,8 @@
         .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .viewfinder-label { position: absolute; z-index: 10; pointer-events: none; text-align: center; width: 90%; text-shadow: 0px 0px 6px rgba(255,255,255,0.9); font-size: 20px; color: #000; font-weight: bold; }
 
-        /* 黃金比例狀態提示條 */
         .ratio-toast { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 15px; z-index: 20; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        /* 濾鏡滾動欄 */
         .filter-scroller-container { width: 100%; background: #f2f2f7; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         .filter-scroller-title { font-size: 16px; font-weight: bold; color: #3a3a3c; padding-left: 5px; }
         .filter-scroller { display: flex; gap: 12px; overflow-x: auto; width: 100%; padding-bottom: 5px; scroll-behavior: smooth; }
@@ -43,7 +39,6 @@
         .filter-item-box.active .filter-thumb-canvas { border-color: #0071e3; }
         .filter-thumb-name { font-size: 14px; font-weight: bold; color: #000; text-align: center; }
 
-        /* 後製編輯階段 */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; }
         .preview-box { width: 100%; max-width: 500px; aspect-ratio: 4/5; background-color: #8e8e8e; border-radius: 12px; margin-bottom: 20px; position: relative; overflow: hidden; }
         .preview-box canvas { width: 100%; height: 100%; object-fit: cover; cursor: move; }
@@ -51,7 +46,6 @@
         
         .compare-btn { position: absolute; top: 15px; right: 15px; background-color: rgba(0,0,0,0.6); color: white; border: none; padding: 10px; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; user-select: none; }
 
-        /* 四大功能選單 */
         .menu-row { display: flex; gap: 10px; justify-content: center; width: 100%; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-item { padding: 12px 18px; background-color: #8e8e8e; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; flex: 1; min-width: 100px; text-align: center; }
         .btn-item.active { background-color: #555555; color: #fff; }
@@ -173,7 +167,6 @@
         let isCountingDown = false; let capturedBlobImage = null; let originalCaptureCanvas = null;
         let currentMakeup = 'none'; let currentSticker = 'none'; let faceLandmarksData = null;
 
-        // 手勢核心變數
         let lastHandX = null; let handWaveCooldown = false;
         let isGoldenRatioMode = false; let yaGestureCooldown = false;
 
@@ -205,12 +198,8 @@
         function selectFilter(index) {
             currentFilterIndex = index;
             document.querySelectorAll('.filter-item-box').forEach((box, i) => box.classList.toggle('active', i === index));
-            
-            // 讓下方滾動條跟著自動對齊置中
             const activeEl = document.getElementById(`filter-item-${index}`);
-            if (activeEl) {
-                activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
         function enterCameraStage() {
@@ -224,7 +213,7 @@
                         initMediaPipeAI(); 
                         initStickerInteraction(); 
                     });
-                }).catch(err => alert("鏡頭被瀏覽器安全性阻擋，請確認權限：" + err));
+                }).catch(err => alert("相機啟動失敗：" + err));
         }
 
         function startBaseCameraLoop() {
@@ -255,127 +244,75 @@
             requestAnimationFrame(render);
         }
 
-        // 黃金比例瓜子臉即時推移演算法
         function applyLiquifyFaceWarp(ctx, sourceImg, lm, w, h) {
             ctx.drawImage(sourceImg, 0, 0, w, h);
-            
             const pLeft = { x: lm[132].x * w, y: lm[132].y * h };
             const pRight = { x: lm[361].x * w, y: lm[361].y * h };
             const pChin = { x: lm[152].x * w, y: lm[152].y * h };
             const pCenter = { x: lm[1].x * w, y: lm[1].y * h };
-
             const faceWidth = pRight.x - pLeft.x;
             const slimFactor = faceWidth * 0.14; 
 
             const buffer = document.createElement('canvas'); buffer.width = w; buffer.height = h;
-            const bCtx = buffer.getContext('2d');
-            bCtx.drawImage(ctx.canvas, 0, 0);
+            const bCtx = buffer.getContext('2d'); bCtx.drawImage(ctx.canvas, 0, 0);
 
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(pLeft.x - 30, pLeft.y - 80);
-            ctx.lineTo(pCenter.x, pCenter.y);
-            ctx.lineTo(pChin.x, pChin.y + 20);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(buffer, slimFactor, 0);
-            ctx.restore();
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(pRight.x + 30, pRight.y - 80);
-            ctx.lineTo(pCenter.x, pCenter.y);
-            ctx.lineTo(pChin.x, pChin.y + 20);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(buffer, -slimFactor, 0);
-            ctx.restore();
-            
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(pLeft.x, pLeft.y);
-            ctx.lineTo(pRight.x, pRight.y);
-            ctx.lineTo(pChin.x, pChin.y + 30);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(buffer, 0, faceWidth * 0.05);
-            ctx.restore();
+            ctx.save(); ctx.beginPath(); ctx.moveTo(pLeft.x - 30, pLeft.y - 80); ctx.lineTo(pCenter.x, pCenter.y); ctx.lineTo(pChin.x, pChin.y + 20); ctx.closePath(); ctx.clip(); ctx.drawImage(buffer, slimFactor, 0); ctx.restore();
+            ctx.save(); ctx.beginPath(); ctx.moveTo(pRight.x + 30, pRight.y - 80); ctx.lineTo(pCenter.x, pCenter.y); ctx.lineTo(pChin.x, pChin.y + 20); ctx.closePath(); ctx.clip(); ctx.drawImage(buffer, -slimFactor, 0); ctx.restore();
+            ctx.save(); ctx.beginPath(); ctx.moveTo(pLeft.x, pLeft.y); ctx.lineTo(pRight.x, pRight.y); ctx.lineTo(pChin.x, pChin.y + 30); ctx.closePath(); ctx.clip(); ctx.drawImage(buffer, 0, faceWidth * 0.05); ctx.restore();
         }
 
         function initMediaPipeAI() {
-            // 【關鍵修正】：改用 unpkg 的高相容性路徑，強迫 GitHub Pages 完美解鎖跨域模型下載
-            const locateConfig = { locateFile: (file) => `https://unpkg.com/@mediapipe/hands/${file}` };
-            const handsAI = new Hands(locateConfig);
+            const handsAI = new Hands({ locateFile: (file) => `https://unpkg.com/@mediapipe/hands/${file}` });
             handsAI.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.4, minTrackingConfidence: 0.4 });
             
             handsAI.onResults(results => {
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
-                    
-                    // 1. 比 OK 拍照 (放寬門檻)
                     const okDist = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
-                    if (okDist < 0.09 && !isCountingDown) {
-                        startPhotoCountdown();
-                        return;
-                    }
+                    if (okDist < 0.09 && !isCountingDown) { startPhotoCountdown(); return; }
 
-                    // 2. 比 YA 切換黃金比例瓜子臉
                     const isYa = lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y > lm[14].y;
                     if (isYa && !yaGestureCooldown && !isCountingDown) {
-                        yaGestureCooldown = true;
-                        isGoldenRatioMode = !isGoldenRatioMode;
-                        
+                        yaGestureCooldown = true; isGoldenRatioMode = !isGoldenRatioMode;
                         const toast = document.getElementById('ratio-toast-box');
-                        if (isGoldenRatioMode) {
-                            toast.innerText = "✨ 黃金比例瓜子臉：已開啟";
-                            toast.style.display = "block";
-                        } else {
-                            toast.innerText = "❌ 黃金比例瓜子臉：已關閉";
-                            toast.style.display = "block";
-                            setTimeout(() => { if(!isGoldenRatioMode) toast.style.display="none"; }, 1500);
-                        }
+                        toast.innerText = isGoldenRatioMode ? "✨ 黃金比例瓜子臉：已開啟" : "❌ 黃金比例瓜子臉：已關閉";
+                        toast.style.display = "block";
+                        if (!isGoldenRatioMode) setTimeout(() => { if(!isGoldenRatioMode) toast.style.display="none"; }, 1500);
                         setTimeout(() => { yaGestureCooldown = false; }, 1500);
                     }
 
-                    // 3. 【關鍵修正】：左右揮手邏輯調整
-                    // 手向左滑（手從右到左，moveDelta 為負），換左邊（上一個濾鏡）
-                    // 手向右滑（手從左到右，moveDelta 為正），換右邊（下一個濾鏡）
                     const currentHandX = lm[9].x;
                     if (lastHandX !== null && !handWaveCooldown && !isCountingDown && !isYa) {
                         const moveDelta = currentHandX - lastHandX;
-                        if (Math.abs(moveDelta) > 0.035) { // 提高揮手靈敏度
+                        if (Math.abs(moveDelta) > 0.04) {
                             handWaveCooldown = true;
                             if (moveDelta < 0) { 
-                                // 向左揮：切換到左邊（上一個濾鏡）
+                                // 向左滑：換左邊（上一個濾鏡）
                                 let targetIdx = currentFilterIndex - 1;
                                 if (targetIdx < 0) targetIdx = filters.length - 1;
                                 selectFilter(targetIdx);
                             } else { 
-                                // 向右揮：切換到右邊（下一個濾鏡）
+                                // 向右滑：換右邊（下一個濾鏡）
                                 selectFilter((currentFilterIndex + 1) % filters.length);
                             }
-                            setTimeout(() => { handWaveCooldown = false; }, 700); // 縮短冷卻，更流暢
+                            setTimeout(() => { handWaveCooldown = false; }, 800);
                         }
                     }
                     lastHandX = currentHandX;
-                } else {
-                    lastHandX = null;
-                }
+                } else { lastHandX = null; }
             });
 
-            // 【關鍵修正】：Face Mesh 同步修正為高相容性 GitHub 專用路徑
             const faceMeshAI = new FaceMesh({ locateFile: (file) => `https://unpkg.com/@mediapipe/face_mesh/${file}` });
             faceMeshAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.4, minTrackingConfidence: 0.4 });
             faceMeshAI.onResults(results => { if (results.multiFaceLandmarks) faceLandmarksData = results.multiFaceLandmarks[0]; });
 
-            // 啟動全自動影格追蹤
+            // 【抗崩潰核心】：捨棄並行運算，改用平滑的「交替輪流機制」
+            let frameToggle = true;
             function runAILoop() {
                 if (videoElement.readyState >= 2) {
-                    Promise.all([
-                        handsAI.send({ image: videoElement }),
-                        faceMeshAI.send({ image: videoElement })
-                    ]).then(() => requestAnimationFrame(runAILoop))
-                      .catch(() => requestAnimationFrame(runAILoop));
+                    let p = frameToggle ? handsAI.send({ image: videoElement }) : faceMeshAI.send({ image: videoElement });
+                    frameToggle = !frameToggle; // 輪流換下一個模型
+                    p.then(() => requestAnimationFrame(runAILoop)).catch(() => requestAnimationFrame(runAILoop));
                 } else {
                     requestAnimationFrame(runAILoop);
                 }
@@ -394,261 +331,133 @@
         }
 
         function takeSnapshot() {
-            originalCaptureCanvas = document.createElement('canvas');
-            originalCaptureCanvas.width = 440; originalCaptureCanvas.height = 550;
+            originalCaptureCanvas = document.createElement('canvas'); originalCaptureCanvas.width = 440; originalCaptureCanvas.height = 550;
             originalCaptureCanvas.getContext('2d').drawImage(videoElement, 0, 0, 440, 550);
 
-            capturedBlobImage = document.createElement('canvas');
-            capturedBlobImage.width = 440; capturedBlobImage.height = 550;
-            const snapCtx = capturedBlobImage.getContext('2d');
-            snapCtx.filter = filterCSSMap[filters[currentFilterIndex]];
-            
-            if (isGoldenRatioMode && faceLandmarksData) {
-                applyLiquifyFaceWarp(snapCtx, videoElement, faceLandmarksData, 440, 550);
-            } else {
-                snapCtx.drawImage(videoElement, 0, 0, 440, 550);
-            }
+            capturedBlobImage = document.createElement('canvas'); capturedBlobImage.width = 440; capturedBlobImage.height = 550;
+            const snapCtx = capturedBlobImage.getContext('2d'); snapCtx.filter = filterCSSMap[filters[currentFilterIndex]];
+            if (isGoldenRatioMode && faceLandmarksData) applyLiquifyFaceWarp(snapCtx, videoElement, faceLandmarksData, 440, 550);
+            else snapCtx.drawImage(videoElement, 0, 0, 440, 550);
 
-            document.getElementById('slider-whiten').value = 0;
-            document.getElementById('slider-blur').value = 0;
-            document.getElementById('slider-smooth-val').value = 0;
-
-            document.getElementById('stage-capture').style.display = 'none';
-            document.getElementById('stage-edit').style.display = 'flex';
+            document.getElementById('slider-whiten').value = 0; document.getElementById('slider-blur').value = 0; document.getElementById('slider-smooth-val').value = 0;
+            document.getElementById('stage-capture').style.display = 'none'; document.getElementById('stage-edit').style.display = 'flex';
             activeStickerState = { x: 220, y: 250, scale: 1.0, rotation: 0 };
-            openSubPanel('skin');
-            isCountingDown = false;
-            document.getElementById('countdown').innerHTML = "👌 比 OK 倒數拍照<br>✌️ 比 YA 變形黃金比例瓜子臉<br>👋 左右揮手換濾鏡 (手向左滑換左邊、向右滑換右邊)";
+            openSubPanel('skin'); isCountingDown = false;
         }
 
         function openSubPanel(type) {
             document.querySelectorAll('.sub-panel').forEach(p => p.style.display = 'none');
             document.querySelectorAll('.btn-item').forEach(b => b.classList.remove('active'));
-            
-            const labelEl = document.getElementById('current-edit-label');
-            labelEl.style.display = 'block';
+            const labelEl = document.getElementById('current-edit-label'); labelEl.style.display = 'block';
 
             if (type === 'skin') { labelEl.innerText = '1. 美白'; document.getElementById('btn-skin').classList.add('active'); }
             if (type === 'smooth') { labelEl.innerText = '2. 磨皮'; document.getElementById('btn-smooth').classList.add('active'); }
             if (type === 'makeup') { labelEl.innerText = '3. 妝容'; document.getElementById('btn-makeup').classList.add('active'); }
             if (type === 'sticker') { labelEl.innerText = '4. 貼紙'; document.getElementById('btn-sticker').classList.add('active'); }
-            
-            document.getElementById('panel-' + type).style.display = 'flex';
-            applyEditEffects();
+            document.getElementById('panel-' + type).style.display = 'flex'; applyEditEffects();
         }
 
-        function setMakeup(style) {
-            currentMakeup = style;
-            document.querySelectorAll('.mk-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('mk-' + style).classList.add('active');
-            applyEditEffects();
-        }
-        
-        function setSticker(type) {
-            currentSticker = type;
-            document.querySelectorAll('.stk-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('stk-' + type).classList.add('active');
-            applyEditEffects();
-        }
-
-        function showOriginal(isPressed) {
-            if (isPressed) { ctxEdit.drawImage(originalCaptureCanvas, 0, 0); } else { applyEditEffects(); }
-        }
+        function setMakeup(style) { currentMakeup = style; document.querySelectorAll('.mk-btn').forEach(b => b.classList.remove('active')); document.getElementById('mk-' + style).classList.add('active'); applyEditEffects(); }
+        function setSticker(type) { currentSticker = type; document.querySelectorAll('.stk-btn').forEach(b => b.classList.remove('active')); document.getElementById('stk-' + type).classList.add('active'); applyEditEffects(); }
+        function showOriginal(isPressed) { if (isPressed) { ctxEdit.drawImage(originalCaptureCanvas, 0, 0); } else { applyEditEffects(); } }
 
         function applyEditEffects() {
             if (!capturedBlobImage) return;
             const w = canvasEdit.width; const h = canvasEdit.height;
-            ctxEdit.clearRect(0, 0, w, h);
-            ctxEdit.drawImage(capturedBlobImage, 0, 0);
+            ctxEdit.clearRect(0, 0, w, h); ctxEdit.drawImage(capturedBlobImage, 0, 0);
 
             const whitenVal = parseInt(document.getElementById('slider-whiten').value);
             const blurVal = parseInt(document.getElementById('slider-blur').value);
             const smoothVal = parseInt(document.getElementById('slider-smooth-val').value);
 
-            if (!faceLandmarksData) {
-                if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker);
-                return;
-            }
+            if (!faceLandmarksData) { if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker); return; }
 
             const maskCanvas = document.createElement('canvas'); maskCanvas.width = w; maskCanvas.height = h;
             const mCtx = maskCanvas.getContext('2d');
             const faceOutlineIndices = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
-            mCtx.beginPath();
-            faceOutlineIndices.forEach((idx, i) => {
-                const p = faceLandmarksData[idx];
-                if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h);
-            });
+            mCtx.beginPath(); faceOutlineIndices.forEach((idx, i) => { const p = faceLandmarksData[idx]; if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h); });
             mCtx.closePath(); mCtx.fillStyle = 'white'; mCtx.fill();
 
             mCtx.globalCompositeOperation = 'destination-out';
-            const punchHole = (indices) => {
-                mCtx.beginPath();
-                indices.forEach((idx, i) => {
-                    const p = faceLandmarksData[idx];
-                    if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h);
-                });
-                mCtx.closePath(); mCtx.fill();
-            };
-            punchHole([33, 160, 158, 133, 153, 144]);
-            punchHole([362, 385, 387, 263, 373, 380]);
-            punchHole([70, 63, 105, 66, 107, 55]);
-            punchHole([336, 296, 334, 293, 300, 276]);
+            const punchHole = (indices) => { mCtx.beginPath(); indices.forEach((idx, i) => { const p = faceLandmarksData[idx]; if (i === 0) mCtx.moveTo(p.x * w, p.y * h); else mCtx.lineTo(p.x * w, p.y * h); }); mCtx.closePath(); mCtx.fill(); };
+            punchHole([33, 160, 158, 133, 153, 144]); punchHole([362, 385, 387, 263, 373, 380]); punchHole([70, 63, 105, 66, 107, 55]); punchHole([336, 296, 334, 293, 300, 276]);
             punchHole([61, 185, 40, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146]);
 
-            // 1. 美白
             if (whitenVal > 0) {
                 const whitenCanvas = document.createElement('canvas'); whitenCanvas.width = w; whitenCanvas.height = h;
-                const wCtx = whitenCanvas.getContext('2d');
-                wCtx.drawImage(capturedBlobImage, 0, 0);
-                
-                const imgData = wCtx.getImageData(0, 0, w, h); const pixels = imgData.data;
-                const factor = (whitenVal / 100) * 50;
+                const wCtx = whitenCanvas.getContext('2d'); wCtx.drawImage(capturedBlobImage, 0, 0);
+                const imgData = wCtx.getImageData(0, 0, w, h); const pixels = imgData.data; const factor = (whitenVal / 100) * 50;
                 for (let i = 0; i < pixels.length; i += 4) {
-                    if(pixels[i] > 80 && pixels[i] > pixels[i+1]) {
-                        pixels[i] = Math.min(255, pixels[i] + factor);
-                        pixels[i+1] = Math.min(255, pixels[i+1] + factor * 0.93);
-                        pixels[i+2] = Math.min(255, pixels[i+2] + factor * 0.86);
-                    }
+                    if(pixels[i] > 80 && pixels[i] > pixels[i+1]) { pixels[i] = Math.min(255, pixels[i] + factor); pixels[i+1] = Math.min(255, pixels[i+1] + factor * 0.93); pixels[i+2] = Math.min(255, pixels[i+2] + factor * 0.86); }
                 }
                 wCtx.putImageData(imgData, 0, 0);
-
                 const whitenMasked = document.createElement('canvas'); whitenMasked.width = w; whitenMasked.height = h;
-                const wmCtx = whitenMasked.getContext('2d');
-                wmCtx.drawImage(maskCanvas, 0, 0);
-                wmCtx.globalCompositeOperation = 'source-in';
-                wmCtx.drawImage(whitenCanvas, 0, 0);
+                const wmCtx = whitenMasked.getContext('2d'); wmCtx.drawImage(maskCanvas, 0, 0); wmCtx.globalCompositeOperation = 'source-in'; wmCtx.drawImage(whitenCanvas, 0, 0);
                 ctxEdit.drawImage(whitenMasked, 0, 0);
             }
 
-            // 2. 磨皮
             if (blurVal > 0 || smoothVal > 0) {
                 const blurCanvas = document.createElement('canvas'); blurCanvas.width = w; blurCanvas.height = h;
-                const bCtx = blurCanvas.getContext('2d');
-                bCtx.filter = `blur(${blurVal * 0.18}px)`;
-                bCtx.drawImage(canvasEdit, 0, 0);
-
+                const bCtx = blurCanvas.getContext('2d'); bCtx.filter = `blur(${blurVal * 0.18}px)`; bCtx.drawImage(canvasEdit, 0, 0);
                 const smoothMasked = document.createElement('canvas'); smoothMasked.width = w; smoothMasked.height = h;
-                const smCtx = smoothMasked.getContext('2d');
-                smCtx.drawImage(maskCanvas, 0, 0);
-                smCtx.globalCompositeOperation = 'source-in';
-                smCtx.drawImage(blurCanvas, 0, 0);
-
-                ctxEdit.save();
-                ctxEdit.globalAlpha = smoothVal / 100;
-                ctxEdit.drawImage(smoothMasked, 0, 0);
-                ctxEdit.restore();
+                const smCtx = smoothMasked.getContext('2d'); smCtx.drawImage(maskCanvas, 0, 0); smCtx.globalCompositeOperation = 'source-in'; smCtx.drawImage(blurCanvas, 0, 0);
+                ctxEdit.save(); ctxEdit.globalAlpha = smoothVal / 100; ctxEdit.drawImage(smoothMasked, 0, 0); ctxEdit.restore();
             }
 
-            // 3. 智慧古典美妝容
-            if (currentMakeup === 'classic') {
-                drawCustomClassicMakeup(ctxEdit, faceLandmarksData, w, h);
-            }
-
-            // 4. 創意貼紙
-            if (currentSticker !== 'none') {
-                drawInteractiveSticker(ctxEdit, currentSticker);
-            }
+            if (currentMakeup === 'classic') drawCustomClassicMakeup(ctxEdit, faceLandmarksData, w, h);
+            if (currentSticker !== 'none') drawInteractiveSticker(ctxEdit, currentSticker);
         }
 
         function drawCustomClassicMakeup(ctx, lm, w, h) {
-            ctx.save();
-            ctx.fillStyle = "rgba(255, 182, 193, 0.28)"; ctx.filter = "blur(14px)";
+            ctx.save(); ctx.fillStyle = "rgba(255, 182, 193, 0.28)"; ctx.filter = "blur(14px)";
             ctx.beginPath(); [70, 159, 158, 133, 113, 221].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.beginPath(); [300, 386, 385, 362, 342, 441].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.restore();
+            ctx.beginPath(); [300, 386, 385, 362, 342, 441].forEach((idx) => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill(); ctx.restore();
 
-            ctx.save();
-            ctx.filter = "blur(8px)"; ctx.fillStyle = "rgba(165, 140, 130, 0.15)";
+            ctx.save(); ctx.filter = "blur(8px)"; ctx.fillStyle = "rgba(165, 140, 130, 0.15)";
             ctx.beginPath(); [55, 193, 122, 6].forEach(idx => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
             ctx.beginPath(); [285, 417, 351, 6].forEach(idx => ctx.lineTo(lm[idx].x * w, lm[idx].y * h)); ctx.fill();
-            ctx.fillStyle = "rgba(255, 245, 245, 0.25)";
-            ctx.beginPath(); ctx.arc(lm[1].x * w, lm[1].y * h - 3, 6, 0, Math.PI*2); ctx.fill();
-            ctx.restore();
+            ctx.fillStyle = "rgba(255, 245, 245, 0.25)"; ctx.beginPath(); ctx.arc(lm[1].x * w, lm[1].y * h - 3, 6, 0, Math.PI*2); ctx.fill(); ctx.restore();
 
-            ctx.save();
-            ctx.filter = "blur(18px)"; ctx.fillStyle = "rgba(255, 140, 155, 0.24)";
-            const eyeWidth = Math.abs(lm[263].x - lm[33].x) * w;
+            ctx.save(); ctx.filter = "blur(18px)"; ctx.fillStyle = "rgba(255, 140, 155, 0.24)"; const eyeWidth = Math.abs(lm[263].x - lm[33].x) * w;
             ctx.beginPath(); ctx.arc(lm[31].x * w, lm[31].y * h + 8, eyeWidth * 0.4, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(lm[261].x * w, lm[261].y * h + 8, eyeWidth * 0.4, 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
+            ctx.beginPath(); ctx.arc(lm[261].x * w, lm[261].y * h + 8, eyeWidth * 0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore();
 
-            ctx.save();
-            const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78];
+            ctx.save(); const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78];
             ctx.beginPath(); lipIndices.forEach((idx, i) => { const p = lm[idx]; if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h); }); ctx.closePath();
-            ctx.fillStyle = "rgba(240, 100, 120, 0.42)"; ctx.filter = "blur(3px)"; ctx.fill();
-            ctx.restore();
+            ctx.fillStyle = "rgba(240, 100, 120, 0.42)"; ctx.filter = "blur(3px)"; ctx.fill(); ctx.restore();
         }
 
         function drawInteractiveSticker(ctx, type) {
             const config = stickerConfig[type]; if (!config) return;
-            ctx.save();
-            ctx.translate(activeStickerState.x, activeStickerState.y);
-            ctx.rotate((activeStickerState.rotation * Math.PI) / 180);
-            ctx.font = `${config.baseSize * activeStickerState.scale}px sans-serif`;
-            ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText(config.text, 0, 0);
-            ctx.restore();
+            ctx.save(); ctx.translate(activeStickerState.x, activeStickerState.y); ctx.rotate((activeStickerState.rotation * Math.PI) / 180);
+            ctx.font = `${config.baseSize * activeStickerState.scale}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(config.text, 0, 0); ctx.restore();
         }
 
         function initStickerInteraction() {
             canvasEdit.addEventListener('mousedown', (e) => handleStart(e.offsetX, e.offsetY));
             canvasEdit.addEventListener('mousemove', (e) => handleMove(e.offsetX, e.offsetY));
             window.addEventListener('mouseup', () => isDraggingSticker = false);
-
-            canvasEdit.addEventListener('wheel', (e) => {
-                if (currentSticker === 'none') return;
-                e.preventDefault();
-                activeStickerState.scale = Math.max(0.3, Math.min(4.0, activeStickerState.scale + (e.deltaY > 0 ? -0.05 : 0.05)));
-                applyEditEffects();
-            }, { passive: false });
+            canvasEdit.addEventListener('wheel', (e) => { if (currentSticker === 'none') return; e.preventDefault(); activeStickerState.scale = Math.max(0.3, Math.min(4.0, activeStickerState.scale + (e.deltaY > 0 ? -0.05 : 0.05))); applyEditEffects(); }, { passive: false });
 
             canvasEdit.addEventListener('touchstart', (e) => {
                 const rect = canvasEdit.getBoundingClientRect();
-                if (e.touches.length === 1) {
-                    handleStart(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-                } else if (e.touches.length === 2) {
-                    isDraggingSticker = false;
-                    const x1 = e.touches[0].clientX; const y1 = e.touches[0].clientY;
-                    const x2 = e.touches[1].clientX; const y2 = e.touches[1].clientY;
-                    lastPinchDist = Math.hypot(x2 - x1, y2 - y1);
-                    initialAngle = Math.atan2(y2 - y1, x2 - x1);
-                    initialStickerRot = activeStickerState.rotation;
-                }
+                if (e.touches.length === 1) handleStart(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                else if (e.touches.length === 2) { isDraggingSticker = false; const x1 = e.touches[0].clientX; const y1 = e.touches[0].clientY; const x2 = e.touches[1].clientX; const y2 = e.touches[1].clientY; lastPinchDist = Math.hypot(x2 - x1, y2 - y1); initialAngle = Math.atan2(y2 - y1, x2 - x1); initialStickerRot = activeStickerState.rotation; }
             });
-
             canvasEdit.addEventListener('touchmove', (e) => {
                 const rect = canvasEdit.getBoundingClientRect();
-                if (e.touches.length === 1) {
-                    handleMove(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-                } else if (e.touches.length === 2 && currentSticker !== 'none') {
-                    e.preventDefault();
-                    const x1 = e.touches[0].clientX; const y1 = e.touches[0].clientY;
-                    const x2 = e.touches[1].clientX; const y2 = e.touches[1].clientY;
-                    
-                    const currentDist = Math.hypot(x2 - x1, y2 - y1);
-                    activeStickerState.scale = Math.max(0.3, Math.min(4.0, activeStickerState.scale * (currentDist / lastPinchDist)));
-                    lastPinchDist = currentDist;
-                    
-                    const currentAngle = Math.atan2(y2 - y1, x2 - x1);
-                    activeStickerState.rotation = initialStickerRot + (currentAngle - initialAngle) * 180 / Math.PI;
-                    applyEditEffects();
+                if (e.touches.length === 1) handleMove(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                else if (e.touches.length === 2 && currentSticker !== 'none') {
+                    e.preventDefault(); const x1 = e.touches[0].clientX; const y1 = e.touches[0].clientY; const x2 = e.touches[1].clientX; const y2 = e.touches[1].clientY;
+                    const currentDist = Math.hypot(x2 - x1, y2 - y1); activeStickerState.scale = Math.max(0.3, Math.min(4.0, activeStickerState.scale * (currentDist / lastPinchDist))); lastPinchDist = currentDist;
+                    const currentAngle = Math.atan2(y2 - y1, x2 - x1); activeStickerState.rotation = initialStickerRot + (currentAngle - initialAngle) * 180 / Math.PI; applyEditEffects();
                 }
             });
             canvasEdit.addEventListener('touchend', () => isDraggingSticker = false);
 
-            function handleStart(mx, ty) {
-                if (currentSticker === 'none') return;
-                if (Math.hypot(mx - activeStickerState.x, ty - activeStickerState.y) < 90 * activeStickerState.scale) {
-                    isDraggingSticker = true; dragStartX = mx; dragStartY = ty;
-                    initialStickerX = activeStickerState.x; initialStickerY = activeStickerState.y;
-                }
-            }
-            function handleMove(mx, ty) {
-                if (!isDraggingSticker || currentSticker === 'none') return;
-                activeStickerState.x = initialStickerX + (mx - dragStartX);
-                activeStickerState.y = initialStickerY + (ty - dragStartY);
-                applyEditEffects();
-            }
+            function handleStart(mx, ty) { if (currentSticker === 'none') return; if (Math.hypot(mx - activeStickerState.x, ty - activeStickerState.y) < 90 * activeStickerState.scale) { isDraggingSticker = true; dragStartX = mx; dragStartY = ty; initialStickerX = activeStickerState.x; initialStickerY = activeStickerState.y; } }
+            function handleMove(mx, ty) { if (!isDraggingSticker || currentSticker === 'none') return; activeStickerState.x = initialStickerX + (mx - dragStartX); activeStickerState.y = initialStickerY + (ty - dragStartY); applyEditEffects(); }
         }
 
         function askToSavePhoto() { alert("精美照片已成功儲存！"); }
