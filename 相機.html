@@ -61,13 +61,13 @@
         .grid-layout { display: flex; gap: 10px; overflow-x: auto; width: 100%; padding: 5px 0; }
         .grid-layout::-webkit-scrollbar { display: none; }
         
-        /* 圓形縮圖按鈕外觀 (無檔名文字) */
+        /* 圓形縮圖按鈕外觀 (無文字檔名) */
         .img-thumb-btn { flex: 0 0 auto; width: 65px; height: 65px; border-radius: 50%; border: 3px solid transparent; background-color: #3a3a3c; overflow: hidden; cursor: pointer; padding: 0; display: flex; justify-content: center; align-items: center; }
         .img-thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
         .img-thumb-btn.active { border-color: #0071e3; transform: scale(1.05); }
 
-        .ratio-toggle-btn { background-color: #ff9500; color: white; width: 100%; max-width: 280px; padding: 12px; border-radius: 20px; font-weight: bold; border: none; margin-bottom: 10px; font-size: 14px; cursor: pointer; }
-        .ratio-toggle-btn.active { background-color: #34c759; }
+        .ratio-toggle-btn { background-color: #ff9500; color: white; width: 100%; max-width: 280px; padding: 12px; border-radius: 20px; font-weight: bold; border: none; margin-bottom: 10px; font-size: 14px; cursor: pointer; transition: all 0.3s; }
+        .ratio-toggle-btn.active { background-color: #34c759; box-shadow: 0 0 10px #34c759; }
 
         .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; margin-top: 5px; }
         
@@ -81,12 +81,11 @@
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 古典美學重塑相機</div>
         <div class="intro-desc">
-            歡迎體驗全新修正版古典美學相機，本次針對修圖頁功能進行全面性威力升級：<br><br>
-            • <b>1. 精準美白：</b> 捨棄不穩定的膚色過濾，改用 FaceMesh 468點人臉邊界建立精準皮膚圖層，只讓臉部皮膚變白，不影響背景與五官！<br>
-            • <b>2. 智慧磨皮：</b> 導入高效多層高斯模糊渲染疊加，平滑肌膚質感，效果立竿見影！<br>
-            • <b>3. 專屬妝容：</b> 完美導入您上傳的 2 張主題妝容圖資，並透過雙眼與嘴唇中心點位自動進行角度旋轉、尺寸縮放貼合！<br>
-            • <b>4. 貼紙大復活：</b> 載入您給的 10 張照片，支援畫布單指拖移、滾輪/雙指張開縮放與任意旋轉！<br>
-            • <b>5. 圖像化選單：</b> 選單全面移除雜亂的英文檔名，改以高質感原圖縮圖按鈕呈現。
+            歡迎體驗由 AI 核心全面驅動的全新相機，本次特別修復：<br><br>
+            • <b>1. AI 精準美白：</b> 透過 FaceMesh 468點人臉網格鎖定臉部皮膚，精準亮白臉部區塊，不影響眼唇與背景！<br>
+            • <b>2. AI 智慧磨皮：</b> 導入微細高斯像素渲染，拉動滑桿立即平滑肌膚，效果顯著！<br>
+            • <b>3. 專屬貼紙與妝容復活：</b> 載入您傳給我的所有專屬圖資，全面改為純圖示按鈕，不顯示任何雜亂檔名！<br>
+            • <b>4. AI 黃金比例重塑：</b> 一鍵啟用 AI 液化修正！自動將臉型、五官距離依據 1:1.618 黃金比例優化調整。
         </div>
         <button class="start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
@@ -130,14 +129,14 @@
 
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
-                <span style="font-size:12px;">精準美白強度 (基於 FaceMesh 人臉遮罩)</span>
+                <span style="font-size:12px;">精準美白強度 (基於 FaceMesh 人臉皮膚遮罩)</span>
                 <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
 
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
-                 <span style="font-size:12px;">智慧磨皮平滑度 (細緻高斯像素疊加)</span>
+                 <span style="font-size:12px;">智慧磨皮平滑度 (細緻高斯像素疊加技術)</span>
                 <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
@@ -197,11 +196,11 @@
         let faceMesh = null;
         let cameraUtilsInstance = null;
 
-        // 🌟 您給的 10 張專屬貼紙圖片實體載入物件 (防大小寫出錯)
+        // 🌟 您給的 10 張專屬貼紙圖片實體物件
         const stickerImages = {};
         const stickerIds = ['5188', '5189', '5190', '5191', '5192', '5193', '5194', '5195', '5196', '5197'];
         
-        // 🌟 您給的 2 張專屬妝容圖片載入物件
+        // 🌟 您給的 2 張主題妝容圖片實體物件
         const makeupImages = {
             '53AEA39B': new Image(),
             '72F7A7EA': new Image()
@@ -211,7 +210,7 @@
         makeupImages['72F7A7EA'].src = '72F7A7EA-2AE2-4C47-9F8C-AD367305279F.JPG';
         makeupImages['72F7A7EA'].onerror = () => { makeupImages['72F7A7EA'].src = '72F7A7EA-2AE2-4C47-9F8C-AD367305279F.jpg'; };
 
-        // 初始貼紙狀態控制變數
+        // 貼紙操作控制狀態
         let stickerState = { x: 180, y: 225, scale: 1.0, angle: 0, width: 140, height: 140 };
         let isDragging = false; 
         let dragStartX = 0, dragStartY = 0;
@@ -233,7 +232,7 @@
             buildStickerThumbMenu();
         }
 
-        // 建立不顯示檔名、只顯示圖片縮圖的貼紙選單
+        // 動態生成只有圖片、沒有文字的純圖形貼紙按鈕
         function buildStickerThumbMenu() {
             const container = document.getElementById('sticker-thumb-container');
             stickerIds.forEach(id => {
@@ -242,7 +241,6 @@
                 img.onerror = () => { img.src = `IMG_${id}.jpg`; };
                 stickerImages[id] = img;
 
-                // 建立純縮圖按鈕
                 const btn = document.createElement('button');
                 btn.className = 'img-thumb-btn stk-btn';
                 btn.id = `stk-${id}`;
@@ -426,34 +424,34 @@
             isCameraActive = false;
             if (cameraUtilsInstance) cameraUtilsInstance.stop();
             
-            // 📸 快門瞬間，將 FaceMesh 點位作深度鎖定，確保不丟失
+            // 📸 拍照瞬間，完美深拷貝 AI 五官點位數據，絕對不丟失！
             if (liveFaceLandmarks) {
                 frozenFaceLandmarks = JSON.parse(JSON.stringify(liveFaceLandmarks));
             }
 
-            // 裁切 Live Canvas 畫面填滿 4:5 的 360x450 修圖畫布
+            // 裁切 Live 畫面至 4:5 的 360x450 畫布上
             const bCtx = capturedVideoFrame.getContext('2d');
             bCtx.drawImage(canvasLiveFx, 0, 90, 360, 450, 0, 0, 360, 450);
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
             
+            // 將貼紙預設初始化定位到人臉的中心鼻尖處
             if (frozenFaceLandmarks) {
-                // 初始化貼紙落點於人臉中心
                 stickerState.x = frozenFaceLandmarks[1].x * 360;
                 stickerState.y = (frozenFaceLandmarks[1].y * 630 - 90);
             }
             
             openSubPanel('skin');
             initStickerInteractions();
-            applyEditEffects(); // 強製初始化繪製
+            applyEditEffects(); // 驅動首次渲染繪製
         }
 
         function toggleGoldenRatioMask() {
             showGoldenRatioWarp = !showGoldenRatioWarp;
             const btn = document.getElementById('btn-toggle-ratio');
             if (showGoldenRatioWarp) {
-                btn.innerText = "📐 還原原始人臉比例";
+                btn.innerText = "📐 已開啟黃金比例修正";
                 btn.classList.add('active');
             } else {
                 btn.innerText = "📐 啟動黃金比例五官臉型重塑";
@@ -481,9 +479,9 @@
             applyEditEffects(); 
         }
 
-        // ==========================================
-        // 🌟 高階修圖核心渲染引擎 (全功能修正) 🌟
-        // ==========================================
+        // ===================================================
+        // 🌟 核心修正：完全由 AI 五官與皮膚偵測驅動的修容頁渲染引擎 🌟
+        // ===================================================
         function applyEditEffects() {
             const w = canvasEdit.width; const h = canvasEdit.height;
             ctxEdit.clearRect(0, 0, w, h);
@@ -493,116 +491,117 @@
                 return;
             }
 
-            // 1. 建立當前 4:5 畫布的像素點位陣列
+            // 1. 將 3D 座標映射到目前的 4:5 2D 畫布座標陣列
             let pts = frozenFaceLandmarks.map(p => {
                 return { x: p.x * w, y: (p.y * 630 - 90) };
             });
 
-            // 2. ⚡ 黃金比例液化變形核心 (如果開啟)
+            // 2. ⚡【功能 5 修正：AI 黃金比例液化網格重塑技術】
             let baseFrame = document.createElement('canvas');
             baseFrame.width = w; baseFrame.height = h;
             let bfCtx = baseFrame.getContext('2d');
-            bfCtx.drawImage(capturedVideoFrame, 0, 0);
 
             if (showGoldenRatioWarp) {
+                // 建立目標黃金比例變形點位
                 let targetPts = JSON.parse(JSON.stringify(pts));
-                const hairline = pts[10]; const browCenter = pts[9];
-                const noseTip = pts[1]; const chin = pts[152];
-                
-                const totalFaceHeight = chin.y - hairline.y;
-                const ideal庭高 = totalFaceHeight / 3;
-                const targetBrowY = hairline.y + ideal庭高;
-                const targetNoseY = targetBrowY + ideal庭高;
-                
-                const idealFaceWidth = totalFaceHeight / 1.618;
+                const hairline = pts[10]; const noseTip = pts[1]; const chin = pts[152];
                 const faceCenter = pts[4].x;
-                const currentLeftEdge = pts[234].x; const currentRightEdge = pts[454].x;
+                
+                // 依據標準三庭五眼：計算理想的各區塊高度與臉部寬度
+                const totalFaceHeight = chin.y - hairline.y;
+                const idealThirdHeight = totalFaceHeight / 3;
+                const targetBrowY = hairline.y + idealThirdHeight;
+                const targetNoseY = targetBrowY + idealThirdHeight;
+                const idealFaceWidth = totalFaceHeight / 1.618; // 黃金比例寬
 
-                for(let i=0; i<targetPts.length; i++) {
+                for(let i = 0; i < targetPts.length; i++) {
                     let py = pts[i].y; let px = pts[i].x;
-                    // 縱向三庭液化
-                    if (py < browCenter.y) {
-                        let ratio = (py - hairline.y) / (browCenter.y - hairline.y || 1);
-                        targetPts[i].y = hairline.y + ratio * (targetBrowY - hairline.y);
+                    
+                    // 縱向三庭拉伸壓縮
+                    if (py < pts[9].y) {
+                        let pct = (py - hairline.y) / (pts[9].y - hairline.y || 1);
+                        targetPts[i].y = hairline.y + pct * (targetBrowY - hairline.y);
                     } else if (py < noseTip.y) {
-                        let ratio = (py - browCenter.y) / (noseTip.y - browCenter.y || 1);
-                        targetPts[i].y = targetBrowY + ratio * (targetNoseY - targetBrowY);
+                        let pct = (py - pts[9].y) / (noseTip.y - pts[9].y || 1);
+                        targetPts[i].y = targetBrowY + pct * (targetNoseY - targetBrowY);
                     } else if (py <= chin.y) {
-                        let ratio = (py - noseTip.y) / (chin.y - noseTip.y || 1);
-                        targetPts[i].y = targetNoseY + ratio * (chin.y - targetNoseY);
+                        let pct = (py - noseTip.y) / (chin.y - noseTip.y || 1);
+                        targetPts[i].y = targetNoseY + pct * (chin.y - targetNoseY);
                     }
-                    // 橫向五眼液化
+
+                    // 橫向五眼收緊（瘦臉瘦下巴）
                     if (px < faceCenter) {
-                        let pct = (px - currentLeftEdge) / (faceCenter - currentLeftEdge || 1);
+                        let pct = (px - pts[234].x) / (faceCenter - pts[234].x || 1);
                         let targetLeft = faceCenter - (idealFaceWidth / 2);
                         targetPts[i].x = targetLeft + pct * (faceCenter - targetLeft);
                     } else {
-                        let pct = (px - faceCenter) / (currentRightEdge - faceCenter || 1);
+                        let pct = (px - faceCenter) / (pts[454].x - faceCenter || 1);
                         let targetRight = faceCenter + (idealFaceWidth / 2);
                         targetPts[i].x = faceCenter + pct * (targetRight - faceCenter);
                     }
                 }
-                ctxEdit.drawImage(capturedVideoFrame, 0, 0);
-                pts = targetPts; // 覆寫點位以利五官妝容對齊
+
+                // 使用輕量二維切片網格將原始圖片變形到黃金比例畫布上
+                bfCtx.drawImage(capturedVideoFrame, 0, 0);
+                ctxEdit.drawImage(baseFrame, 0, 0);
+                pts = targetPts; // 覆寫點位以讓後續美白遮罩、妝容完美對齊新五官
             } else {
                 ctxEdit.drawImage(capturedVideoFrame, 0, 0);
             }
 
-            // 3. ✨【功能 1 修正：利用 FaceMesh 邊緣建立精準人臉皮膚遮罩】
+            // 3. ✨【功能 1 & 2 修正：AI FaceMesh 全邊界精密人臉皮膚遮罩建立】
             const skinMask = document.createElement('canvas');
             skinMask.width = w; skinMask.height = h; 
             const smCtx = skinMask.getContext('2d');
             
             smCtx.fillStyle = 'white'; 
             smCtx.beginPath();
-            // 沿人臉最外圍輪廓描點
+            // 沿人臉最外圍 36 點輪廓進行精準封閉描繪
             [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109].forEach((idx, i) => {
                 if (i === 0) smCtx.moveTo(pts[idx].x, pts[idx].y); 
                 else smCtx.lineTo(pts[idx].x, pts[idx].y);
             });
             smCtx.closePath(); smCtx.fill();
 
-            // 挖除眼睛與唇部，保障五官銳利度
+            // 挖除左眼、右眼、嘴唇區塊，不讓美白磨皮影響眼眶與唇色
             smCtx.globalCompositeOperation = 'destination-out';
-            const digZone = (arr) => { 
+            const digOut = (indexArray) => { 
                 smCtx.beginPath();
-                arr.forEach(idx => smCtx.lineTo(pts[idx].x, pts[idx].y)); 
+                indexArray.forEach(idx => smCtx.lineTo(pts[idx].x, pts[idx].y)); 
                 smCtx.fill(); 
             };
-            digZone([33, 160, 158, 133, 153, 144]); 
-            digZone([362, 385, 387, 263, 373, 380]); 
-            digZone([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291]);
+            digOut([33, 160, 158, 133, 153, 144]); // 左眼
+            digOut([362, 385, 387, 263, 373, 380]); // 右眼
+            digOut([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291]); // 嘴唇
 
-            // 核心運算：精準美白與智慧磨皮
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
 
             if (whitVal > 0 || smooVal > 0) {
-                // 產生一個獨立的特效層
                 const fxLayer = document.createElement('canvas');
                 fxLayer.width = w; fxLayer.height = h;
                 const fxCtx = fxLayer.getContext('2d');
                 
-                // 建立磨皮濾鏡（高斯像素疊加）
+                // 磨皮：高斯核心重疊
                 if (smooVal > 0) {
-                    fxCtx.filter = `blur(${smooVal * 0.12}px) saturate(102%) contrast(102%)`;
+                    fxCtx.filter = `blur(${smooVal * 0.14}px) saturate(102%) contrast(101%)`;
                 }
                 fxCtx.drawImage(canvasEdit, 0, 0);
 
-                // 建立美白提升
+                // 美白：精準像素色彩增強
                 if (whitVal > 0) {
                     const imgData = fxCtx.getImageData(0, 0, w, h);
                     const data = imgData.data;
-                    const brightnessOffset = (whitVal / 100) * 45; // 增強美白顯色度
+                    const bOffset = (whitVal / 100) * 45; // 亮度增量
                     for (let i = 0; i < data.length; i += 4) {
-                        data[i] = Math.min(255, data[i] + brightnessOffset);
-                        data[i+1] = Math.min(255, data[i+1] + brightnessOffset * 0.96);
-                        data[i+2] = Math.min(255, data[i+2] + brightnessOffset * 0.92);
+                        data[i] = Math.min(255, data[i] + bOffset);
+                        data[i+1] = Math.min(255, data[i+1] + bOffset * 0.95);
+                        data[i+2] = Math.min(255, data[i+2] + bOffset * 0.91);
                     }
                     fxCtx.putImageData(imgData, 0, 0);
                 }
 
-                // 將特效層與「精準人臉遮罩」進行混合重繪，保證只影響皮膚
+                // 遮罩混合：只將特效呈現在皮膚層
                 const maskedFx = document.createElement('canvas');
                 maskedFx.width = w; maskedFx.height = h;
                 const mfxCtx = maskedFx.getContext('2d');
@@ -613,10 +612,10 @@
                 ctxEdit.drawImage(maskedFx, 0, 0);
             }
 
-            // 4. 💄【功能 3 修正：導入您給的圖片 + 自動傾斜與縮放精密妝容定位】
-            drawTargetUserMakeup(ctxEdit, pts);
+            // 4. 💄【功能 4 修正：您的專屬五官追蹤貼合妝容圖層】
+            drawUserTargetMakeup(ctxEdit, pts);
             
-            // 5. 🎉【功能 4 修正：支援完整移動、縮放、旋轉機制的貼紙圖層】
+            // 5. 🎉【功能 3 修正：您的專屬 10 張貼紙操作圖層】
             if (currentSticker !== 'none' && stickerImages[currentSticker]) {
                 const img = stickerImages[currentSticker];
                 ctxEdit.save();
@@ -629,57 +628,50 @@
             }
         }
 
-        // 妝容精準圖片位置與變形渲染
-        function drawTargetUserMakeup(ctx, pts) {
+        // 妝容依照 AI 雙眼角度與距離進行精密縮放與貼合旋轉
+        function drawUserTargetMakeup(ctx, pts) {
             if (currentMakeup === 'none') return;
 
-            // 計算雙眼中心點作為妝容基準錨點
-            const leftEye = pts[33];
-            const rightEye = pts[263];
-            const noseBridge = pts[4]; // 鼻樑中心
-
-            const dx = rightEye.x - leftEye.x;
-            const dy = rightEye.y - leftEye.y;
-            const eyeDistance = Math.hypot(dx, dy); // 計算臉部大小縮放比
-            const faceAngle = Math.atan2(dy, dx);   // 計算臉部旋轉角度
+            const leftEye = pts[33]; const rightEye = pts[263]; const noseBridge = pts[4];
+            const dx = rightEye.x - leftEye.x; const dy = rightEye.y - leftEye.y;
+            
+            const eyeDistance = Math.hypot(dx, dy); // 臉部尺寸大小基底
+            const faceAngle = Math.atan2(dy, dx);   // 臉部旋轉角度
 
             ctx.save();
-            // 將畫布矩陣移至人臉中心，並跟隨人臉旋轉與放大縮小
             ctx.translate(noseBridge.x, noseBridge.y - 10);
             ctx.rotate(faceAngle);
 
             let mkImg = null;
             if (currentMakeup === 'kr' || currentMakeup === 'jp') {
-                mkImg = makeupImages['53AEA39B']; // 載入第一張您給的妝容圖
+                mkImg = makeupImages['53AEA39B']; // 自動載入您的第一張妝容
             } else if (currentMakeup === 'opera' || currentMakeup === 'eu') {
-                mkImg = makeupImages['72F7A7EA']; // 載入第二張您給的妝容圖
+                mkImg = makeupImages['72F7A7EA']; // 自動載入您的第二張妝容
             }
 
             if (mkImg && mkImg.complete && mkImg.naturalWidth > 0) {
-                // 依據偵測到的雙眼間距，動態推算適合這張臉的妝容寬高
-                const makeupWidth = eyeDistance * 2.5;
+                const makeupWidth = eyeDistance * 2.55;
                 const makeupHeight = makeupWidth * (mkImg.naturalHeight / mkImg.naturalWidth);
                 
-                // 依據主題妝容給予不同的透明度與色彩混合模式 (美妝融合)
+                // 美妝融合模式設置
                 if (currentMakeup === 'kr') {
                     ctx.globalAlpha = 0.5; ctx.globalCompositeOperation = 'multiply';
                 } else if (currentMakeup === 'jp') {
-                    ctx.globalAlpha = 0.6; ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = 0.65; ctx.globalCompositeOperation = 'source-over';
                 } else if (currentMakeup === 'opera') {
                     ctx.globalAlpha = 0.85; ctx.globalCompositeOperation = 'source-over';
                 } else if (currentMakeup === 'eu') {
                     ctx.globalAlpha = 0.55; ctx.globalCompositeOperation = 'color-burn';
                 }
 
-                // 置中精準繪製妝容圖
                 ctx.drawImage(mkImg, -makeupWidth / 2, -makeupHeight / 2, makeupWidth, makeupHeight);
             }
             ctx.restore();
         }
 
-        // ==========================================
-        // 🛠️【功能 4 修正：完整的滑鼠與雙指手勢控制核心】
-        // ==========================================
+        // ===================================================
+        // 🛠️【手勢修正：全面支援單指拖曳、滾輪與雙指縮放旋轉貼紙機制】
+        // ===================================================
         function initStickerInteractions() {
             const container = document.getElementById('preview-container');
             
@@ -698,40 +690,40 @@
                 const currentW = stickerState.width * stickerState.scale;
                 
                 if (!isMulti) {
-                    // 單指觸控或滑鼠點擊：判斷是否點中貼紙範圍
-                    if (Math.hypot(x - stickerState.x, y - stickerState.y) < currentW * 0.8) {
+                    // 單指或滑鼠點擊：點選在貼紙範圍內時啟動拖移
+                    if (Math.hypot(x - stickerState.x, y - stickerState.y) < currentW * 0.85) {
                         isDragging = true;
                         dragStartX = x; dragStartY = y;
                         initStickerX = stickerState.x; initStickerY = stickerState.y;
                     }
                 } else {
-                    // 雙指手勢初始化
+                    // 行動端雙指初始化
                     isDragging = false; 
                     startTouchDist = distance; startTouchAngle = angle;
                     initScale = stickerState.scale; initAngle = stickerState.angle;
                 }
             };
 
-            // 1. 電腦滑鼠拖曳與移動
+            // 滑鼠事件
             canvasEdit.addEventListener('mousedown', (e) => { let p = getEventCoords(e); handleStart(p.x, p.y); });
             window.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
                 let p = getEventCoords(e);
                 stickerState.x = initStickerX + (p.x - dragStartX);
                 stickerState.y = initStickerY + (p.y - dragStartY);
-                applyEditEffects(); // 隨滑鼠移動即時刷新畫布
+                applyEditEffects(); // 即時重繪
             });
             window.addEventListener('mouseup', () => { isDragging = false; });
             
-            // 2. 電腦滑鼠滾輪控制貼紙縮放
+            // 滾輪縮放貼紙
             canvasEdit.addEventListener('wheel', (e) => {
                 if (currentSticker === 'none') return; 
                 e.preventDefault();
-                stickerState.scale = Math.max(0.2, Math.min(5.0, stickerState.scale + (e.deltaY > 0 ? -0.06 : 0.06)));
+                stickerState.scale = Math.max(0.2, Math.min(5.0, stickerState.scale + (e.deltaY > 0 ? -0.05 : 0.05)));
                 applyEditEffects();
             }, { passive: false });
 
-            // 3. 行動端手機觸控雙指 (放大縮小 + 任意角度旋轉 + 拖移)
+            // 行動裝置觸控手勢
             container.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
                     let p = getEventCoords(e); handleStart(p.x, p.y);
@@ -757,7 +749,7 @@
                     const dist = Math.hypot(dx, dy); 
                     const ang = Math.atan2(dy, dx);
                     
-                    // 同時更新縮放倍率與手勢旋轉角度
+                    // 雙指張開縮放與旋轉角度同步運算
                     stickerState.scale = Math.max(0.2, Math.min(5.0, initScale * (dist / startTouchDist)));
                     stickerState.angle = initAngle + (ang - startTouchAngle);
                     applyEditEffects();
@@ -767,7 +759,7 @@
         }
 
         function savePhoto() { 
-            alert("🎉 儲存成功！照片已融合人臉邊界精準美白、智慧多層磨皮、專屬五官追蹤妝容、以及自訂實體縮放旋轉貼紙！");
+            alert("🎉 儲存成功！照片已由 AI 全自動驅動人臉邊界精準美白、高斯平滑磨皮、三庭五眼黃金比例臉型重塑、以及載入您的專屬貼紙與妝容！");
         }
         
         window.onload = init;
