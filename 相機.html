@@ -326,8 +326,10 @@
             const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
             hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.6 });
             hands.onResults(results => {
+                document.getElementById('status-text').innerText =
+'Hands執行中';
 
-    if (
+                if (
         results.multiHandLandmarks &&
         results.multiHandLandmarks.length > 0
     ) {
