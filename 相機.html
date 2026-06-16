@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-<title>臉+脖子自然美白</title>
+<title>膚色校正相機</title>
 
 <style>
 body {
@@ -42,8 +42,8 @@ button, input {
   <button id="snap">📸 拍照</button>
   <button id="download">⬇️ 下載</button>
   <br>
-  ✨ 美白強度
-  <input id="slider" type="range" min="0" max="1" step="0.01" value="0.25">
+  🎨 膚色校正強度
+  <input id="slider" type="range" min="0" max="1" step="0.01" value="0.4">
 </div>
 
 <!-- FaceMesh -->
@@ -58,6 +58,9 @@ const ctx = canvas.getContext("2d");
 const slider = document.getElementById("slider");
 
 let landmarks = null;
+
+// 🎯 目標膚色
+const target = { r: 255, g: 237, b: 238 };
 
 // 📷 相機
 const camera = new Camera(video, {
@@ -86,23 +89,7 @@ faceMesh.onResults((results) => {
   }
 });
 
-// 🎯 拍照
-document.getElementById("snap").onclick = async () => {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  ctx.drawImage(video, 0, 0);
-
-  // 先丟給 FaceMesh 再修（簡化：用最後一幀 landmarks）
-  applyBeauty();
-};
-
-// ✨ 更自然的「混合提亮」
-function blendLighten(value, strength) {
-  return value + (255 - value) * strength;
-}
-
-// 📍 判斷臉 + 脖子區域
+// 🎯 是否在臉+脖子
 function isFaceOrNeck(x, y, w, h) {
   if (!landmarks) return false;
 
@@ -114,13 +101,11 @@ function isFaceOrNeck(x, y, w, h) {
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
 
-  // 👉 臉區
   const face = (
     x >= minX && x <= maxX &&
     y >= minY && y <= maxY
   );
 
-  // 👉 脖子（往下延伸）
   const neck = (
     x >= minX && x <= maxX &&
     y > maxY && y < maxY + (maxY - minY) * 0.6
@@ -129,8 +114,27 @@ function isFaceOrNeck(x, y, w, h) {
   return face || neck;
 }
 
-// ✨ 修圖
-function applyBeauty() {
+// 🌈 顏色校正（往目標色靠近）
+function colorMatch(r, g, b, strength) {
+  return {
+    r: r + (target.r - r) * strength,
+    g: g + (target.g - g) * strength,
+    b: b + (target.b - b) * strength
+  };
+}
+
+// 📸 拍照 + 修圖
+document.getElementById("snap").onclick = () => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0);
+
+  applySkinTone();
+};
+
+// ✨ 修圖核心
+function applySkinTone() {
   const strength = parseFloat(slider.value);
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -147,12 +151,11 @@ function applyBeauty() {
       const g = data[i + 1];
       const b = data[i + 2];
 
-      // 🌿 更自然的提亮（避免過曝）
-      const s = strength * 0.6;
+      const newColor = colorMatch(r, g, b, strength);
 
-      data[i]     = blendLighten(r, s);
-      data[i + 1] = blendLighten(g, s);
-      data[i + 2] = blendLighten(b, s);
+      data[i]     = newColor.r;
+      data[i + 1] = newColor.g;
+      data[i + 2] = newColor.b;
     }
   }
 
@@ -162,7 +165,7 @@ function applyBeauty() {
 // ⬇️ 下載
 document.getElementById("download").onclick = () => {
   const link = document.createElement("a");
-  link.download = "face_neck_beauty.png";
+  link.download = "skin_tone_match.png";
   link.href = canvas.toDataURL("image/png");
   link.click();
 };
