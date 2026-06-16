@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<title>手勢相機</title>
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: black;
+}
+
+video, canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#status {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 20px;
+  z-index: 10;
+}
+</style>
+</head>
+
+<body>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+<div id="status">等待手勢...</div>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<script>
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const statusText = document.getElementById("status");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// 🎨 濾鏡
+const filters = [
+  "none",
+  "grayscale(100%)",
+  "sepia(80%)",
+  "contrast(150%)",
+  "hue-rotate(90deg)"
+];
+
+let filterIndex = 0;
+let isCounting = false;
+
+// 套濾鏡
+function applyFilter() {
+  video.style.filter = filters[filterIndex];
+}
+
+// 📸 拍照
+function takePhoto() {
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  statusText.innerText = "📸 拍照完成";
+  isCounting = false;
+}
+
+// ⏳ 倒數拍照
+function countdown() {
+  if (isCounting) return;
+  isCounting = true;
+
+  let count = 5;
+  statusText.innerText = `📸 倒數 ${count}`;
+
+  const timer = setInterval(() => {
+    count--;
+    if (count > 0) {
+      statusText.innerText = `📸 倒數 ${count}`;
+    } else {
+      clearInterval(timer);
+      takePhoto();
+    }
+  }, 1000);
+}
+
+// ✋ 手勢判斷
+function detectGesture(landmarks) {
+  const wrist = landmarks[0];
+  const thumb = landmarks[4];
+  const index = landmarks[8];
+
+  const dx = Math.abs(thumb.x - index.x);
+  const dy = Math.abs(thumb.y - index.y);
+
+  // 👍 OK 手勢（簡化）
+  if (dx < 0.05 && dy < 0.05) {
+    countdown();
+    return;
+  }
+
+  // 👈👉 揮手切濾鏡
+  if (wrist.x < 0.3) {
+    filterIndex = (filterIndex + 1) % filters.length;
+    applyFilter();
+    statusText.innerText = "👉 下一個濾鏡";
+  }
+
+  if (wrist.x > 0.7) {
+    filterIndex = (filterIndex - 1 + filters.length) % filters.length;
+    applyFilter();
+    statusText.innerText = "👈 上一個濾鏡";
+  }
+}
+
+// 🤖 MediaPipe Hands
+const hands = new Hands({
+  locateFile: (file) =>
+    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+
+hands.setOptions({
+  maxNumHands: 1,
+  modelComplexity: 1,
+  minDetectionConfidence: 0.7,
+  minTrackingConfidence: 0.7
+});
+
+hands.onResults((results) => {
+  if (results.multiHandLandmarks?.length > 0) {
+    detectGesture(results.multiHandLandmarks[0]);
+  }
+});
+
+// 📷 開相機
+const camera = new Camera(video, {
+  onFrame: async () => {
+    await hands.send({ image: video });
+  },
+  width: 640,
+  height: 480
+});
+
+camera.start();
+applyFilter();
+</script>
+
+</body>
+</html>
