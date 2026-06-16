@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 雙鏡頭黃金重塑旗艦相機(手勢流暢優化版)</title>
+    <title>AI 雙鏡頭旗艦相機 (手勢完全修正版)</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
@@ -38,7 +37,7 @@
         .filter-thumb-name { font-size: 11px; color: #8e8e93; font-weight: 500; }
         .filter-thumb-item.active .filter-thumb-name { color: #0071e3; font-weight: bold; }
 
-        .gesture-tips { font-size: 11px; color: #8e8e93; text-align: center; line-height: 1.5; background: #1c1c1e; padding: 6px 12px; border-radius: 12px; width: 92%; }
+        .gesture-tips { font-size: 11px; color: #a1a1a6; text-align: center; line-height: 1.5; background: #1c1c1e; padding: 8px 12px; border-radius: 12px; width: 92%; border: 1px solid rgba(255,255,255,0.05); }
 
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; background: #1c1c1e; overflow-y: auto; padding: 15px; }
         .preview-box { width: 100%; max-width: 360px; aspect-ratio: 4/5; background-color: #000; border-radius: 14px; margin-bottom: 15px; position: relative; overflow: hidden; }
@@ -70,19 +69,19 @@
     <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 雙鏡頭旗艦相機 (低負載穩定版)</div>
+        <div class="intro-title">AI 雙鏡頭旗艦相機 (手勢完全修正版)</div>
         <div class="intro-desc">
-            <b>🙌 完美保留手勢功能 + 防崩潰調校：</b><br><br>
+            <b>🛡️ 已切換為網頁原生非阻塞執行緒：</b><br><br>
             * 畫面拆分為<b>「原鏡頭」</b>與<b>「修改後」</b>即時左右對比。<br><br>
-            1. <b>🖐️ 左右揮手 或 點擊滾動條：</b> 順暢切換右窗即時濾鏡。<br>
-            2. <b>👌 比出 OK 手勢：</b> 觸發 5 秒拍照倒數，完美捕捉精美畫面。<br>
-            3. <b>✨ 後製編輯：</b> 拍照後自動執行 FaceMesh，完整支援美白、磨皮、一鍵黃金比例瘦臉大眼、雙主題妝容、實體圖片貼紙拖移。
+            1. <b>🖐️ 左右揮手 或 點擊縮圖：</b> 切換右窗即時濾鏡。<br>
+            2. <b>👌 比出 OK 手勢（大拇指與食指捏合）：</b> 觸發 5 秒拍照倒數。<br>
+            3. <b>✨ 後製編輯：</b> 拍照後才單次載入人臉 AI，完美支援美白、磨皮、一鍵黃金比例瘦臉大眼、雙主題妝容、實體圖片貼紙拖移。
         </div>
-        <button class="start-btn" onclick="enterCameraStage()">開啟相機測試</button>
+        <button class="start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="status-text" class="status-top">🖐️ 手勢 AI 載入中...</div>
+        <div id="status-text" class="status-top">⚡ 鏡頭初始化中...</div>
         
         <div class="viewfinders-split">
             <div class="viewfinder-box">
@@ -101,7 +100,7 @@
             <div class="filter-scroll-container" id="filter-bar"></div>
 
             <div class="gesture-tips">
-                🖐️ 左右揮手換濾鏡 | 👌 比出 OK 觸發 5 秒拍照 (已啟用低溫防閃核心)
+                🖐️ 面向相機左右揮手換濾鏡<br>👌 比出 OK (指尖捏合) 觸發 5 秒拍照
             </div>
         </div>
     </div>
@@ -212,9 +211,9 @@
         const CW = 360;
         const CH = 630;
 
-        let lastAITime = 0; 
-        let faceMeshProcessor = null;
         let isCameraActive = false;
+        let faceMeshProcessor = null;
+        let handAIInterval = null;
 
         function init() {
             canvasRaw.width = CW; canvasRaw.height = CH;
@@ -272,22 +271,24 @@
         function enterCameraStage() {
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
-            const status = document.getElementById('status-text');
+            const statusText = document.getElementById('status-text');
 
+            // 啟用瀏覽器最原生的相機授權
             navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } 
             })
             .then(stream => {
                 videoElement.srcObject = stream;
                 isCameraActive = true;
+                statusText.innerText = "🖐️ 左右揮手換濾鏡 | 👌 比出 OK 手勢拍照";
                 
-                // 啟動最流暢、原生不爭搶 WebGL 的渲染迴圈
+                // 啟動自主繪圖迴圈，完全與 AI 分開，絕不閃爍
                 startRenderLoop();
-                // 啟動降載版低頻率手勢分析
-                initLowLoadHandAI();
+                // 啟用突破死鎖的手勢計時分析執行續
+                startThreadHandAI();
             })
             .catch(err => {
-                status.innerText = "❌ 錯誤：無法啟動相機。請授權相機權限。";
+                statusText.innerText = "❌ 錯誤：無法啟動相機，請確認授權。";
             });
         }
 
@@ -312,6 +313,7 @@
             ctx.restore();
         }
 
+        // 原生高效渲染：不與 WebGL 搶資源，徹底消除閃爍
         function startRenderLoop() {
             if (!isCameraActive) return;
             if (videoElement.readyState >= 2) {
@@ -330,60 +332,65 @@
             requestAnimationFrame(startRenderLoop);
         }
 
-        // 核心修改：以每 150ms 運算一次的超低能耗運行手勢 AI，保證相機不崩潰、不閃爍
-        function initLowLoadHandAI() {
-            const status = document.getElementById('status-text');
-            
+        // 自製獨立計時器執行緒：將 Canvas 快照送入 AI，強行打通卡死的手勢偵測
+        function startThreadHandAI() {
             const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-            hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+            hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.55, minTrackingConfidence: 0.55 });
+            
             hands.onResults(results => {
-                if (!isCountingDown) status.innerText = "🖐️ 左右揮手換濾鏡 | 👌 比出 OK 手勢拍照";
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    handleHandGestures(results.multiHandLandmarks[0]);
-                } else { lastHandX = null; }
+                    processLiveGestures(results.multiHandLandmarks[0]);
+                } else {
+                    lastHandX = null;
+                }
             });
 
-            // 使用 setInterval 代替高頻率的 onFrame 迴圈，強行壓低 GPU 運算量，阻斷閃爍發生
-            setInterval(async () => {
+            // 每 120 毫秒將畫布快照丟給手勢 AI，既能靈敏偵測，又絕對不卡死、不閃爍
+            handAIInterval = setInterval(async () => {
                 if (isCameraActive && videoElement.readyState >= 2 && !isCountingDown) {
-                    await hands.send({ image: videoElement });
+                    // 使用當前無衝突的 raw 畫布作為特徵輸入源
+                    await hands.send({ image: canvasRaw });
                 }
-            }, 150); // 每秒只分析約 6 次，硬體毫無壓力
+            }, 120);
         }
 
-        function handleHandGestures(lm) {
+        function processLiveGestures(lm) {
             const status = document.getElementById('status-text');
+            
+            // 精準 OK 手勢：食指尖(8)與拇指尖(4)捏合，其餘指尖(12, 16)高於關節
             const distThumbFore = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
-            // OK 手勢演算法
-            const isOk = (distThumbFore < 0.055) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
+            const isOk = (distThumbFore < 0.058) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
 
             if (isOk && !isCountingDown) {
                 isCountingDown = true;
                 let count = 5;
-                status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
+                status.innerText = `👌 比出 OK！倒數 ${count} 秒後自動拍照...`;
+                
                 countdownTimer = setInterval(() => {
                     count--;
-                    status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
-                    if (count <= 0) {
+                    if (count > 0) {
+                        status.innerText = `👌 比出 OK！倒數 ${count} 秒後自動拍照...`;
+                    } else {
                         clearInterval(countdownTimer);
-                        status.innerText = "📸 拍照成功！";
+                        status.innerText = "📸 拍照中...";
                         setTimeout(triggerSnapshot, 200);
                     }
                 }, 1000);
                 return;
             }
 
-            // 揮手切換濾鏡
+            // 揮手切換濾鏡：偵測手掌中心點(9)
             const currentX = 1 - lm[9].x; 
             if (lastHandX !== null && !waveCooldown && !isCountingDown) {
                 const delta = currentX - lastHandX;
-                if (Math.abs(delta) > 0.08) { 
+                if (Math.abs(delta) > 0.075) { 
                     waveCooldown = true;
                     let nextIdx = currentFilterIndex;
                     if (delta > 0) nextIdx = (currentFilterIndex + 1) % filters.length;
                     else nextIdx = (currentFilterIndex - 1 + filters.length) % filters.length;
+                    
                     selectFilterByIndex(nextIdx);
-                    setTimeout(() => { waveCooldown = false; }, 700);
+                    setTimeout(() => { waveCooldown = false; }, 650); // 防重複抖動
                 }
             }
             lastHandX = currentX;
@@ -391,23 +398,24 @@
 
         function triggerSnapshot() {
             isCameraActive = false;
+            clearInterval(handAIInterval); // 關閉手勢計時器
             
-            // 擷取修改後的預覽畫面
+            // 擷取右側修改後的精美畫面
             const bCtx = capturedVideoFrame.getContext('2d');
             bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450);
             
-            // 切換至編輯畫面
+            // 切換至編輯後製舞台
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
             openSubPanel('ratio'); 
             initStickerMobileDrag();
 
-            // 徹底切斷鏡頭，將系統硬體資源全部釋放給後製編輯使用
+            // 徹底關閉相機硬體視訊串流，釋放 100% 資源給後製美顏
             if (videoElement.srcObject) {
                 videoElement.srcObject.getTracks().forEach(track => track.stop());
             }
 
-            // 啟動單次、靜態的精密人臉分析
+            // 進行精密單次人臉 FaceMesh 後製計算
             analyzeFaceMeshForSnapshot();
         }
 
@@ -420,10 +428,10 @@
                 faceMeshProcessor.onResults(results => {
                     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                         latestFaceLandmarks = results.multiFaceLandmarks[0];
-                        tips.innerText = "✨ AI 人臉黃金特徵分析完畢！可以開啟黃金比例重塑囉。";
+                        tips.innerText = "✨ AI 人臉分析成功！可以點擊下方按鈕進行黃金比例重塑囉。";
                         applyEditEffects();
                     } else {
-                        tips.innerText = "⚠️ 未完美偵測到清晰人臉，仍可點擊開啟基礎優化。";
+                        tips.innerText = "⚠️ 未完全對準人臉，仍可點擊按鈕套用基礎美顏效果。";
                         applyEditEffects();
                     }
                 });
