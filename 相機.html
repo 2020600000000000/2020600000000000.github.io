@@ -2,33 +2,22 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-<title>膚色校正相機</title>
+<title>膚色校正（可見效果版）</title>
 
 <style>
-body {
-  margin: 0;
-  background: black;
-  font-family: sans-serif;
-  text-align: center;
-}
-
+body { margin:0; background:black; }
 video, canvas {
-  width: 100%;
-  max-height: 80vh;
-  object-fit: contain;
-  background: black;
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
-
-#controls {
-  position: fixed;
-  bottom: 10px;
-  width: 100%;
-  color: white;
-}
-
-button, input {
-  margin: 5px;
-  padding: 10px;
+#ui {
+  position:fixed;
+  bottom:10px;
+  width:100%;
+  text-align:center;
+  color:white;
 }
 </style>
 </head>
@@ -38,136 +27,92 @@ button, input {
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas"></canvas>
 
-<div id="controls">
-  <button id="snap">📸 拍照</button>
-  <button id="download">⬇️ 下載</button>
-  <br>
-  🎨 膚色校正強度
-  <input id="slider" type="range" min="0" max="1" step="0.01" value="0.4">
+<div id="ui">
+  🎨 強度
+  <input id="slider" type="range" min="0" max="1" step="0.01" value="0.6">
+  <button id="snap">拍照</button>
 </div>
 
-<!-- FaceMesh -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-
 const slider = document.getElementById("slider");
 
-let landmarks = null;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-// 🎯 目標膚色
-const target = { r: 255, g: 237, b: 238 };
+// 🎯 目標粉嫩膚色
+const target = [255, 237, 238];
 
-// 📷 相機
-const camera = new Camera(video, {
-  onFrame: async () => {},
-  width: 640,
-  height: 480
-});
-camera.start();
-
-// 🤖 FaceMesh
-const faceMesh = new FaceMesh({
-  locateFile: (file) =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+// 🧍 人像分割（關鍵！）
+const segmentation = new SelfieSegmentation({
+  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`
 });
 
-faceMesh.setOptions({
-  maxNumFaces: 1,
-  refineLandmarks: true,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
-});
+segmentation.setOptions({ modelSelection: 1 });
 
-faceMesh.onResults((results) => {
-  if (results.multiFaceLandmarks?.length > 0) {
-    landmarks = results.multiFaceLandmarks[0];
-  }
-});
-
-// 🎯 是否在臉+脖子
-function isFaceOrNeck(x, y, w, h) {
-  if (!landmarks) return false;
-
-  const xs = landmarks.map(p => p.x * w);
-  const ys = landmarks.map(p => p.y * h);
-
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-
-  const face = (
-    x >= minX && x <= maxX &&
-    y >= minY && y <= maxY
-  );
-
-  const neck = (
-    x >= minX && x <= maxX &&
-    y > maxY && y < maxY + (maxY - minY) * 0.6
-  );
-
-  return face || neck;
+function isSkin(r,g,b){
+  // 更寬鬆皮膚判斷（確保會作用）
+  return r > 60 && g > 30 && b > 20;
 }
 
-// 🌈 顏色校正（往目標色靠近）
-function colorMatch(r, g, b, strength) {
-  return {
-    r: r + (target.r - r) * strength,
-    g: g + (target.g - g) * strength,
-    b: b + (target.b - b) * strength
-  };
-}
+segmentation.onResults((res)=>{
 
-// 📸 拍照 + 修圖
-document.getElementById("snap").onclick = () => {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-  ctx.drawImage(video, 0, 0);
+  const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d = img.data;
 
-  applySkinTone();
-};
+  const maskCanvas = document.createElement("canvas");
+  maskCanvas.width = canvas.width;
+  maskCanvas.height = canvas.height;
+  const mctx = maskCanvas.getContext("2d");
+  mctx.drawImage(res.segmentationMask,0,0,canvas.width,canvas.height);
 
-// ✨ 修圖核心
-function applySkinTone() {
+  const mask = mctx.getImageData(0,0,canvas.width,canvas.height).data;
+
   const strength = parseFloat(slider.value);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
+  for(let i=0;i<d.length;i+=4){
 
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
+    // 👤 只在人身上
+    if(mask[i] < 50) continue;
 
-      const i = (y * canvas.width + x) * 4;
+    let r=d[i], g=d[i+1], b=d[i+2];
 
-      if (!isFaceOrNeck(x, y, canvas.width, canvas.height)) continue;
+    // 🎯 只抓「偏膚色」
+    if(isSkin(r,g,b)){
 
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-
-      const newColor = colorMatch(r, g, b, strength);
-
-      data[i]     = newColor.r;
-      data[i + 1] = newColor.g;
-      data[i + 2] = newColor.b;
+      // 👉 關鍵：往目標色「拉近」(不是乘法)
+      d[i]   = r + (target[0]-r)*strength;
+      d[i+1] = g + (target[1]-g)*strength;
+      d[i+2] = b + (target[2]-b)*strength;
     }
   }
 
-  ctx.putImageData(imageData, 0, 0);
-}
+  ctx.putImageData(img,0,0);
+});
 
-// ⬇️ 下載
-document.getElementById("download").onclick = () => {
-  const link = document.createElement("a");
-  link.download = "skin_tone_match.png";
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+const camera = new Camera(video,{
+  onFrame: async ()=>{
+    await segmentation.send({image:video});
+  },
+  width:640,
+  height:480
+});
+
+camera.start();
+
+// 📸 拍照（直接輸出結果）
+document.getElementById("snap").onclick = ()=>{
+  const a=document.createElement("a");
+  a.download="skin.png";
+  a.href=canvas.toDataURL();
+  a.click();
 };
 </script>
 
