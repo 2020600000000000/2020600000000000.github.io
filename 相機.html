@@ -1,17 +1,35 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<meta charset="UTF-8" />
-<title>手機級美顏App</title>
+<meta charset="UTF-8">
+<title>美顏App（單檔版）</title>
 
 <style>
 body { margin:0; background:black; font-family:sans-serif; }
-video, canvas {
+
+/* ===== Camera ===== */
+#cameraPage, #editorPage {
   position:absolute;
+  width:100%;
+  height:100%;
+}
+
+video, canvas {
   width:100%;
   height:100%;
   object-fit:cover;
 }
+
+/* UI */
+#snapBtn {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:15px;
+  font-size:18px;
+}
+
 #ui {
   position:fixed;
   bottom:10px;
@@ -19,167 +37,97 @@ video, canvas {
   text-align:center;
   color:white;
 }
-input { width:200px; }
-button { padding:10px; margin:5px; }
+
+button, input { margin:5px; padding:10px; }
+
+/* hide editor first */
+#editorPage { display:none; }
 </style>
 </head>
 
 <body>
 
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
-
-<div id="ui">
-  ✨ 美顏強度
-  <input id="slider" type="range" min="0" max="1" step="0.01" value="0.6">
-  <button id="snap">📸 拍照</button>
+<!-- ================= CAMERA PAGE ================= -->
+<div id="cameraPage">
+  <video id="video" autoplay playsinline></video>
+  <button id="snapBtn">📸 拍照</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<!-- ================= EDITOR PAGE ================= -->
+<div id="editorPage">
+  <canvas id="canvas"></canvas>
+
+  <div id="ui">
+    ✨ 美顏強度
+    <input id="slider" type="range" min="0" max="1" step="0.01" value="0.5">
+    <button id="backBtn">🔙 返回拍照</button>
+  </div>
+</div>
 
 <script>
 const video=document.getElementById("video");
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 
+const cameraPage=document.getElementById("cameraPage");
+const editorPage=document.getElementById("editorPage");
+
 const slider=document.getElementById("slider");
 
-canvas.width=innerWidth;
-canvas.height=innerHeight;
-
-let face=null;
-
-// =====================
-// 📷 Camera
-// =====================
-const cam=new Camera(video,{
-  onFrame:async()=>{},
-  width:640,
-  height:480
-});
-cam.start();
-
-// =====================
-// 🤖 FaceMesh
-// =====================
-const fm=new FaceMesh({
-  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+// ================= CAMERA =================
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+  video.srcObject=stream;
 });
 
-fm.setOptions({
-  maxNumFaces:1,
-  refineLandmarks:true
-});
+// 📸 拍照 → 切頁
+document.getElementById("snapBtn").onclick=()=>{
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
 
-fm.onResults(r=>{
-  if(r.multiFaceLandmarks?.length){
-    face=r.multiFaceLandmarks[0];
-  }
-});
+  ctx.drawImage(video,0,0);
 
-// =====================
-// 🎯 脸 + 脖子区域
-// =====================
-function inFace(x,y,w,h){
-  if(!face) return false;
+  cameraPage.style.display="none";
+  editorPage.style.display="block";
+};
 
-  let xs=face.map(p=>p.x*w);
-  let ys=face.map(p=>p.y*h);
+// ================= SKIN TONE =================
+const target=[255,235,238];
 
-  let minX=Math.min(...xs);
-  let maxX=Math.max(...xs);
-  let minY=Math.min(...ys);
-  let maxY=Math.max(...ys);
-
-  return (
-    x>=minX && x<=maxX &&
-    y>=minY && y<=maxY+(maxY-minY)*0.7
-  );
+function isSkin(r,g,b){
+  return r>60 && g>40 && b>30;
 }
 
-// =====================
-// 🌸 磨皮（簡化 bilateral blur）
-// =====================
-function smooth(img,x,y,w){
-  let sumR=0,sumG=0,sumB=0,c=0;
-
-  for(let dy=-2;dy<=2;dy++){
-    for(let dx=-2;dx<=2;dx++){
-      let nx=x+dx, ny=y+dy;
-      if(nx<0||ny<0||nx>=w||ny>=img.height) continue;
-
-      let i=(ny*w+nx)*4;
-      sumR+=img.data[i];
-      sumG+=img.data[i+1];
-      sumB+=img.data[i+2];
-      c++;
-    }
-  }
-
-  return [sumR/c,sumG/c,sumB/c];
-}
-
-// =====================
-// 🎨 肤色收斂（自然粉嫩）
-// =====================
-function tone(r,g,b,t){
-  const target=[255,235,238];
-  return [
-    r+(target[0]-r)*t,
-    g+(target[1]-g)*t,
-    b+(target[2]-b)*t
-  ];
-}
-
-// =====================
-// 🔥 主渲染（真正 App 核心）
-// =====================
-function render(){
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+function apply(){
+  let t=parseFloat(slider.value);
 
   let img=ctx.getImageData(0,0,canvas.width,canvas.height);
   let d=img.data;
 
-  let t=parseFloat(slider.value);
+  for(let i=0;i<d.length;i+=4){
 
-  for(let y=0;y<canvas.height;y+=2){
-    for(let x=0;x<canvas.width;x+=2){
+    let r=d[i],g=d[i+1],b=d[i+2];
 
-      let i=(y*canvas.width+x)*4;
-
-      if(!inFace(x,y,canvas.width,canvas.height)) continue;
-
-      let r=d[i],g=d[i+1],b=d[i+2];
-
-      // 🌸 tone mapping
-      let [tr,tg,tb]=tone(r,g,b,t);
-
-      // 💆‍♀️ smooth (磨皮)
-      let sm=smooth(img,x,y,canvas.width);
-
-      // 🧠 混合（關鍵！）
-      d[i]=(tr+sm[0])/2;
-      d[i+1]=(tg+sm[1])/2;
-      d[i+2]=(tb+sm[2])/2;
+    if(isSkin(r,g,b)){
+      d[i]=r+(target[0]-r)*t;
+      d[i+1]=g+(target[1]-g)*t;
+      d[i+2]=b+(target[2]-b)*t;
     }
   }
 
   ctx.putImageData(img,0,0);
-
-  requestAnimationFrame(render);
 }
 
-render();
+// 🎚 即時調整
+slider.oninput=()=>{
+  ctx.drawImage(canvas,0,0);
+  apply();
+};
 
-// =====================
-// 📸 拍照
-// =====================
-document.getElementById("snap").onclick=()=>{
-  const a=document.createElement("a");
-  a.download="pro_beauty.png";
-  a.href=canvas.toDataURL();
-  a.click();
+// 🔙 回拍照
+document.getElementById("backBtn").onclick=()=>{
+  editorPage.style.display="none";
+  cameraPage.style.display="block";
 };
 </script>
 
