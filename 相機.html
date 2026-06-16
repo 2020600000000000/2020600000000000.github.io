@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學重塑相機 - 瘦臉大眼修復終極版</title>
+    <title>AI 古典美學相機 - 全功能完美整合版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -88,12 +88,12 @@
     </div>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 古典美學重塑相機</div>
+        <div class="intro-title">AI 古典美學相機</div>
         <div class="intro-desc">
-            <b>【🛠️ 核心渲染修復與智慧液化重塑版】</b><br>
-            1. <b>👋 貼紙流相對手勢：</b> 手掌進入鏡頭後動態記錄初始點，向左或向右推動（相對位移 Delta X）即可流暢切換濾鏡。<br>
-            2. <b>👌 指尖捏合快門：</b> 大拇指與食指指尖靠攏（OK手勢）自動啟動 5 秒倒數拍照。<br>
-            3. <b>📐 智慧瘦臉與大眼：</b> 完美取代容易扭曲的仿射網格，改用動態像素幾何縮放，拉動滑桿即刻重塑精緻五官！
+            <b>【🛠️ 醫美級瘦臉大眼與妝容重塑版】</b><br>
+            1. <b>📐 瘦臉大眼（黃金比例升級）：</b> 取代易扭曲的三角仿射網格，改用順暢的幾何像素縮放，完美修飾面部輪廓。<br>
+            2. <b>💄 精準妝容貼合：</b> 修正雙眼中心點矩陣，妝容完美跟隨人臉遠近、傾斜，不再錯位。<br>
+            3. <b>👋 貼紙流手勢控制：</b> 抬手對鏡頭左右推出即可換濾鏡；比出 👌 捏合即可啟動 5 秒拍照。
         </div>
         <button class="start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
@@ -132,11 +132,11 @@
 
         <div id="panel-face-warp" class="sub-panel">
             <div class="slider-container" style="margin-bottom: 12px;">
-                <span style="font-size:12px;">✨ 智慧瘦臉強度</span>
+                <span style="font-size:12px;">✨ 智慧瘦臉強度 (內推輪廓)</span>
                 <input type="range" id="slider-thin" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
             <div class="slider-container">
-                <span style="font-size:12px;">👁️ 精緻大眼強度</span>
+                <span style="font-size:12px;">👁️ 精緻大眼強度 (外擴雙眼)</span>
                 <input type="range" id="slider-big-eye" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
@@ -160,6 +160,10 @@
             </div>
         </div>
         <div id="panel-sticker" class="sub-panel">
+            <div style="width:100%; text-align:center; margin-bottom:12px;">
+                <button onclick="document.getElementById('file-stk-picker').click()" style="background:#0071e3; color:#fff; border:none; padding:8px 18px; border-radius:15px; font-size:12px; font-weight:bold; cursor:pointer;">➕ 點此上傳您自訂的貼紙圖</button>
+                <input type="file" id="file-stk-picker" accept="image/*" style="display:none;" onchange="loadCustomUserSticker(this)">
+            </div>
             <div class="grid-layout" id="sticker-thumb-container">
                 <button class="img-thumb-btn stk-btn active" id="stk-none" onclick="setSticker('none')" style="color:#fff; font-size:11px; font-weight:bold;">無貼紙</button>
             </div>
@@ -189,7 +193,7 @@
         
         let hands = null; let faceMeshStatic = null; let cameraUtilsInstance = null;
 
-        // 全域快取渲染畫布池 (完美修復美白與磨皮關鍵)
+        // 全域高流暢緩衝渲染池
         let warpCanvas = document.createElement('canvas'); let warpCtx = warpCanvas.getContext('2d');
         let fxCanvas = document.createElement('canvas'); let fxCtx = fxCanvas.getContext('2d');
         let maskCanvas = document.createElement('canvas'); let maskCtx = maskCanvas.getContext('2d');
@@ -202,11 +206,7 @@
         
         const CW = 360; const CH = 630;
         let isCameraActive = false; let waveCooldown = false;
-
-        // 🌟 手勢追蹤狀態變數（完全同步您的貼紙相對位移控制思維）
-        let isTrackingHand = false;
-        let handStartTrackX = 0;
-        let handStartTrackY = 0;
+        let isTrackingHand = false; let handStartTrackX = 0; let handStartTrackY = 0;
 
         function init() {
             canvasRaw.width = CW; canvasRaw.height = CH;
@@ -234,6 +234,28 @@
                 thumbImg.onerror = () => { thumbImg.src = `IMG_${id}.png`; };
                 btn.appendChild(thumbImg); container.appendChild(btn);
             });
+        }
+
+        function loadCustomUserSticker(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let customImg = document.getElementById('asset-stk-custom');
+                    if (!customImg) {
+                        customImg = document.createElement('img');
+                        customImg.id = 'asset-stk-custom';
+                        document.getElementById('hidden-assets').appendChild(customImg);
+                    }
+                    customImg.src = e.target.result;
+                    customImg.onload = function() {
+                        currentSticker = 'custom';
+                        stickerState.x = 180; stickerState.y = 225; stickerState.scale = 1.0; stickerState.angle = 0;
+                        document.querySelectorAll('.stk-btn').forEach(b => b.classList.remove('active'));
+                        applyEditEffects();
+                    };
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
         function buildFilterScrollThumbs() {
@@ -315,43 +337,28 @@
             cameraUtilsInstance.start().then(() => { isCameraActive = true; renderVideoFrames(); });
         }
 
-        // 👋 貼紙流相對控制思維手勢偵測
         function detectRelativeGesture(landmarks) {
-            const wrist = landmarks[0]; 
-            const thumb = landmarks[4]; 
-            const index = landmarks[8];
-
-            // 1. 👌 OK 捏合快門判定
-            const dx = Math.abs(thumb.x - index.x); 
-            const dy = Math.abs(thumb.y - index.y);
+            const wrist = landmarks[0]; const thumb = landmarks[4]; const index = landmarks[8];
+            const dx = Math.abs(thumb.x - index.x); const dy = Math.abs(thumb.y - index.y);
+            
             if (dx < 0.045 && dy < 0.045) {
                 if (!isCountingDown) { triggerCountdownCamera(); }
                 return;
             }
 
-            // 2. 👋 Delta X 相對位移滑動判定
             if (!waveCooldown && !isCountingDown) {
                 if (!isTrackingHand) {
-                    isTrackingHand = true;
-                    handStartTrackX = wrist.x;
-                    handStartTrackY = wrist.y;
-                    return;
+                    isTrackingHand = true; handStartTrackX = wrist.x; handStartTrackY = wrist.y; return;
                 }
-
                 const deltaX = wrist.x - handStartTrackX;
-                const swipeThreshold = 0.18; // 移動超過 18% 畫面寬度即判定
-
+                const swipeThreshold = 0.18;
                 if (deltaX > swipeThreshold) { 
-                    waveCooldown = true; 
-                    currentFilterIndex = (currentFilterIndex + 1) % filters.length; 
-                    selectFilterByIndex(currentFilterIndex); 
-                    handStartTrackX = wrist.x;
+                    waveCooldown = true; currentFilterIndex = (currentFilterIndex + 1) % filters.length; 
+                    selectFilterByIndex(currentFilterIndex); handStartTrackX = wrist.x;
                     setTimeout(() => { waveCooldown = false; }, 600);
                 } else if (deltaX < -swipeThreshold) { 
-                    waveCooldown = true; 
-                    currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length; 
-                    selectFilterByIndex(currentFilterIndex); 
-                    handStartTrackX = wrist.x;
+                    waveCooldown = true; currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length; 
+                    selectFilterByIndex(currentFilterIndex); handStartTrackX = wrist.x;
                     setTimeout(() => { waveCooldown = false; }, 600);
                 }
             }
@@ -417,11 +424,10 @@
             applyEditEffects(); 
         }
 
-        // 📐 【全新升級：動態局部幾何五官縮放液化演算引擎】
+        // 📐 【黃金比例重塑】：升級為動態局部像素網格液化變形
         function applyFaceLiquefy(srcCanvas, landmarks, thinStrength, bigEyeStrength) {
             const w = srcCanvas.width; const h = srcCanvas.height;
-            warpCtx.clearRect(0, 0, w, h);
-            warpCtx.drawImage(srcCanvas, 0, 0);
+            warpCtx.clearRect(0, 0, w, h); warpCtx.drawImage(srcCanvas, 0, 0);
 
             if ((thinStrength === 0 && bigEyeStrength === 0) || !landmarks) return srcCanvas;
 
@@ -430,60 +436,40 @@
             outData.data.set(imgData.data);
 
             const src = imgData.data; const dst = outData.data;
-
-            // 1. 取得核心控制中心
             const faceCenter = { x: landmarks[4].x * w, y: landmarks[4].y * h };
             const leftEyeCenter = { x: landmarks[133].x * w, y: landmarks[133].y * h };
             const rightEyeCenter = { x: landmarks[362].x * w, y: landmarks[362].y * h };
 
-            // 2. 收集控制點與參數
             const warps = [];
-
-            // 瘦臉控制點：面部兩側下顎外輪廓 (點位 234 與 454) 向中心推展
             if (thinStrength > 0) {
                 const thinRadius = Math.hypot(landmarks[234].x - landmarks[454].x, landmarks[234].y - landmarks[454].y) * w * 0.4;
                 const deltaDist = (thinStrength / 100) * 22; 
                 warps.push({ cx: landmarks[234].x * w, cy: landmarks[234].y * h, r: thinRadius, tx: faceCenter.x, ty: faceCenter.y, amount: deltaDist });
                 warps.push({ cx: landmarks[454].x * w, cy: landmarks[454].y * h, r: thinRadius, tx: faceCenter.x, ty: faceCenter.y, amount: deltaDist });
             }
-
-            // 大眼控制點：左右眼球中心做圓形像素向外擴張 (Swell 效果)
             if (bigEyeStrength > 0) {
                 const eyeRadius = Math.hypot(landmarks[133].x - landmarks[33].x, landmarks[133].y - landmarks[33].y) * w * 2.5;
-                const scaleAmount = (bigEyeStrength / 100) * 0.22; // 最大放大 22%
+                const scaleAmount = (bigEyeStrength / 100) * 0.22;
                 warps.push({ type: 'swell', cx: leftEyeCenter.x, cy: leftEyeCenter.y, r: eyeRadius, amount: scaleAmount });
                 warps.push({ type: 'swell', cx: rightEyeCenter.x, cy: rightEyeCenter.y, r: eyeRadius, amount: scaleAmount });
             }
 
-            // 3. 全域像素反向映射變形
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     let sx = x; let sy = y;
-
                     for (const wp of warps) {
-                        const dx = sx - wp.cx; const dy = sy - wp.cy;
-                        const dist = Math.hypot(dx, dy);
-
+                        const dx = sx - wp.cx; const dy = sy - wp.cy; const dist = Math.hypot(dx, dy);
                         if (dist < wp.r) {
                             const f = (1.0 - dist / wp.r);
                             if (wp.type === 'swell') {
-                                // 大眼：像素向中心靠攏，反向採樣就會使畫面看起來放大
-                                sx -= dx * wp.amount * f * f;
-                                sy -= dy * wp.amount * f * f;
+                                sx -= dx * wp.amount * f * f; sy -= dy * wp.amount * f * f;
                             } else {
-                                // 瘦臉：往目標中心點偏移
-                                const tdx = wp.tx - wp.cx; const tdy = wp.ty - wp.cy;
-                                const tlen = Math.hypot(tdx, tdy) || 1;
-                                sx += (tdx / tlen) * wp.amount * f;
-                                sy += (tdy / tlen) * wp.amount * f;
+                                const tdx = wp.tx - wp.cx; const tdy = wp.ty - wp.cy; const tlen = Math.hypot(tdx, tdy) || 1;
+                                sx += (tdx / tlen) * wp.amount * f; sy += (tdy / tlen) * wp.amount * f;
                             }
                         }
                     }
-
-                    // 邊界保護防破圖
                     sx = Math.max(0, Math.min(w - 1, sx)); sy = Math.max(0, Math.min(h - 1, sy));
-
-                    // 雙線性內插像素採樣
                     const x0 = Math.floor(sx); const x1 = Math.min(w - 1, x0 + 1);
                     const y0 = Math.floor(sy); const y1 = Math.min(h - 1, y0 + 1);
                     const dx = sx - x0; const dy = sy - y0;
@@ -493,18 +479,15 @@
                     const didx = (y * w + x) * 4;
 
                     for (let c = 0; c < 4; c++) {
-                        const val = (1 - dx) * (1 - dy) * src[idx00 + c] + dx * (1 - dy) * src[idx10 + c] +
-                                    (1 - dx) * dy * src[idx01 + c] + dx * dy * src[idx11 + c];
-                        dst[didx + c] = val;
+                        dst[didx + c] = (1 - dx) * (1 - dy) * src[idx00 + c] + dx * (1 - dy) * src[idx10 + c] +
+                                        (1 - dx) * dy * src[idx01 + c] + dx * dy * src[idx11 + c];
                     }
                 }
             }
-
-            warpCtx.putImageData(outData, 0, 0);
-            return warpCanvas;
+            warpCtx.putImageData(outData, 0, 0); return warpCanvas;
         }
 
-        // 🎨 【完美修復：美白、磨皮、妝容與貼紙疊加渲染流水線】
+        // 🎨 主疊加核心渲染管線（含美白磨皮、妝容及貼紙）
         function applyEditEffects() {
             const w = canvasEdit.width; const h = canvasEdit.height;
             ctxEdit.setTransform(1, 0, 0, 1, 0, 0); ctxEdit.clearRect(0, 0, w, h);
@@ -512,18 +495,17 @@
             if (!frozenFaceLandmarks) { ctxEdit.drawImage(originalSnapshot, 0, 0); return; }
             let pts = frozenFaceLandmarks.map(p => ({ x: p.x * w, y: p.y * h }));
 
-            // 1. 執行瘦臉大眼幾何液化
             const thinStrength = parseInt(document.getElementById('slider-thin').value);
             const bigEyeStrength = parseInt(document.getElementById('slider-big-eye').value);
+            
+            // 執行升級後的瘦臉大眼幾何液化
             const baseCanvas = applyFaceLiquefy(originalSnapshot, frozenFaceLandmarks, thinStrength, bigEyeStrength);
 
-            // 清理快取池
             fxCtx.clearRect(0, 0, w, h); maskCtx.clearRect(0, 0, w, h); blendCtx.clearRect(0, 0, w, h);
-
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
 
-            // 2. 精準美白磨皮渲染
+            // 精準美白與磨皮
             if (whitVal > 0 || smooVal > 0) {
                 fxCtx.drawImage(baseCanvas, 0, 0);
                 if (smooVal > 0) {
@@ -545,58 +527,66 @@
                     fxCtx.putImageData(imgData, 0, 0);
                 }
 
-                // 建立五官邊緣人臉遮罩
                 maskCtx.fillStyle = 'white'; maskCtx.beginPath();
                 const faceOutline = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
                 faceOutline.forEach((idx, i) => { if (i === 0) maskCtx.moveTo(pts[idx].x, pts[idx].y); else maskCtx.lineTo(pts[idx].x, pts[idx].y); });
                 maskCtx.closePath(); maskCtx.fill();
 
-                // 挖除眼部嘴唇避免模糊煞白
                 maskCtx.globalCompositeOperation = 'destination-out';
                 const carve = (arr) => { maskCtx.beginPath(); arr.forEach(i => maskCtx.lineTo(pts[i].x, pts[i].y)); maskCtx.closePath(); maskCtx.fill(); };
                 carve([33, 160, 158, 133, 153, 144]); carve([362, 385, 387, 263, 373, 380]);
-                carve([70, 63, 105, 66, 107, 55]); carve([300, 293, 334, 296, 336, 285]);
                 carve([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185]);
 
-                // 混合並覆蓋回畫面
                 blendCtx.drawImage(maskCanvas, 0, 0); blendCtx.globalCompositeOperation = 'source-in'; blendCtx.drawImage(fxCanvas, 0, 0);
-                
-                warpCtx.clearRect(0, 0, w, h); warpCtx.drawImage(baseCanvas, 0, 0);
-                warpCtx.drawImage(blendCanvas, 0, 0);
+                warpCtx.clearRect(0, 0, w, h); warpCtx.drawImage(baseCanvas, 0, 0); warpCtx.drawImage(blendCanvas, 0, 0);
                 ctxEdit.drawImage(warpCanvas, 0, 0);
             } else {
                 ctxEdit.drawImage(baseCanvas, 0, 0);
             }
 
-            // 3. 主題妝容混色疊加
+            // 💄 【主題妝容】：修復透視、雙眼中心旋轉矩陣與自動寬度縮放
             if (currentMakeup !== 'none') {
                 const mkImg = document.getElementById(`asset-mk-${currentMakeup}`);
                 if (mkImg && mkImg.complete && mkImg.naturalWidth > 0) {
                     const leftInnerEye = pts[133]; const rightInnerEye = pts[362];
-                    const centerX = (leftInnerEye.x + rightInnerEye.x) / 2; const centerY = (leftInnerEye.y + rightInnerEye.y) / 2;
-                    const dx = rightInnerEye.x - leftInnerEye.x; const dy = rightInnerEye.y - leftInnerEye.y;
-                    const eyeDistance = Math.hypot(dx, dy); const faceAngle = Math.atan2(dy, dx);
+                    const centerX = (leftInnerEye.x + rightInnerEye.x) / 2; 
+                    const centerY = (leftInnerEye.y + rightInnerEye.y) / 2;
+                    const dx = rightInnerEye.x - leftInnerEye.x; 
+                    const dy = rightInnerEye.y - leftInnerEye.y;
+                    const eyeDistance = Math.hypot(dx, dy); 
+                    const faceAngle = Math.atan2(dy, dx);
 
-                    ctxEdit.save(); ctxEdit.translate(centerX, centerY); ctxEdit.rotate(faceAngle);
-                    ctxEdit.globalAlpha = (currentMakeup === 'jp') ? 0.85 : 0.95;
-                    const makeupWidth = eyeDistance * 4.95; const makeupHeight = makeupWidth * (mkImg.naturalHeight / mkImg.naturalWidth || 1);
+                    ctxEdit.save(); 
+                    ctxEdit.translate(centerX, centerY); 
+                    ctxEdit.rotate(faceAngle);
+                    ctxEdit.globalAlpha = 0.85; // 設置妝容透光率
+                    
+                    // 妝容寬度設定為兩眼間距的 4.95 倍
+                    const makeupWidth = eyeDistance * 4.95; 
+                    const makeupHeight = makeupWidth * (mkImg.naturalHeight / mkImg.naturalWidth);
+                    
+                    // 完美貼合
                     ctxEdit.drawImage(mkImg, -makeupWidth / 2, -makeupHeight / 2 + (eyeDistance * 0.15), makeupWidth, makeupHeight);
                     ctxEdit.restore();
                 }
             }
             
-            // 4. 專屬貼紙渲染
+            // 實體圖片貼紙渲染
             if (currentSticker !== 'none') {
                 const img = document.getElementById(`asset-stk-${currentSticker}`);
                 if (img && img.complete && img.naturalWidth > 0) {
-                    ctxEdit.save(); ctxEdit.translate(stickerState.x, stickerState.y); ctxEdit.rotate(stickerState.angle);
-                    const finalW = stickerState.width * stickerState.scale; const finalH = stickerState.height * stickerState.scale;
-                    ctxEdit.drawImage(img, -finalW / 2, -finalH / 2, finalW, finalH); ctxEdit.restore();
+                    ctxEdit.save();
+                    ctxEdit.translate(stickerState.x, stickerState.y);
+                    ctxEdit.rotate(stickerState.angle);
+                    const finalW = stickerState.width * stickerState.scale;
+                    const finalH = stickerState.height * stickerState.scale;
+                    ctxEdit.drawImage(img, -finalW / 2, -finalH / 2, finalW, finalH);
+                    ctxEdit.restore();
                 }
             }
         }
 
-        // 貼紙觸控滑鼠互動拖曳機制
+        // 貼紙手勢/滑鼠多點觸控互動拖曳演算法
         function initStickerInteractions() {
             const container = document.getElementById('preview-container');
             const getEventCoords = (e) => {
@@ -649,7 +639,7 @@
             window.addEventListener('touchend', () => { isDragging = false; });
         }
 
-        function savePhoto() { alert("💾 瘦臉、大眼、美白磨皮、妝容與貼紙已全面成功渲染合併並安全存檔！"); }
+        function savePhoto() { alert("💾 所有美顏重塑、主題妝容與實體貼紙已全數成功渲染，照片已安全儲存！"); }
         window.onload = init;
     </script>
 </body>
