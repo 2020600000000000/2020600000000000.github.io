@@ -223,6 +223,7 @@
         let isCameraActive = false;
         let lastHandX = null;
         let waveCooldown = false;
+        let okStartTime = null;
 
         function init() {
             canvasRaw.width = CW; canvasRaw.height = CH;
@@ -325,12 +326,31 @@
             const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
             hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.6 });
             hands.onResults(results => {
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    handleAIGestures(results.multiHandLandmarks[0]);
-                } else {
-                    lastHandX = null;
-                }
-            });
+
+    if (
+        results.multiHandLandmarks &&
+        results.multiHandLandmarks.length > 0
+    ) {
+        console.log("HAND DETECTED");
+        
+        handleAIGestures(
+            results.multiHandLandmarks[0]
+        );
+
+    } else {
+
+        lastHandX = null;
+        okStartTime = null;
+
+        if (!isCountingDown) {
+
+            document.getElementById(
+                'status-text'
+            ).innerText =
+            '✋ 尚未偵測到手掌';
+        }
+    }
+});
 
             const faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
@@ -340,42 +360,123 @@
                 }
             });
 
-            let toggle = true;
-            function aiLoop() {
-                if (!isCameraActive) return;
-                if (videoElement.readyState >= 2) {
-                    let p = toggle ? hands.send({ image: videoElement }) : faceMesh.send({ image: videoElement });
-                    toggle = !toggle;
-                    p.then(() => requestAnimationFrame(aiLoop)).catch(() => requestAnimationFrame(aiLoop));
-                } else {
-                    requestAnimationFrame(aiLoop);
-                }
-            }
-            requestAnimationFrame(aiLoop);
+            async function aiLoop() {
+
+    if (!isCameraActive) return;
+
+    if (videoElement.readyState >= 2) {
+
+        try {
+
+            await Promise.all([
+
+                hands.send({
+                    image: videoElement
+                }),
+
+                faceMesh.send({
+                    image: videoElement
+                })
+
+            ]);
+
+        } catch (e) {
+
+            console.error(e);
+        }
+    }
+
+    requestAnimationFrame(aiLoop);
+}
+
+requestAnimationFrame(aiLoop);
         }
 
-        function handleAIGestures(lm) {
-            const isOk = (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.04) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
-            if (isOk && !isCountingDown) {
-                triggerCountdownCamera();
+       function handleAIGestures(lm) {
+
+    const status =
+        document.getElementById('status-text');
+
+    // ===== OK =====
+
+    const okDistance = Math.hypot(
+        lm[4].x - lm[8].x,
+        lm[4].y - lm[8].y
+    );
+
+    const isOk = okDistance < 0.08;
+
+    if (isOk && !isCountingDown) {
+
+        if (!okStartTime) {
+            okStartTime = Date.now();
+        }
+
+        const hold =
+            Date.now() - okStartTime;
+
+        status.innerText =
+            `👌 OK偵測中 ${Math.floor(hold/100)}/5`;
+
+        if (hold > 500) {
+
+            okStartTime = null;
+
+            triggerCountdownCamera();
+        }
+
+    } else {
+
+        okStartTime = null;
+    }
+
+    // ===== Wave =====
+
+    const currentX = lm[9].x;
+
+    if (
+        lastHandX !== null &&
+        !waveCooldown &&
+        !isCountingDown
+    ) {
+
+        const delta =
+            currentX - lastHandX;
+
+        if (Math.abs(delta) > 0.025) {
+
+            waveCooldown = true;
+
+            if (delta > 0) {
+
+                currentFilterIndex =
+                    (currentFilterIndex + 1)
+                    % filters.length;
+
+            } else {
+
+                currentFilterIndex =
+                    (currentFilterIndex - 1 + filters.length)
+                    % filters.length;
             }
 
-            const currentX = lm[9].x;
-            if (lastHandX !== null && !waveCooldown && !isCountingDown) {
-                const delta = currentX - lastHandX;
-                if (Math.abs(delta) > 0.07) {
-                    waveCooldown = true;
-                    if (delta > 0) {
-                        currentFilterIndex = (currentFilterIndex + 1) % filters.length;
-                    } else {
-                        currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length;
-                    }
-                    selectFilterByIndex(currentFilterIndex);
-                    setTimeout(() => { waveCooldown = false; }, 700);
-                }
-            }
-            lastHandX = currentX;
+            selectFilterByIndex(
+                currentFilterIndex
+            );
+
+            status.innerText =
+                `👋 已切換 ${filters[currentFilterIndex]}`;
+
+            setTimeout(() => {
+
+                waveCooldown = false;
+
+            }, 500);
         }
+    }
+
+    lastHandX = currentX;
+}
 
         function triggerCountdownCamera() {
             isCountingDown = true;
