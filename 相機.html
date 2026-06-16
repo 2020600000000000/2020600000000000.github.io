@@ -2,10 +2,10 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-<title>膚色校正（可見效果版）</title>
+<title>美圖秀秀級 Web 美顏</title>
 
 <style>
-body { margin:0; background:black; }
+body { margin:0; background:#000; }
 video, canvas {
   position:absolute;
   width:100%;
@@ -19,6 +19,7 @@ video, canvas {
   text-align:center;
   color:white;
 }
+input { width:200px; }
 </style>
 </head>
 
@@ -28,7 +29,7 @@ video, canvas {
 <canvas id="canvas"></canvas>
 
 <div id="ui">
-  🎨 強度
+  ✨ 美顏強度
   <input id="slider" type="range" min="0" max="1" step="0.01" value="0.6">
   <button id="snap">拍照</button>
 </div>
@@ -40,77 +41,110 @@ video, canvas {
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
 const slider = document.getElementById("slider");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-// 🎯 目標粉嫩膚色
-const target = [255, 237, 238];
+// 🎯 目標膚色（粉嫩）
+const target = [255, 235, 238];
 
-// 🧍 人像分割（關鍵！）
-const segmentation = new SelfieSegmentation({
+// 🧍 人像分割
+const seg = new SelfieSegmentation({
   locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`
 });
+seg.setOptions({ modelSelection: 1 });
 
-segmentation.setOptions({ modelSelection: 1 });
-
+// 🎯 皮膚判斷（寬鬆）
 function isSkin(r,g,b){
-  // 更寬鬆皮膚判斷（確保會作用）
-  return r > 60 && g > 30 && b > 20;
+  return r>60 && g>40 && b>30;
 }
 
-segmentation.onResults((res)=>{
+// ✨ 磨皮（簡易局部平均）
+function smooth(img, x, y, w){
+  let i=(y*w+x)*4;
+  let sumR=0,sumG=0,sumB=0,c=0;
+
+  for(let dy=-1;dy<=1;dy++){
+    for(let dx=-1;dx<=1;dx++){
+      let nx=x+dx, ny=y+dy;
+      if(nx<0||ny<0||nx>=w||ny>=img.height) continue;
+      let ni=(ny*w+nx)*4;
+      sumR+=img.data[ni];
+      sumG+=img.data[ni+1];
+      sumB+=img.data[ni+2];
+      c++;
+    }
+  }
+
+  return [
+    sumR/c,
+    sumG/c,
+    sumB/c
+  ];
+}
+
+seg.onResults(res=>{
 
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-  const img = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d = img.data;
+  let img = ctx.getImageData(0,0,canvas.width,canvas.height);
+  let d = img.data;
 
   const maskCanvas = document.createElement("canvas");
-  maskCanvas.width = canvas.width;
-  maskCanvas.height = canvas.height;
+  maskCanvas.width=canvas.width;
+  maskCanvas.height=canvas.height;
+
   const mctx = maskCanvas.getContext("2d");
   mctx.drawImage(res.segmentationMask,0,0,canvas.width,canvas.height);
 
   const mask = mctx.getImageData(0,0,canvas.width,canvas.height).data;
 
-  const strength = parseFloat(slider.value);
+  const s=parseFloat(slider.value);
 
-  for(let i=0;i<d.length;i+=4){
+  for(let y=0;y<canvas.height;y++){
+    for(let x=0;x<canvas.width;x++){
 
-    // 👤 只在人身上
-    if(mask[i] < 50) continue;
+      let i=(y*canvas.width+x)*4;
 
-    let r=d[i], g=d[i+1], b=d[i+2];
+      if(mask[i]<50) continue;
 
-    // 🎯 只抓「偏膚色」
-    if(isSkin(r,g,b)){
+      let r=d[i], g=d[i+1], b=d[i+2];
 
-      // 👉 關鍵：往目標色「拉近」(不是乘法)
-      d[i]   = r + (target[0]-r)*strength;
-      d[i+1] = g + (target[1]-g)*strength;
-      d[i+2] = b + (target[2]-b)*strength;
+      if(!isSkin(r,g,b)) continue;
+
+      // 🌸 美圖核心：柔光 + 色彩收斂
+      let sr = r + (target[0]-r)*s;
+      let sg = g + (target[1]-g)*s;
+      let sb = b + (target[2]-b)*s;
+
+      // ✨ 軟化（簡易磨皮）
+      let sm = smooth(img,x,y,canvas.width);
+
+      d[i]   = (sr + sm[0]) / 2;
+      d[i+1] = (sg + sm[1]) / 2;
+      d[i+2] = (sb + sm[2]) / 2;
     }
   }
 
   ctx.putImageData(img,0,0);
 });
 
-const camera = new Camera(video,{
+// 📷 camera
+const cam = new Camera(video,{
   onFrame: async ()=>{
-    await segmentation.send({image:video});
+    await seg.send({image:video});
   },
   width:640,
   height:480
 });
+cam.start();
 
-camera.start();
-
-// 📸 拍照（直接輸出結果）
-document.getElementById("snap").onclick = ()=>{
+// 📸 拍照
+document.getElementById("snap").onclick=()=>{
   const a=document.createElement("a");
-  a.download="skin.png";
+  a.download="meitu.png";
   a.href=canvas.toDataURL();
   a.click();
 };
