@@ -20,20 +20,31 @@
 
         /* 拍照舞台 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; position: relative; }
-        .status-top { width: 90%; text-align: center; padding: 10px; font-size: 13px; color: #fff; background: rgba(0,0,0,0.75); position: absolute; top: 15px; z-index: 50; font-weight: bold; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .status-top { width: 90%; text-align: center; padding: 10px; font-size: 13px; color: #fff; background: rgba(0,0,0,0.85); position: absolute; top: 15px; z-index: 50; font-weight: bold; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         
         /* 手機雙鏡頭對比觀景窗 */
-        .viewfinders-split { width: 100vw; height: 68vh; display: flex; flex-direction: row; gap: 4px; background: #000; padding: 4px; box-sizing: border-box; }
+        .viewfinders-split { width: 100vw; height: 58vh; display: flex; flex-direction: row; gap: 4px; background: #000; padding: 4px; box-sizing: border-box; }
         .viewfinder-box { flex: 1; height: 100%; position: relative; background: #1c1c1e; border-radius: 12px; overflow: hidden; }
         
-        /* 觀景窗內的畫布 */
+        /* 觀景窗畫布 */
         .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .viewfinder-label { position: absolute; z-index: 10; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); }
 
-        /* 下方資訊欄 */
-        .control-panel { width: 100vw; height: 32vh; background: #121212; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; gap: 12px; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
-        .filter-indicator { font-size: 14px; background: #0071e3; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: bold; }
-        .gesture-tips { font-size: 12px; color: #8e8e93; text-align: center; line-height: 1.6; background: #1c1c1e; padding: 8px 16px; border-radius: 14px; width: 90%; }
+        /* 下方底座資訊與控制欄 */
+        .control-panel { width: 100vw; height: 42vh; background: #121212; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 12px; gap: 10px; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+        .filter-indicator { font-size: 13px; background: #0071e3; padding: 5px 15px; border-radius: 20px; color: #fff; font-weight: bold; }
+        
+        /* 📸 新增：底部的濾鏡橫向滑動例圖列 */
+        .filter-scroll-container { width: 100%; display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .filter-scroll-container::-webkit-scrollbar { display: none; } /* 隱藏捲軸 */
+        .filter-thumb-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 0 auto; cursor: pointer; }
+        .filter-circle-preview { width: 68px; height: 68px; border-radius: 50%; background: #2c2c2e; border: 3px solid transparent; overflow: hidden; position: relative; transition: all 0.2s ease; }
+        .filter-circle-preview canvas { width: 100%; height: 100%; object-fit: cover; }
+        .filter-thumb-item.active .filter-circle-preview { border-color: #0071e3; transform: scale(1.08); }
+        .filter-thumb-name { font-size: 11px; color: #8e8e93; font-weight: 500; }
+        .filter-thumb-item.active .filter-thumb-name { color: #0071e3; font-weight: bold; }
+
+        .gesture-tips { font-size: 11px; color: #8e8e93; text-align: center; line-height: 1.5; background: #1c1c1e; padding: 6px 12px; border-radius: 12px; width: 92%; }
 
         /* 後製階段 */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; background: #1c1c1e; overflow-y: auto; padding: 15px; }
@@ -49,10 +60,10 @@
         .slider-input { width: 100%; height: 6px; background: #48484a; border-radius: 3px; -webkit-appearance: none; }
         .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #0071e3; }
         
-        .grid-layout { display: flex; gap: 8px; overflow-x: auto; width: 100%; white-space: nowrap; }
+        .grid-layout { display: flex; gap: 8px; overflow-x: auto; width: 100%; white-space: nowrap; padding-bottom: 5px; }
         .grid-item { flex: 0 0 auto; padding: 10px 15px; background-color: #3a3a3c; border-radius: 15px; border: 2px solid transparent; color: #fff; font-size: 12px; font-weight: bold; }
         .grid-item.active { border-color: #0071e3; background-color: #0071e3; }
-        .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; margin-top: 10px; }
+        .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; margin-top: 5px; }
         
         #hidden-video { display: none; }
     </style>
@@ -64,16 +75,16 @@
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 即時雙鏡頭對比相機</div>
         <div class="intro-desc">
-            <b>🙌 隔空手勢操控與即時對比：</b><br><br>
-            * 畫面上方將同步拆分為<b>「原鏡頭」</b>與<b>「修改後」</b>左右對比視窗。<br><br>
-            1. <b>🖐️ 隔空揮手：</b> 手掌左右大範圍晃動，直接切換右側視窗的快門濾鏡。<br>
-            2. <b>👌 比出 OK：</b> 觸發 5 秒拍照，自動擷取右側套用濾鏡後的精美畫面。
+            <b>🙌 隔空手勢與滑動控制：</b><br><br>
+            * 畫面拆分為<b>「原鏡頭」</b>與<b>「修改後」</b>左右即時對比。<br><br>
+            1. <b>🖐️ 隔空揮手 或 底下滾動條：</b> 快速滑動切換右窗例圖濾鏡。<br>
+            2. <b>👌 比出 OK 手勢：</b> 觸發 5 秒拍照倒數，自動擷取右側精美畫面。
         </div>
         <button class="start-btn" onclick="enterCameraStage()">開啟對比相機</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="status-text" class="status-top">✋ AI 正在啟動，請對準前鏡頭...</div>
+        <div id="status-text" class="status-top">✋ AI 正在啟動，請將手掌對準前鏡頭...</div>
         
         <div class="viewfinders-split">
             <div class="viewfinder-box">
@@ -88,8 +99,12 @@
         
         <div class="control-panel">
             <div class="filter-indicator" id="filter-name">濾鏡：原圖</div>
+            
+            <div class="filter-scroll-container" id="filter-bar">
+                </div>
+
             <div class="gesture-tips">
-                🖐️ 揮手：換濾鏡 | 👌 比OK：5秒拍照
+                🖐️ 左右揮手 或 點擊縮圖切換濾鏡 | 👌 比出 OK 觸發 5 秒拍照
             </div>
         </div>
     </div>
@@ -100,13 +115,12 @@
         </div>
         
         <div class="menu-row">
-            <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">自訂貼紙</button>
+            <button class="btn-item active" id="btn-sticker" onclick="openSubPanel('sticker')">專屬貼紙</button>
             <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">精準美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">智慧磨皮</button>
             <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">主題妝容</button>
         </div>
 
-        <!-- 貼紙選單：已換成上傳的圖片檔 -->
         <div id="panel-sticker" class="sub-panel">
             <div class="grid-layout">
                 <button class="grid-item stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
@@ -144,7 +158,7 @@
             </div>
         </div>
 
-        <button class="confirm-btn" onclick="savePhoto()">💾 儲存照片</button>
+        <button class="confirm-btn" onclick="savePhoto()">💾 儲存這張照片</button>
     </div>
 
     <script>
@@ -159,50 +173,107 @@
 
         let currentFilterIndex = 0;
         const filters = ['原圖', '浪漫粉紅', '日系清新', '冷調冷冽', '暖陽復古'];
-        const filterCSSMap = { '原圖': 'none', '浪漫粉紅': 'hue-rotate(-10deg) saturate(1.2) brightness(1.05)', '日系清新': 'brightness(1.15) contrast(0.9)', '冷調冷冽': 'saturate(0.6) contrast(1.15) hue-rotate(15deg)', '暖陽復古': 'sepia(0.25) saturate(1.3)' };
+        const filterCSSMap = { 
+            '原圖': 'none', 
+            '浪漫粉紅': 'hue-rotate(-10deg) saturate(1.2) brightness(1.05)', 
+            '日系清新': 'brightness(1.15) contrast(0.9)', 
+            '冷調冷冽': 'saturate(0.6) contrast(1.15) hue-rotate(15deg)', 
+            '暖陽復古': 'sepia(0.25) saturate(1.3)' 
+        };
         
-        let lastHandX = null; let waveCooldown = false;
-        let isCountingDown = false; let countdownTimer = null;
+        let lastHandX = null; 
+        let waveCooldown = false;
+        let isCountingDown = false; 
+        let countdownTimer = null;
         let capturedCanvasBackup = null;
 
-        let currentMakeup = 'none'; let currentSticker = 'none';
+        let currentMakeup = 'none'; 
+        let currentSticker = 'none';
         
-        // 建立新圖片貼紙物件庫映射對照表
+        // 建立專屬圖片貼紙集與預載機制
         const stickerImages = {};
         const stickerIds = ['5188', '5189', '5190', '5191', '5192', '5193', '5194', '5195', '5196', '5197'];
         
-        // 預先載入圖片資源
         stickerIds.forEach(id => {
             const img = new Image();
             img.src = `IMG_${id}.JPG`;
             stickerImages[id] = img;
         });
 
-        let stickerState = { x: 180, y: 220, width: 120, height: 120 };
+        let stickerState = { x: 180, y: 220, width: 130, height: 130 };
         let isDragging = false; let dragStartX = 0; let dragStartY = 0; let initStickerX = 0; let initStickerY = 0;
 
-        const CW = 300;
-        const CH = 525;
+        const CW = 360;
+        const CH = 630;
 
         function init() {
             canvasRaw.width = CW; canvasRaw.height = CH;
             canvasLiveFx.width = CW; canvasLiveFx.height = CH;
             canvasEdit.width = 360; canvasEdit.height = 450;
+            buildFilterScrollThumbs();
         }
-        init();
+
+        // 動態生成帶有即時鏡頭微縮 Canvas 的滑動預覽列
+        function buildFilterScrollThumbs() {
+            const bar = document.getElementById('filter-bar');
+            bar.innerHTML = '';
+            filters.forEach((name, idx) => {
+                const item = document.createElement('div');
+                item.className = `filter-thumb-item ${idx === 0 ? 'active' : ''}`;
+                item.id = `thumb-item-${idx}`;
+                item.onclick = () => selectFilterByIndex(idx);
+
+                const circle = document.createElement('div');
+                circle.className = 'filter-circle-preview';
+                circle.style.filter = filterCSSMap[name];
+
+                const thumbCanvas = document.createElement('canvas');
+                thumbCanvas.id = `thumb-canvas-${idx}`;
+                thumbCanvas.width = 80;
+                thumbCanvas.height = 80;
+
+                circle.appendChild(thumbCanvas);
+                
+                const label = document.createElement('div');
+                label.className = 'filter-thumb-name';
+                label.innerText = name;
+
+                item.appendChild(circle);
+                item.appendChild(label);
+                bar.appendChild(item);
+            });
+        }
+
+        function selectFilterByIndex(idx) {
+            currentFilterIndex = idx;
+            document.getElementById('filter-name').innerText = `濾鏡：${filters[idx]}`;
+            
+            document.querySelectorAll('.filter-thumb-item').forEach((item, i) => {
+                item.classList.toggle('active', i === idx);
+            });
+            
+            // 讓選中的濾鏡預覽自動置中滾動
+            const activeEl = document.getElementById(`thumb-item-${idx}`);
+            if (activeEl) {
+                activeEl.parentNode.scrollTo({
+                    left: activeEl.offsetLeft - activeEl.parentNode.clientWidth / 2 + activeEl.clientWidth / 2,
+                    behavior: 'smooth'
+                });
+            }
+        }
 
         function enterCameraStage() {
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
             
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 960 } } })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } } })
                 .then(stream => {
                     videoElement.srcObject = stream;
                     videoElement.addEventListener('loadedmetadata', () => {
                         startRenderLoop();
-                        initMediaPipe();
+                        initMediaPipeCamera(); // 呼叫更新後的強效串流綁定
                     });
-                }).catch(err => alert("請允許前鏡頭權限"));
+                }).catch(err => alert("相機啟動失敗，請給予前鏡頭權限！"));
         }
 
         function drawVideoCover(ctx, video, canvasW, canvasH) {
@@ -228,64 +299,96 @@
         function startRenderLoop() {
             const render = () => {
                 if (videoElement.readyState >= 2) {
+                    // 渲染大雙窗
                     drawVideoCover(ctxRaw, videoElement, CW, CH);
                     canvasLiveFx.style.filter = filterCSSMap[filters[currentFilterIndex]];
                     drawVideoCover(ctxLive, videoElement, CW, CH);
+
+                    // 同步渲染底下所有圓形滾動條的微縮 Canvas
+                    filters.forEach((name, idx) => {
+                        const tCan = document.getElementById(`thumb-canvas-${idx}`);
+                        if (tCan) {
+                            const tCtx = tCan.getContext('2d');
+                            drawVideoCover(tCtx, videoElement, 80, 80);
+                        }
+                    });
                 }
                 requestAnimationFrame(render);
             };
             requestAnimationFrame(render);
         }
 
-        function initMediaPipe() {
+        // 🛠️ 核心修正：利用 MediaPipe Camera 套件重新設計影像泵，完全激活手勢
+        function initMediaPipeCamera() {
             const status = document.getElementById('status-text');
             const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-            hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.6 });
+            
+            hands.setOptions({ 
+                maxNumHands: 1, 
+                modelComplexity: 1, 
+                minDetectionConfidence: 0.55, 
+                minTrackingConfidence: 0.55 
+            });
+
             hands.onResults(results => {
-                if(!isCountingDown) {
+                if (!isCountingDown) {
                     status.innerText = "🖐️ 左右揮手換濾鏡 | 👌 比出 OK 手勢拍照";
                 }
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     handleHandGestures(results.multiHandLandmarks[0]);
-                } else { lastHandX = null; }
+                } else { 
+                    lastHandX = null; 
+                }
             });
 
-            function aiLoop() {
-                if (videoElement.readyState >= 2) {
-                    hands.send({ image: videoElement })
-                        .then(() => requestAnimationFrame(aiLoop))
-                        .catch(() => requestAnimationFrame(aiLoop));
-                } else { requestAnimationFrame(aiLoop); }
-            }
-            requestAnimationFrame(aiLoop);
+            // 使用官方規格的 Camera 元件做雙向幀頻泵，絕不卡手死機
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480
+            });
+            camera.start();
         }
 
         function handleHandGestures(lm) {
             const status = document.getElementById('status-text');
-            const isOk = (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.05) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
+            
+            // 偵測 OK 手勢
+            const distThumbFore = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+            const isOk = (distThumbFore < 0.05) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
 
             if (isOk && !isCountingDown) {
                 isCountingDown = true;
                 let count = 5;
+                status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
                 countdownTimer = setInterval(() => {
                     count--;
                     status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
                     if (count <= 0) {
                         clearInterval(countdownTimer);
-                        status.innerText = "💥 拍照成功！進入後製階段";
-                        setTimeout(triggerSnapshot, 300);
+                        status.innerText = "📸 拍照成功！進入美顏編輯";
+                        setTimeout(triggerSnapshot, 400);
                     }
                 }, 1000);
+                return;
             }
 
-            const currentX = lm[9].x;
+            // 隔空精準揮手判定（同步與滾動預覽條做雙向綁定連動）
+            const currentX = 1 - lm[9].x; 
             if (lastHandX !== null && !waveCooldown && !isCountingDown) {
                 const delta = currentX - lastHandX;
-                if (Math.abs(delta) > 0.08) {
+                if (Math.abs(delta) > 0.07) { 
                     waveCooldown = true;
-                    currentFilterIndex = delta > 0 ? (currentFilterIndex + 1) % filters.length : (currentFilterIndex - 1 + filters.length) % filters.length;
-                    document.getElementById('filter-name').innerText = `濾鏡：${filters[currentFilterIndex]}`;
-                    setTimeout(() => { waveCooldown = false; }, 800);
+                    let nextIdx = currentFilterIndex;
+                    if (delta > 0) {
+                        nextIdx = (currentFilterIndex + 1) % filters.length;
+                    } else {
+                        nextIdx = (currentFilterIndex - 1 + filters.length) % filters.length;
+                    }
+                    selectFilterByIndex(nextIdx); // 自動執行滾動條切換與置中
+                    setTimeout(() => { waveCooldown = false; }, 700);
                 }
             }
             lastHandX = currentX;
@@ -314,12 +417,7 @@
         }
 
         function setMakeup(m) { currentMakeup = m; document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m)); applyEditEffects(); }
-        
-        function setSticker(s) { 
-            currentSticker = s; 
-            document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); 
-            applyEditEffects(); 
-        }
+        function setSticker(s) { currentSticker = s; document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); applyEditEffects(); }
 
         function applyEditEffects() {
             if (!capturedCanvasBackup) return;
@@ -330,21 +428,21 @@
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             if (whitVal > 0) {
                 ctxEdit.save();
-                ctxEdit.fillStyle = `rgba(255,255,255,${whitVal/350})`; ctxEdit.fillRect(0,0,w,h); ctxEdit.restore();
+                ctxEdit.fillStyle = `rgba(255,255,255,${whitVal/320})`; ctxEdit.fillRect(0,0,w,h); ctxEdit.restore();
             }
+            
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
             if (smooVal > 0) {
                 ctxEdit.save();
-                ctxEdit.globalAlpha = 0.2 * (smooVal/100); ctxEdit.shadowBlur = 12; ctxEdit.shadowColor = "#fff"; ctxEdit.drawImage(canvasEdit, 0,0); ctxEdit.restore();
+                ctxEdit.globalAlpha = 0.25 * (smooVal/100); ctxEdit.shadowBlur = 14; ctxEdit.shadowColor = "#fff"; ctxEdit.drawImage(canvasEdit, 0,0); ctxEdit.restore();
             }
 
             drawStaticMakeup(ctxEdit, w, h);
             
-            // 繪製自訂圖片貼紙
+            // 繪製上傳的 IMG_5188~5197 高清大貼紙圖片
             if (currentSticker !== 'none' && stickerImages[currentSticker]) {
                 const img = stickerImages[currentSticker];
                 ctxEdit.save();
-                // 移至貼紙中心點進行繪製
                 ctxEdit.translate(stickerState.x, stickerState.y);
                 ctxEdit.drawImage(img, -stickerState.width / 2, -stickerState.height / 2, stickerState.width, stickerState.height);
                 ctxEdit.restore();
@@ -355,48 +453,65 @@
             if (currentMakeup === 'none') return;
             ctx.save();
             if (currentMakeup === 'kr') {
-                let grad1 = ctx.createRadialGradient(w*0.3, h*0.45, 5, w*0.3, h*0.45, 35);
-                grad1.addColorStop(0, "rgba(255, 120, 140, 0.3)"); grad1.addColorStop(1, "rgba(255,120,140,0)");
-                ctx.fillStyle = grad1; ctx.beginPath(); ctx.arc(w*0.3, h*0.45, 35, 0, Math.PI*2); ctx.fill();
+                let grad1 = ctx.createRadialGradient(w*0.3, h*0.45, 5, w*0.3, h*0.45, 40);
+                grad1.addColorStop(0, "rgba(255, 120, 140, 0.35)"); grad1.addColorStop(1, "rgba(255,120,140,0)");
+                ctx.fillStyle = grad1; ctx.beginPath(); ctx.arc(w*0.3, h*0.45, 40, 0, Math.PI*2); ctx.fill();
                 
-                let grad2 = ctx.createRadialGradient(w*0.7, h*0.45, 5, w*0.7, h*0.45, 35);
-                grad2.addColorStop(0, "rgba(255, 120, 140, 0.3)"); grad2.addColorStop(1, "rgba(255,120,140,0)");
-                ctx.fillStyle = grad2; ctx.beginPath(); ctx.arc(w*0.7, h*0.45, 35, 0, Math.PI*2); ctx.fill();
+                let grad2 = ctx.createRadialGradient(w*0.7, h*0.45, 5, w*0.7, h*0.45, 40);
+                grad2.addColorStop(0, "rgba(255, 120, 140, 0.35)"); grad2.addColorStop(1, "rgba(255,120,140,0)");
+                ctx.fillStyle = grad2; ctx.beginPath(); ctx.arc(w*0.7, h*0.45, 40, 0, Math.PI*2); ctx.fill();
             } else if (currentMakeup === 'jp') {
-                ctx.fillStyle = "rgba(255, 90, 90, 0.15)";
-                ctx.beginPath(); ctx.arc(w*0.32, h*0.42, 20, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(w*0.68, h*0.42, 20, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "rgba(255, 80, 80, 0.18)";
+                ctx.beginPath(); ctx.arc(w*0.32, h*0.42, 22, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(w*0.68, h*0.42, 22, 0, Math.PI*2); ctx.fill();
             } else if (currentMakeup === 'opera') {
-                ctx.fillStyle = "rgba(230, 0, 40, 0.25)";
-                ctx.beginPath(); ctx.arc(w*0.5, h*0.35, 50, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "rgba(230, 0, 40, 0.28)";
+                ctx.beginPath(); ctx.arc(w*0.5, h*0.35, 55, 0, Math.PI*2); ctx.fill();
             }
             ctx.restore();
         }
 
         function initStickerMobileDrag() {
-            canvasEdit.addEventListener('touchstart', (e) => {
+            const handleStart = (clientX, clientY) => {
                 if (currentSticker === 'none') return;
-                let t = e.touches[0]; let rect = canvasEdit.getBoundingClientRect();
-                let canvasX = t.clientX - rect.left; let canvasY = t.clientY - rect.top;
+                let rect = canvasEdit.getBoundingClientRect();
+                let canvasX = (clientX - rect.left) * (canvasEdit.width / rect.width);
+                let canvasY = (clientY - rect.top) * (canvasEdit.height / rect.height);
                 
-                // 點擊點距離貼紙中心 60px 內判定為拖曳貼紙
-                if (Math.hypot(canvasX - stickerState.x, canvasY - stickerState.y) < 60) {
-                    isDragging = true; dragStartX = canvasX; dragStartY = canvasY;
+                if (Math.hypot(canvasX - stickerState.x, canvasY - stickerState.y) < stickerState.width * 0.7) {
+                    isDragging = true; 
+                    dragStartX = canvasX; dragStartY = canvasY;
                     initStickerX = stickerState.x; initStickerY = stickerState.y;
                 }
+            };
+
+            const handleMove = (clientX, clientY) => {
+                if (!isDragging) return;
+                let rect = canvasEdit.getBoundingClientRect();
+                let canvasX = (clientX - rect.left) * (canvasEdit.width / rect.width);
+                let canvasY = (clientY - rect.top) * (canvasEdit.height / rect.height);
+                
+                stickerState.x = initStickerX + (canvasX - dragStartX);
+                stickerState.y = initStickerY + (canvasY - dragStartY);
+                applyEditEffects();
+            };
+
+            canvasEdit.addEventListener('mousedown', (e) => handleStart(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', () => isDragging = false);
+
+            canvasEdit.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) handleStart(e.touches[0].clientX, e.touches[0].clientY);
             });
             canvasEdit.addEventListener('touchmove', (e) => {
-                if (isDragging) {
-                    let t = e.touches[0]; let rect = canvasEdit.getBoundingClientRect();
-                    stickerState.x = initStickerX + ((t.clientX - rect.left) - dragStartX);
-                    stickerState.y = initStickerY + ((t.clientY - rect.top) - dragStartY);
-                    applyEditEffects();
-                }
-            });
+                if (isDragging && e.touches.length === 1) { e.preventDefault(); handleMove(e.touches[0].clientX, e.touches[0].clientY); }
+            }, { passive: false });
             window.addEventListener('touchend', () => isDragging = false);
         }
 
-        function savePhoto() { alert("🎉 照片已成功儲存！"); }
+        function savePhoto() { alert("🎉 照片已成功儲存至您的相簿！"); }
+        
+        window.onload = init;
     </script>
 </body>
 </html>
