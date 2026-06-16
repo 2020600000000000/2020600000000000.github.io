@@ -2,13 +2,14 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-<title>只美白皮膚相機</title>
+<title>皮膚美白可調相機</title>
 
 <style>
 body {
   margin: 0;
   overflow: hidden;
   background: black;
+  font-family: sans-serif;
 }
 
 video, canvas {
@@ -18,14 +19,17 @@ video, canvas {
   object-fit: cover;
 }
 
-#btn {
+#ui {
   position: absolute;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
   z-index: 10;
-  padding: 12px 18px;
-  font-size: 16px;
+  color: white;
+}
+
+#slider {
+  width: 200px;
 }
 </style>
 </head>
@@ -35,9 +39,12 @@ video, canvas {
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas"></canvas>
 
-<button id="btn">📸 拍照</button>
+<div id="ui">
+  ✨ 美白強度
+  <input id="slider" type="range" min="0.8" max="1.5" step="0.01" value="1.08">
+  <button id="btn">📸 拍照</button>
+</div>
 
-<!-- 人像分割 -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
@@ -45,6 +52,8 @@ video, canvas {
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
+const slider = document.getElementById("slider");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -59,17 +68,16 @@ segmentation.setOptions({
   modelSelection: 1
 });
 
-// 🎯 判斷「是否像皮膚顏色」
+// 🎯 皮膚判斷
 function isSkin(r, g, b) {
-  // 簡化皮膚色範圍（亞洲膚色也適用）
   return (
     r > 95 && g > 40 && b > 20 &&
     Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
-    Math.abs(r - g) > 15 &&
     r > g && r > b
   );
 }
 
+// 🎨 主處理
 segmentation.onResults((results) => {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -85,21 +93,21 @@ segmentation.onResults((results) => {
 
   const maskData = maskCtx.getImageData(0, 0, canvas.width, canvas.height).data;
 
+  const strength = parseFloat(slider.value);
+
   for (let i = 0; i < data.length; i += 4) {
 
     const isPerson = maskData[i] > 50;
-
     if (!isPerson) continue;
 
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
 
-    // 👉 只處理「皮膚色」
     if (isSkin(r, g, b)) {
-      data[i]     = Math.min(255, r * 1.08); // 只提亮皮膚
-      data[i + 1] = Math.min(255, g * 1.08);
-      data[i + 2] = Math.min(255, b * 1.08);
+      data[i]     = Math.min(255, r * strength);
+      data[i + 1] = Math.min(255, g * strength);
+      data[i + 2] = Math.min(255, b * strength);
     }
   }
 
