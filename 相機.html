@@ -1,135 +1,54 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>穩定美顏App</title>
+// 🌸 更高級：保邊磨皮 + 局部膚色
+function beauty(img, w, h, strength){
 
-<style>
-body{margin:0;background:black;font-family:sans-serif;}
-#camera,#editor{position:absolute;width:100%;height:100%;}
-video,canvas{width:100%;height:100%;object-fit:cover;}
+  const d = img.data;
 
-#btn{
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  padding:15px;
-  font-size:18px;
-}
+  // 👉 先備份原圖（很重要！避免越修越糊）
+  const original = new Uint8ClampedArray(d);
 
-#ui{
-  position:fixed;
-  bottom:10px;
-  width:100%;
-  text-align:center;
-  color:white;
-}
+  function skin(r,g,b){
+    return r>70 && g>40 && b>30;
+  }
 
-#editor{display:none;}
-input{width:200px;}
-button{padding:10px;margin:5px;}
-</style>
-</head>
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
 
-<body>
+      let i=(y*w+x)*4;
 
-<!-- 📷 CAMERA -->
-<div id="camera">
-  <video id="video" autoplay playsinline></video>
-  <button id="snap">📸 拍照</button>
-</div>
+      let r=d[i], g=d[i+1], b=d[i+2];
 
-<!-- 🎨 EDITOR -->
-<div id="editor">
-  <canvas id="canvas"></canvas>
+      if(!skin(r,g,b)) continue;
 
-  <div id="ui">
-    ✨ 美顏強度
-    <input id="slider" type="range" min="0" max="1" step="0.01" value="0.5">
-    <button id="back">🔙 返回</button>
-  </div>
-</div>
+      // ===== ① 保邊「磨皮」（不是 blur）=====
+      let avgR=0,avgG=0,avgB=0,c=0;
 
-<script>
-const video=document.getElementById("video");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+      for(let dy=-1;dy<=1;dy++){
+        for(let dx=-1;dx<=1;dx++){
 
-const camera=document.getElementById("camera");
-const editor=document.getElementById("editor");
+          let ni=((y+dy)*w+(x+dx))*4;
 
-const slider=document.getElementById("slider");
+          avgR+=original[ni];
+          avgG+=original[ni+1];
+          avgB+=original[ni+2];
+          c++;
+        }
+      }
 
-let imgData=null;
+      avgR/=c; avgG/=c; avgB/=c;
 
-// 📷 開相機（穩定版）
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-  video.srcObject=stream;
-})
-.catch(err=>{
-  alert("相機開啟失敗："+err);
-});
+      // ===== ② 膚色統一（但不過曝）=====
+      const target=[255,235,238];
 
-// 📸 拍照 + 切頁（一定會動）
-document.getElementById("snap").onclick=()=>{
-  canvas.width=video.videoWidth;
-  canvas.height=video.videoHeight;
+      let tr=r+(target[0]-r)*strength;
+      let tg=g+(target[1]-g)*strength;
+      let tb=b+(target[2]-b)*strength;
 
-  ctx.drawImage(video,0,0);
-
-  imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-
-  camera.style.display="none";
-  editor.style.display="block";
-};
-
-// 🎯 更穩定膚色判斷
-function isSkin(r,g,b){
-  return r>70 && g>40 && b>30;
-}
-
-// 🌸 膚色目標（粉嫩）
-const target=[255,235,238];
-
-// ✨ 修圖（一定有變化）
-function render(){
-  if(!imgData) return;
-
-  let t=parseFloat(slider.value);
-
-  let d=new Uint8ClampedArray(imgData.data);
-  let w=canvas.width;
-
-  for(let i=0;i<d.length;i+=4){
-
-    let r=d[i],g=d[i+1],b=d[i+2];
-
-    if(isSkin(r,g,b)){
-      d[i]=r+(target[0]-r)*t;
-      d[i+1]=g+(target[1]-g)*t;
-      d[i+2]=b+(target[2]-b)*t;
+      // ===== ③ 混合（關鍵）=====
+      d[i]   = (avgR*0.6 + tr*0.4);
+      d[i+1] = (avgG*0.6 + tg*0.4);
+      d[i+2] = (avgB*0.6 + tb*0.4);
     }
   }
 
-  let newImg=new ImageData(d,canvas.width,canvas.height);
-  ctx.putImageData(newImg,0,0);
+  return img;
 }
-
-// 🎚 slider 一定有效
-slider.oninput=render;
-
-// 🔙 返回拍照
-document.getElementById("back").onclick=()=>{
-  editor.style.display="none";
-  camera.style.display="block";
-};
-
-// 初始 render（避免空白）
-setInterval(render,100);
-
-</script>
-
-</body>
-</html>
