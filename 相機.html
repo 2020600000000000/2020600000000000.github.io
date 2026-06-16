@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學重塑相機 - GitHub Pages 部署版</title>
+    <title>AI 古典美學重塑相機 - GitHub Pages 穩定版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -14,141 +14,161 @@
         body { background-color: #121212; color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
         /* 歡迎頁面 */
-        .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100vw; height: 100vh; padding: 30px; text-align: center; }
-        .intro-title { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #ff9500, #ff2d55); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
-        .intro-desc { font-size: 14px; color: #aaa; line-height: 1.6; max-width: 300px; margin-bottom: 40px; }
-        .btn-start { background: linear-gradient(135deg, #0071e3, #34c759); border: none; padding: 16px 45px; border-radius: 30px; color: white; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(0,113,227,0.3); transition: transform 0.2s; }
-        .btn-start:active { transform: scale(0.96); }
+        .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100vw; height: 100vh; padding: 30px; text-align: center; background: #1c1c1e; position: absolute; z-index: 100; }
+        .intro-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #fff; }
+        .intro-desc { font-size: 14px; color: #aeaeb2; margin-bottom: 30px; line-height: 1.6; text-align: left; background: #2c2c2e; padding: 15px; border-radius: 12px; }
+        .start-btn { background-color: #0071e3; color: #fff; border: none; padding: 16px 50px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; }
 
-        /* 主舞台 (拍攝區) */
-        .stage-container { display: none; flex-direction: column; align-items: center; width: 100vw; max-width: 450px; height: 100vh; position: relative; justify-content: space-between; padding: 20px 0; }
-        .top-status-bar { width: 90%; background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); padding: 10px 15px; border-radius: 15px; text-align: center; font-size: 12px; font-weight: 500; color: #e5e5ea; border: 1px solid rgba(255,255,255,0.05); }
+        /* 拍照畫面 */
+        .camera-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; position: relative; }
+        .status-top { width: 90%; text-align: center; padding: 10px; font-size: 13px; color: #fff; background: rgba(0,0,0,0.85); position: absolute; top: 15px; z-index: 60; font-weight: bold; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* 相機畫布容器 (360x630, 9:15高挑黃金比例) */
-        .viewport-wrapper { width: 360px; height: 630px; background-color: #000; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        #hidden-video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-        #canvas-raw { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
-        #canvas-live-fx { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .viewfinders-split { width: 100vw; height: 58vh; display: flex; flex-direction: row; gap: 4px; background: #000; padding: 4px; box-sizing: border-box; position: relative; }
+        .viewfinder-box { flex: 1; height: 100%; position: relative; background: #1c1c1e; border-radius: 12px; overflow: hidden; }
+        .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .viewfinder-label { position: absolute; z-index: 10; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; white-space: nowrap; }
+
+        /* 控制面板 */
+        .control-panel { width: 100vw; height: 42vh; background: #121212; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 15px; gap: 15px; }
+        .filter-indicator { font-size: 13px; background: #2c2c2e; padding: 5px 15px; border-radius: 20px; color: #fff; font-weight: bold; }
         
-        /* 濾鏡滑動軸 */
-        .bottom-interaction-panel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .filter-hint { font-size: 13px; color: #ff9500; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .filter-scroll-container { width: 100%; display: flex; overflow-x: auto; gap: 15px; padding: 5px 25px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+        /* 濾鏡滾動條 */
+        .filter-scroll-container { width: 100%; display: flex; gap: 12px; overflow-x: auto; padding: 5px; }
         .filter-scroll-container::-webkit-scrollbar { display: none; }
-        .filter-thumb-item { display: flex; flex-direction: column; align-items: center; gap: 6px; scroll-snap-align: center; cursor: pointer; opacity: 0.5; transition: opacity 0.2s, transform 0.2s; }
-        .filter-thumb-item.active { opacity: 1; transform: scale(1.05); }
-        .filter-circle-preview { width: 66px; height: 66px; border-radius: 50%; border: 2px solid transparent; overflow: hidden; transition: border-color 0.2s; background: #2c2c2e; }
-        .filter-thumb-item.active .filter-circle-preview { border-color: #0071e3; }
+        .filter-thumb-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 0 auto; cursor: pointer; }
+        .filter-circle-preview { width: 68px; height: 68px; border-radius: 50%; background: #2c2c2e; border: 3px solid transparent; overflow: hidden; position: relative; }
         .filter-circle-preview canvas { width: 100%; height: 100%; object-fit: cover; }
-        .filter-thumb-name { font-size: 11px; font-weight: 500; color: #aeaeb2; }
-        .filter-thumb-item.active .filter-thumb-name { color: #0071e3; font-weight: 600; }
+        .filter-thumb-item.active .filter-circle-preview { border-color: #0071e3; transform: scale(1.08); }
+        .filter-thumb-name { font-size: 11px; color: #8e8e93; }
+        .filter-thumb-item.active .filter-thumb-name { color: #0071e3; font-weight: bold; }
 
-        /* 編輯後期加工舞台 */
-        .edit-viewport-box { width: 360px; height: 450px; border-radius: 20px; overflow: hidden; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.6); background: #000; }
-        #canvas-edit-preview { width: 100%; height: 100%; display: block; }
+        .gesture-tips { font-size: 12px; color: #a1a1a6; text-align: center; line-height: 1.6; background: #1c1c1e; padding: 12px; border-radius: 12px; width: 92%; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* 修圖編輯頁面 */
+        .edit-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; background: #1c1c1e; overflow-y: auto; padding: 15px; }
+        .preview-box { width: 100%; max-width: 360px; aspect-ratio: 4/5; background-color: #000; border-radius: 14px; margin-bottom: 15px; position: relative; overflow: hidden; touch-action: none; }
+        .preview-box canvas { width: 100%; height: 100%; object-fit: cover; }
         
-        /* 工具底板 */
-        .edit-control-dashboard { width: 100%; background: #1c1c1e; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px 0; display: flex; flex-direction: column; align-items: center; box-shadow: 0 -10px 30px rgba(0,0,0,0.3); }
-        .edit-tabs-row { display: flex; width: 90%; justify-content: space-around; margin-bottom: 20px; background: #2c2c2e; padding: 4px; border-radius: 12px; }
-        .btn-item { flex: 1; background: transparent; border: none; padding: 10px 0; border-radius: 10px; color: #aeaeb2; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s; }
-        .btn-item.active { background: #3a3a3c; color: #fff; }
+        .menu-row { display: flex; gap: 6px; overflow-x: auto; width: 100%; padding: 5px 0; margin-bottom: 10px; }
+        .menu-row::-webkit-scrollbar { display: none; }
+        .btn-item { flex: 0 0 auto; padding: 10px 16px; background-color: #2c2c2e; border-radius: 20px; font-size: 13px; font-weight: bold; border: none; color: #fff; }
+        .btn-item.active { background-color: #0071e3; }
         
-        /* 細部調節面板 */
-        .sub-panel { width: 90%; display: none; flex-direction: column; gap: 15px; min-height: 80px; justify-content: center; }
-        .slider-group { display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 13px; color: #e5e5ea; }
-        .slider-group label { width: 70px; }
-        .slider-group input[type="range"] { flex: 1; margin: 0 12px; accent-color: #0071e3; }
-        .slider-group span { width: 35px; text-align: right; color: #aeaeb2; }
+        .sub-panel { width: 100%; display: none; flex-direction: column; align-items: center; background: #2c2c2e; padding: 15px; border-radius: 14px; margin-bottom: 15px; }
+        .slider-container { width: 100%; display: flex; flex-direction: column; gap: 5px; }
+        .slider-input { width: 100%; height: 6px; background: #48484a; border-radius: 3px; -webkit-appearance: none; margin: 10px 0; }
+        .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #0071e3; }
         
-        /* 妝容、貼紙按鈕群組 */
-        .buttons-scroll-row { width: 100%; display: flex; overflow-x: auto; gap: 12px; padding: 4px 0; scrollbar-width: none; }
-        .buttons-scroll-row::-webkit-scrollbar { display: none; }
-        .makeup-thumb-btn, .sticker-thumb-btn { padding: 8px 16px; background: #2c2c2e; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; color: #e5e5ea; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
-        .makeup-thumb-btn.active, .sticker-thumb-btn.active { background: rgba(0,113,227,0.15); border-color: #0071e3; color: #0071e3; font-weight: 600; }
+        .grid-layout { display: flex; gap: 8px; overflow-x: auto; width: 100%; padding-bottom: 5px; }
+        .grid-layout::-webkit-scrollbar { display: none; }
+        .grid-item { flex: 0 0 auto; padding: 10px 15px; background-color: #3a3a3c; border-radius: 15px; border: 2px solid transparent; color: #fff; font-size: 12px; font-weight: bold; }
+        .grid-item.active { border-color: #0071e3; background-color: #0071e3; }
+
+        .ratio-toggle-btn { background-color: #ff9500; color: white; width: 100%; max-width: 280px; padding: 12px; border-radius: 20px; font-weight: bold; border: none; margin-bottom: 10px; font-size: 14px; cursor: pointer; }
+        .ratio-toggle-btn.active { background-color: #34c759; }
+
+        .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; margin-top: 5px; }
         
-        /* 大功能動作按紐 */
-        .action-buttons-wrapper { width: 90%; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .btn-ratio-toggle { width: 100%; background: #2c2c2e; border: 1px solid rgba(255,149,0,0.3); color: #ff9500; font-size: 13px; font-weight: 600; padding: 12px 0; border-radius: 14px; cursor: pointer; transition: all 0.2s; }
-        .btn-ratio-toggle.active { background: #ff9500; color: #000; }
-        .btn-download-trigger { width: 100%; background: linear-gradient(135deg, #34c759, #248a3d); border: none; color: white; font-size: 15px; font-weight: 700; padding: 14px 0; border-radius: 14px; cursor: pointer; box-shadow: 0 6px 15px rgba(52,199,89,0.3); }
+        #hidden-video { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="intro-stage" id="stage-intro">
+    <video id="hidden-video" autoplay playsinline muted></video>
+
+    <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 古典美學重塑相機</div>
-        <div class="intro-desc">融合黃金比例面具、多維智能五官彩妝與無感磨皮，支援 AI 揮手切換濾鏡及精準 OK 倒數捕捉。</div>
-        <button class="btn-start" onclick="enterCameraStage()">開啟 AI 相機體驗</button>
+        <div class="intro-desc">
+            歡迎體驗全新升級的古典美學相機，手勢解鎖全螢幕位置限制：<br><br>
+            1. <b>👋 全螢幕隔空揮手：</b> 快速向左或向右移動手掌即可秒換濾鏡。<br>
+            2. <b>👌 全螢幕任意比 OK：</b> 任意位置比出 OK 靜止 0.5 秒即可啟動 5 秒倒數拍照！<br><br>
+            <b>✨ 專業修圖頁面五大功能整合：</b><br>
+            • <b>精準美白 / 智慧磨皮</b>：智能辨識人臉皮膚範圍進行高階渲染。<br>
+            • <b>四大主題妝容</b>：五官定位追蹤，精準疊加韓系、日系、歌仔戲與歐式妝容。<br>
+            • <b>專屬實體貼紙</b>：支援移動、放大縮小、隨意旋轉。<br>
+            • <b>原來黃金比例</b>：一鍵開啟古典美學網格線！
+        </div>
+        <button class="start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
 
-    <div class="stage-container" id="stage-capture">
-        <div class="top-status-bar" id="status-text">👋 任意處揮手換濾鏡 | 👌 比出 OK 觸發倒數拍照</div>
+    <div id="stage-capture" class="camera-stage">
+        <div id="status-text" class="status-top">👋 任意處揮手換濾鏡 | 👌 比出 OK 觸發倒數拍照</div>
         
-        <div class="viewport-wrapper">
-            <video id="hidden-video" autoplay playsinline muted></video>
-            <canvas id="canvas-raw"></canvas>
-            <canvas id="canvas-live-fx"></canvas>
+        <div class="viewfinders-split">
+            <div class="viewfinder-box">
+                <canvas id="canvas-raw"></canvas>
+                <div class="viewfinder-label">📷 原始畫面</div>
+            </div>
+            <div class="viewfinder-box">
+                 <canvas id="canvas-live-fx"></canvas>
+                <div class="viewfinder-label">✨ 即時預覽 (揮手換濾鏡)</div>
+            </div>
         </div>
-
-        <div class="bottom-interaction-panel">
-            <div class="filter-hint" id="filter-name">目前濾鏡：原圖</div>
+        
+        <div class="control-panel">
+            <div class="filter-indicator" id="filter-name">目前濾鏡：原圖</div>
             <div class="filter-scroll-container" id="filter-bar"></div>
+            <div class="gesture-tips">
+                提示：快速橫向揮手切換濾鏡；擺出 OK 手勢定格 0.5 秒即可自動快門拍照。
+            </div>
         </div>
     </div>
 
-    <div class="stage-container" id="stage-edit" style="padding-bottom: 0;">
-        <div class="top-status-bar" style="color:#34c759; background:rgba(52,199,89,0.1); border-color:rgba(52,199,89,0.2);">📸 捕捉成功！已進入黃金美學微調艙</div>
-        
-        <div class="edit-viewport-box" id="preview-container">
+    <div id="stage-edit" class="edit-stage">
+        <div class="preview-box" id="preview-container">
             <canvas id="canvas-edit-preview"></canvas>
         </div>
 
-        <div class="edit-control-dashboard">
-            <div class="edit-tabs-row">
-                <button class="btn-item active" id="btn-skin" onclick="openSubPanel('skin')">膚質塑造</button>
-                <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">古風五官</button>
-                <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">實體貼紙</button>
-            </div>
+        <button id="btn-toggle-ratio" class="ratio-toggle-btn" onclick="toggleGoldenRatioMask()">📐 開啟一鍵黃金比例遮罩</button>
+        
+        <div class="menu-row">
+            <button class="btn-item active" id="btn-skin" onclick="openSubPanel('skin')">✨ 精準美白</button>
+            <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">⏳ 智慧磨皮</button>
+            <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">💄 主題妝容</button>
+            <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">🎉 專屬貼紙</button>
+        </div>
 
-            <div class="sub-panel" id="panel-skin" style="display: flex;">
-                <div class="slider-group">
-                    <label>精細磨皮</label>
-                    <input type="range" id="slider-smooth-val" min="0" max="100" value="40" oninput="document.getElementById('lbl-smooth').innerText=this.value; applyEditEffects();">
-                    <span id="lbl-smooth">40</span>
-                </div>
-                <div class="slider-group">
-                    <label>智能美白</label>
-                    <input type="range" id="slider-whiten" min="0" max="100" value="30" oninput="document.getElementById('lbl-whiten').innerText=this.value; applyEditEffects();">
-                    <span id="lbl-whiten">30</span>
-                </div>
-            </div>
-
-            <div class="sub-panel" id="panel-makeup">
-                <div class="buttons-scroll-row">
-                    <button class="makeup-thumb-btn active" id="mk-none" onclick="setMakeup('none')">素顏純淨</button>
-                    <button class="makeup-thumb-btn" id="mk-kr" onclick="setMakeup('kr')">微醺果凍</button>
-                    <button class="makeup-thumb-btn" id="mk-jp" onclick="setMakeup('jp')">日系潮紅</button>
-                    <button class="makeup-thumb-btn" id="mk-opera" onclick="setMakeup('opera')">國風戲曲</button>
-                    <button class="makeup-thumb-btn" id="mk-eu" onclick="setMakeup('eu')">立體深邃</button>
-                </div>
-            </div>
-
-            <div class="sub-panel" id="panel-sticker">
-                <div class="buttons-scroll-row">
-                    <button class="sticker-thumb-btn active" id="stk-none" onclick="setSticker('none')">移除貼紙</button>
-                    <button class="sticker-thumb-btn" id="stk-5188" onclick="setSticker('5188')">花鈿貼 5188</button>
-                    <button class="sticker-thumb-btn" id="stk-5189" onclick="setSticker('5189')">古風貼 5189</button>
-                    <button class="sticker-thumb-btn" id="stk-5190" onclick="setSticker('5190')">面飾貼 5190</button>
-                    <button class="sticker-thumb-btn" id="stk-5192" onclick="setSticker('5192')">點綴貼 5192</button>
-                    <button class="sticker-thumb-btn" id="stk-5195" onclick="setSticker('5195')">古典貼 5195</button>
-                </div>
-            </div>
-
-            <div class="action-buttons-wrapper">
-                <button class="btn-ratio-toggle" id="btn-toggle-ratio" onclick="toggleGoldenRatioMask()">📐 開啟一鍵黃金比例遮罩</button>
-                <button class="btn-download-trigger" onclick="savePhoto()">💾 融合保存至手機相簿</button>
+        <div id="panel-skin" class="sub-panel">
+            <div class="slider-container">
+                <span style="font-size:12px;">精準美白強度 (僅限辨識出的皮膚區域)</span>
+                <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
+
+        <div id="panel-smooth" class="sub-panel">
+            <div class="slider-container">
+                 <span style="font-size:12px;">智慧磨皮平滑度 (不模糊五官與背景)</span>
+                <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
+            </div>
+        </div>
+
+        <div id="panel-makeup" class="sub-panel">
+            <div class="grid-layout">
+                <button class="grid-item mk-btn active" id="mk-none" onclick="setMakeup('none')">無妝容</button>
+                <button class="grid-item mk-btn" id="mk-kr" onclick="setMakeup('kr')">🌸 韓系水光</button>
+                <button class="grid-item mk-btn" id="mk-jp" onclick="setMakeup('jp')">🍒 日系大眼</button>
+                <button class="grid-item mk-btn" id="mk-opera" onclick="setMakeup('opera')">🎭 傳統歌仔戲</button>
+                <button class="grid-item mk-btn" id="mk-eu" onclick="setMakeup('eu')">👑 歐式立體</button>
+            </div>
+        </div>
+
+        <div id="panel-sticker" class="sub-panel">
+            <div class="grid-layout">
+                <button class="grid-item stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
+                <button class="grid-item stk-btn" id="stk-5188" onclick="setSticker('5188')">貼紙 5188</button>
+                <button class="grid-item stk-btn" id="stk-5189" onclick="setSticker('5189')">貼紙 5189</button>
+                <button class="grid-item stk-btn" id="stk-5190" onclick="setSticker('5190')">貼紙 5190</button>
+                <button class="grid-item stk-btn" id="stk-5191" onclick="setSticker('5191')">貼紙 5191</button>
+                <button class="grid-item stk-btn" id="stk-5192" onclick="setSticker('5192')">貼紙 5192</button>
+                <button class="grid-item stk-btn" id="stk-5193" onclick="setSticker('5193')">貼紙 5193</button>
+                <button class="grid-item stk-btn" id="stk-5194" onclick="setSticker('5194')">貼紙 5194</button>
+                <button class="grid-item stk-btn" id="stk-5195" onclick="setSticker('5195')">貼紙 5195</button>
+                <button class="grid-item stk-btn" id="stk-5196" onclick="setSticker('5196')">貼紙 5196</button>
+                <button class="grid-item stk-btn" id="stk-5197" onclick="setSticker('5197')">貼紙 5197</button>
+            </div>
+        </div>
+
+        <button class="confirm-btn" onclick="savePhoto()">💾 儲存相簿</button>
     </div>
 
     <script>
@@ -156,7 +176,7 @@
         const canvasRaw = document.getElementById('canvas-raw');
         const canvasLiveFx = document.getElementById('canvas-live-fx');
         const canvasEdit = document.getElementById('canvas-edit-preview');
-
+        
         const ctxRaw = canvasRaw.getContext('2d');
         const ctxLive = canvasLiveFx.getContext('2d');
         const ctxEdit = canvasEdit.getContext('2d');
@@ -170,21 +190,24 @@
             '冷調冷冽': 'saturate(0.6) contrast(1.15) hue-rotate(15deg)', 
             '暖陽復古': 'sepia(0.25) saturate(1.3)' 
         };
-        
         let faceLandmarksData = null; 
         let showGoldenRatio = false;  
         let isCountingDown = false; 
         let countdownTimer = null;
-        let capturedVideoFrame = document.createElement('canvas'); 
+        let capturedVideoFrame = document.createElement('canvas');
         let currentMakeup = 'none'; 
         let currentSticker = 'none';
+        
+        // 將 MediaPipe 執行個體宣告為全域變數，避免 Scope 記憶體崩潰
+        let hands = null;
+        let faceMesh = null;
 
-        // 載入貼紙圖片 (預設改為小寫 .jpg，如檔名是大寫請改回 .JPG)
+        // 載入貼紙來源 (GitHub 建議副檔名使用小寫 .jpg 確保相容性)
         const stickerImages = {};
         const stickerIds = ['5188', '5189', '5190', '5191', '5192', '5193', '5194', '5195', '5196', '5197'];
         stickerIds.forEach(id => {
             const img = new Image();
-            img.src = `IMG_${id}.jpg`; 
+            img.src = `IMG_${id}.jpg`;
             stickerImages[id] = img;
         });
 
@@ -193,25 +216,18 @@
         let dragStartX = 0, dragStartY = 0;
         let initStickerX = 0, initStickerY = 0;
         let startTouchDist = 0, startTouchAngle = 0, initScale = 1.0, initAngle = 0;
-        
         const CW = 360;
         const CH = 630;
         let isCameraActive = false;
-        
         let lastHandX = null;
         let waveCooldown = false;
         let okStartTime = null;
 
-        let hands = null;
-        let faceMesh = null;
-
         function init() {
             canvasRaw.width = CW;
             canvasRaw.height = CH;
-            canvasLiveFx.width = CW; 
-            canvasLiveFx.height = CH;
-            canvasEdit.width = 360; 
-            canvasEdit.height = 450;
+            canvasLiveFx.width = CW; canvasLiveFx.height = CH;
+            canvasEdit.width = 360; canvasEdit.height = 450;
             capturedVideoFrame.width = 360;
             capturedVideoFrame.height = 450;
             buildFilterScrollThumbs();
@@ -268,35 +284,25 @@
                 videoElement.srcObject = stream;
                 isCameraActive = true;
                 startRenderLoop();
-                initMediaPipeAI(); 
+                initMediaPipeAI();
             })
             .catch(err => {
-                alert("相機開啟失敗，請確認是否給予瀏覽器相機使用權限。");
-                console.error(err);
+                alert("相機開啟失敗，請確認 HTTPS 與瀏覽器相機權限。");
             });
         }
 
         function drawVideoCover(ctx, video, canvasW, canvasH) {
             if (video.videoWidth === 0) return;
-            const vW = video.videoWidth; 
-            const vH = video.videoHeight;
-            const videoRatio = vW / vH; 
-            const canvasRatio = canvasW / canvasH;
+            const vW = video.videoWidth; const vH = video.videoHeight;
+            const videoRatio = vW / vH; const canvasRatio = canvasW / canvasH;
             let sx, sy, sW, sH;
             if (videoRatio > canvasRatio) {
-                sH = vH;
-                sW = vH * canvasRatio; 
-                sx = (vW - sW) / 2; 
-                sy = 0;
+                sH = vH; sW = vH * canvasRatio; sx = (vW - sW) / 2; sy = 0;
             } else {
-                sW = vW;
-                sH = vW / canvasRatio; 
-                sx = 0; 
-                sy = (vH - sH) / 2;
+                sW = vW; sH = vW / canvasRatio; sx = 0; sy = (vH - sH) / 2;
             }
             ctx.save();
-            ctx.translate(canvasW, 0); 
-            ctx.scale(-1, 1); 
+            ctx.translate(canvasW, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, sx, sy, sW, sH, 0, 0, canvasW, canvasH);
             ctx.restore();
         }
@@ -317,11 +323,9 @@
         }
 
         function initMediaPipeAI() {
-            alert("initMediaPipeAI 啟動成功！");
-
+            // 1. 初始化 Hands
             hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
             hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.6 });
-            
             hands.onResults(results => {
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     document.getElementById('status-text').innerText = '👋 偵測到手掌，分析手勢中...';
@@ -335,29 +339,33 @@
                 }
             });
 
+            // 2. 初始化 FaceMesh
             faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
-            
             faceMesh.onResults(results => {
                 if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                     faceLandmarksData = results.multiFaceLandmarks[0];
                 }
             });
 
-            requestAnimationFrame(aiLoop);
-        }
-
-        async function aiLoop() {
-            if (!isCameraActive) return;
-            if (videoElement.readyState >= 2 && hands && faceMesh) {
-                try {
-                    await Promise.all([
-                        hands.send({ image: videoElement }),
-                        faceMesh.send({ image: videoElement })
-                    ]);
-                } catch (e) {
-                    console.error("AI 畫面資料傳送錯誤:", e);
+            // 啟動交替節流 AI 運算，徹底防止行動端網頁崩潰
+            let frameCount = 0;
+            async function aiLoop() {
+                if (!isCameraActive) return;
+                if (videoElement.readyState >= 2) {
+                    try {
+                        frameCount++;
+                        // 手機版分流節流：單數格算手勢，雙數格算臉部，降低處理器 50% 負載
+                        if (frameCount % 2 === 0) {
+                            await hands.send({ image: videoElement });
+                        } else {
+                            await faceMesh.send({ image: videoElement });
+                        }
+                    } catch (e) {
+                        console.error("MediaPipe 運算異常:", e);
+                    }
                 }
+                requestAnimationFrame(aiLoop);
             }
             requestAnimationFrame(aiLoop);
         }
@@ -365,18 +373,15 @@
         function handleAIGestures(lm) {
             const status = document.getElementById('status-text');
 
-            // OK 手勢
+            // ===== OK 手勢偵測 =====
             const okDistance = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
-            const isOk = okDistance < 0.055; 
+            const isOk = okDistance < 0.06; // 稍微調嚴謹點，避免誤觸
 
             if (isOk && !isCountingDown) {
-                if (!okStartTime) {
-                    okStartTime = Date.now();
-                }
-                const holdTime = Date.now() - okStartTime;
-                status.innerText = `👌 OK 偵測中... 蓄力值: ${Math.min(5, Math.floor(holdTime / 100))}/5`;
-                
-                if (holdTime > 500) { 
+                if (!okStartTime) okStartTime = Date.now();
+                const hold = Date.now() - okStartTime;
+                status.innerText = `👌 OK偵測中... 蓄力值: ${Math.min(5, Math.floor(hold/100))}/5`;
+                if (hold > 500) {
                     okStartTime = null;
                     triggerCountdownCamera();
                 }
@@ -384,11 +389,11 @@
                 okStartTime = null;
             }
 
-            // 揮手手勢
-            const currentX = lm[9].x; 
+            // ===== Wave 揮手偵測 =====
+            const currentX = lm[9].x;
             if (lastHandX !== null && !waveCooldown && !isCountingDown) {
                 const delta = currentX - lastHandX;
-                if (Math.abs(delta) > 0.035) { 
+                if (Math.abs(delta) > 0.03) { // 提高臨界值防止手晃誤判
                     waveCooldown = true;
                     if (delta > 0) {
                         currentFilterIndex = (currentFilterIndex + 1) % filters.length;
@@ -396,8 +401,8 @@
                         currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length;
                     }
                     selectFilterByIndex(currentFilterIndex);
-                    status.innerText = `👋 揮手觸發！已變更濾鏡為：${filters[currentFilterIndex]}`;
-                    setTimeout(() => { waveCooldown = false; }, 650); 
+                    status.innerText = `👋 揮手觸發！已切換濾鏡：${filters[currentFilterIndex]}`;
+                    setTimeout(() => { waveCooldown = false; }, 650);
                 }
             }
             lastHandX = currentX;
@@ -410,7 +415,6 @@
             const status = document.getElementById('status-text');
             status.style.color = "#ffcc00";
             status.innerText = `👌 偵測到 OK 手勢！倒數 ${count} 秒後自動拍照...`;
-            
             countdownTimer = setInterval(() => {
                 count--;
                 if (count > 0) {
@@ -426,15 +430,14 @@
         function triggerSnapshot() {
             isCameraActive = false;
             const bCtx = capturedVideoFrame.getContext('2d');
-            bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450); 
+            bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450);
             
             if (videoElement.srcObject) {
-                videoElement.srcObject.getTracks().forEach(track => track.stop()); 
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
             }
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
-            
             if (faceLandmarksData) {
                 stickerState.x = faceLandmarksData[1].x * 360;
                 stickerState.y = faceLandmarksData[1].y * 450;
@@ -470,7 +473,6 @@
             document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m));
             applyEditEffects(); 
         }
-
         function setSticker(s) { 
             currentSticker = s;
             document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); 
@@ -486,8 +488,7 @@
             if (!faceLandmarksData) return;
 
             const skinMask = document.createElement('canvas');
-            skinMask.width = w; 
-            skinMask.height = h; 
+            skinMask.width = w; skinMask.height = h; 
             const smCtx = skinMask.getContext('2d');
             
             smCtx.fillStyle = 'white'; 
@@ -496,8 +497,7 @@
                 if (i === 0) smCtx.moveTo(faceLandmarksData[idx].x * w, faceLandmarksData[idx].y * h); 
                 else smCtx.lineTo(faceLandmarksData[idx].x * w, faceLandmarksData[idx].y * h);
             });
-            smCtx.closePath(); 
-            smCtx.fill();
+            smCtx.closePath(); smCtx.fill();
 
             smCtx.globalCompositeOperation = 'destination-out';
             const digZone = (arr) => { 
@@ -512,8 +512,7 @@
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             if (whitVal > 0) {
                 const whitenLayer = document.createElement('canvas');
-                whitenLayer.width = w; 
-                whitenLayer.height = h;
+                whitenLayer.width = w; whitenLayer.height = h;
                 const wlCtx = whitenLayer.getContext('2d');
                 wlCtx.drawImage(capturedVideoFrame, 0, 0);
                 const imgData = wlCtx.getImageData(0, 0, w, h);
@@ -528,8 +527,7 @@
                 }
                 wlCtx.putImageData(imgData, 0, 0);
                 const whitenMasked = document.createElement('canvas');
-                whitenMasked.width = w; 
-                whitenMasked.height = h;
+                whitenMasked.width = w; whitenMasked.height = h;
                 const wmCtx = whitenMasked.getContext('2d');
                 wmCtx.drawImage(skinMask, 0, 0);
                 wmCtx.globalCompositeOperation = 'source-in';
@@ -540,14 +538,11 @@
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
             if (smooVal > 0) {
                 const blurLayer = document.createElement('canvas');
-                blurLayer.width = w; 
-                blurLayer.height = h;
+                blurLayer.width = w; blurLayer.height = h;
                 const blCtx = blurLayer.getContext('2d');
                 blCtx.filter = `blur(${smooVal * 0.12}px)`; 
                 blCtx.drawImage(canvasEdit, 0, 0);
-                const smoothMasked = document.createElement('canvas'); 
-                smoothMasked.width = w; 
-                smoothMasked.height = h;
+                const smoothMasked = document.createElement('canvas'); smoothMasked.width = w; smoothMasked.height = h;
                 const smMctx = smoothMasked.getContext('2d');
                 smMctx.drawImage(skinMask, 0, 0);
                 smMctx.globalCompositeOperation = 'source-in';
@@ -560,7 +555,6 @@
             }
 
             drawOurThemedMakeup(ctxEdit, faceLandmarksData, w, h);
-            
             if (showGoldenRatio) {
                 drawOurClassicGoldenRatio(ctxEdit, faceLandmarksData, w, h);
             }
@@ -590,7 +584,6 @@
             [hairlineY, browCenterY, noseTipY, chinBottomY].forEach(yPos => {
                 ctx.beginPath(); ctx.moveTo(0, yPos); ctx.lineTo(w, yPos); ctx.stroke();
             });
-
             ctx.strokeStyle = "rgba(0, 113, 227, 0.7)";
             const leftFaceEdgeX = lm[234].x * w;  
             const leftEyeOuterCornerX = lm[130].x * w; 
@@ -601,20 +594,16 @@
             [leftFaceEdgeX, leftEyeOuterCornerX, leftEyeInnerCornerX, rightEyeInnerCornerX, rightEyeOuterCornerX, rightFaceEdgeX].forEach(xPos => {
                 ctx.beginPath(); ctx.moveTo(xPos, 0); ctx.lineTo(xPos, h); ctx.stroke();
             });
-
             ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
             ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
             ctx.setLineDash([]);
             ctx.lineWidth = 1;
-            
             ctx.beginPath();
             [70, 63, 105, 66, 107].forEach(i => ctx.lineTo(lm[i].x * w, lm[i].y * h));
             ctx.closePath(); ctx.fill(); ctx.stroke();
-
             ctx.beginPath();
             [300, 293, 334, 296, 336].forEach(i => ctx.lineTo(lm[i].x * w, lm[i].y * h));
             ctx.closePath(); ctx.fill(); ctx.stroke();
-
             ctx.fillStyle = "rgba(255, 59, 48, 0.15)";
             ctx.strokeStyle = "rgba(255, 59, 48, 0.5)";
             ctx.beginPath();
@@ -706,7 +695,6 @@
                 let p = getEventCoords(e);
                 handleStart(p.x, p.y);
             });
-            
             window.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
                 let p = getEventCoords(e);
@@ -714,7 +702,6 @@
                 stickerState.y = initStickerY + (p.y - dragStartY);
                 applyEditEffects();
             });
-            
             window.addEventListener('mouseup', () => { isDragging = false; });
 
             canvasEdit.addEventListener('wheel', (e) => {
@@ -739,7 +726,6 @@
 
             container.addEventListener('touchmove', (e) => {
                 if (currentSticker === 'none') return;
-                
                 if (isDragging && e.touches.length === 1) {
                     e.preventDefault();
                     let p = getEventCoords(e);
@@ -752,20 +738,18 @@
                     const dy = e.touches[0].clientY - e.touches[1].clientY;
                     const dist = Math.hypot(dx, dy);
                     const ang = Math.atan2(dy, dx);
-
                     stickerState.scale = Math.max(0.3, Math.min(4.0, initScale * (dist / startTouchDist)));
                     stickerState.angle = initAngle + (ang - startTouchAngle);
                     applyEditEffects();
                 }
             }, { passive: false });
-            
             window.addEventListener('touchend', () => { isDragging = false; });
         }
 
         function savePhoto() { 
             alert("🎉 照片已融合智慧磨皮、精準美白、主題五官妝容、實體旋轉貼紙與專屬黃金比例線，儲存相簿成功！");
         }
-
+        
         window.onload = init;
     </script>
 </body>
