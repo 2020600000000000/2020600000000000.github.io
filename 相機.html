@@ -1,169 +1,209 @@
-pip install mediapipe
-import sys
-import cv2
-import numpy as np
-import mediapipe as mp
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, 
-                             QPushButton, QSlider, QVBoxLayout, QHBoxLayout, QFileDialog)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QImage, QPixmap
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智慧美白磨皮工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 20px;
+        }
+        .control-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 250px;
+        }
+        .view-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            min-height: 400px;
+            position: relative;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 4px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+        .btn:hover { background-color: #2980b9; }
+        .btn-save { background-color: #2ecc71; }
+        .btn-save:hover { background-color: #27ae60; }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label { font-weight: 600; font-size: 14px; }
+        input[type="file"] { display: none; }
+        #status { color: #7f8c8d; font-size: 14px; }
+    </style>
+</head>
+<body>
 
-class AIPhotoEditor(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-        self.orig_image = None
-        self.processed_image = None
-        
-        # 初始化 MediaPipe Face Mesh AI 模型
-        self.mp_face_mesh = mp.solutions.face_mesh
-        self.face_mesh = self.mp_face_mesh.FaceMesh(
-            static_image_mode=True,  # 處理靜態圖片
-            max_num_faces=4,         # 最多支援同時偵測 4 張臉
-            refine_landmarks=True,
-            min_detection_confidence=0.5
-        )
-
-    def initUI(self):
-        self.setWindowTitle('GitHub 專案：AI 關鍵點識別美白磨皮工具')
-        self.setGeometry(100, 100, 1000, 650)
-
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        main_layout = QHBoxLayout(main_widget)
-
-        # 控制面板
-        control_layout = QVBoxLayout()
-        
-        self.btn_open = QPushButton('打開圖片', self)
-        self.btn_open.clicked.connect(self.open_image)
-        control_layout.addWidget(self.btn_open)
-
-        # 磨皮滑桿
-        control_layout.addWidget(QLabel('AI 臉部磨皮強度:'))
-        self.slider_blur = QSlider(Qt.Orientation.Horizontal)
-        self.slider_blur.setRange(0, 50)
-        self.slider_blur.setValue(0)
-        self.slider_blur.valueChanged.connect(self.process_image)
-        control_layout.addWidget(self.slider_blur)
-
-        # 美白滑桿
-        control_layout.addWidget(QLabel('AI 臉部美白亮度:'))
-        self.slider_bright = QSlider(Qt.Orientation.Horizontal)
-        self.slider_bright.setRange(0, 100)
-        self.slider_bright.setValue(0)
-        self.slider_bright.valueChanged.connect(self.process_image)
-        control_layout.addWidget(self.slider_bright)
-
-        self.btn_save = QPushButton('儲存圖片', self)
-        self.btn_save.clicked.connect(self.save_image)
-        control_layout.addWidget(self.btn_save)
-        
-        control_layout.addStretch()
-        main_layout.addLayout(control_layout, 1)
-
-        # 圖片顯示
-        self.lbl_image = QLabel('請先打開一張圖片', self)
-        self.lbl_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_image.setStyleSheet("border: 1px solid #bdc3c7; background-color: #ecf0f1;")
-        main_layout.addWidget(self.lbl_image, 4)
-
-    def open_image(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, '選擇圖片', '', 'Image files (*.jpg *.jpeg *.png)')
-        if file_path:
-            self.orig_image = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), cv2.IMREAD_COLOR)
-            self.slider_blur.setValue(0)
-            self.slider_bright.setValue(0)
-            self.display_image(self.orig_image)
-
-    def get_ai_face_mask(self, img):
-        """ 利用 MediaPipe AI 模型偵測人臉外部輪廓，並排除眼睛與嘴巴 """
-        h, w, _ = img.shape
-        mask = np.zeros((h, w), dtype=np.uint8)
-        
-        # MediaPipe 需要 RGB 格式
-        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = self.face_mesh.process(rgb_img)
-
-        if not results.multi_face_landmarks:
-            # 如果 AI 沒偵測到人臉，就回傳全白遮罩（防呆：套用到整張圖）
-            return np.ones((h, w), dtype=np.uint8) * 255
-
-        # 核心 AI 邏輯：利用 MediaPipe 預設的臉部輪廓索引
-        # FACEMESH_FACE_OVAL 包含臉部最外圈的邊緣點
-        face_oval_indices = [p.v for p in self.mp_face_mesh.FACEMESH_FACE_OVAL]
-        
-        for face_landmarks in results.multi_face_landmarks:
-            # 蒐集這張臉的外圍輪廓座標
-            points = []
-            for idx in face_oval_indices:
-                landmark = face_landmarks.landmark[idx]
-                pt = (int(landmark.x * w), int(landmark.y * h))
-                points.append(pt)
+    <h2>✨ GitHub 線上 AI 美白磨皮修圖工具</h2>
+    
+    <div class="container">
+        <div class="control-panel">
+            <label for="upload-input" class="btn">1. 上傳圖片</label>
+            <input type="file" id="upload-input" accept="image/*">
             
-            # 填滿臉部多邊形為白色
-            cv2.fillPoly(mask, [np.array(points, dtype=np.int32)], 255)
+            <div class="slider-group">
+                <label>2. 磨皮強度 (平滑化): <span id="blur-val">0</span></label>
+                <input type="range" id="slider-blur" min="0" max="20" value="0">
+            </div>
             
-            # 【進階排除】挖空眼睛與嘴巴，避免五官一起被模糊（自由選配，此處先保留基礎臉部輪廓）
-            # 為了讓妝容與眼神銳利，這裡也可以另外用 FACEMESH_EYES 索引進行挖空。
+            <div class="slider-group">
+                <label>3. 美白亮度: <span id="bright-val">0</span></label>
+                <input type="range" id="slider-bright" min="0" max="100" value="0">
+            </div>
+
+            <button id="btn-save" class="btn btn-save" style="margin-top: 20px;">4. 下載儲存圖片</button>
+            <div id="status">目前狀態：等待上傳圖片...</div>
+        </div>
+
+        <div class="view-panel" id="view-panel">
+            <span id="placeholder-text">圖片預覽區域</span>
+            <canvas id="canvas" style="display: none;"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const uploadInput = document.getElementById('upload-input');
+        const sliderBlur = document.getElementById('slider-blur');
+        const sliderBright = document.getElementById('slider-bright');
+        const btnSave = document.getElementById('btn-save');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        const placeholderText = document.getElementById('placeholder-text');
+
+        let originalImage = new Image();
+
+        // 監聽圖片上傳
+        uploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                originalImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        originalImage.onload = () => {
+            canvas.width = originalImage.width;
+            canvas.height = originalImage.height;
+            canvas.style.display = 'block';
+            placeholderText.style.display = 'none';
             
-        # 邊緣羽化，讓美顏邊界自然不突兀
-        mask_blur = cv2.GaussianBlur(mask, (31, 31), 0)
-        return mask_blur
+            // 重設滑桿
+            sliderBlur.value = 0;
+            sliderBright.value = 0;
+            document.getElementById('blur-val').innerText = '0';
+            document.getElementById('bright-val').innerText = '0';
+            
+            status.innerText = "狀態：圖片載入成功！";
+            resetAndDraw();
+        };
 
-    def process_image(self):
-        if self.orig_image is None:
-            return
+        // 滑桿事件監聽
+        sliderBlur.addEventListener('input', (e) => {
+            document.getElementById('blur-val').innerText = e.target.value;
+            applyEffects();
+        });
 
-        # 1. 呼叫 AI 模型取得人臉遮罩
-        face_mask = self.get_ai_face_mask(self.orig_image)
-        face_weight = face_mask.astype(float) / 255.0
-        face_weight = cv2.merge([face_weight, face_weight, face_weight])
+        sliderBright.addEventListener('input', (e) => {
+            document.getElementById('bright-val').innerText = e.target.value;
+            applyEffects();
+        });
 
-        # 2. 製作美化效果圖
-        effect_img = self.orig_image.copy()
-        
-        blur_val = self.slider_blur.value()
-        if blur_val > 0:
-            effect_img = cv2.bilateralFilter(effect_img, 0, blur_val * 3, blur_val * 3)
+        function resetAndDraw() {
+            ctx.drawImage(originalImage, 0, 0);
+        }
 
-        bright_val = self.slider_bright.value()
-        if bright_val > 0:
-            alpha = 1.0 + (bright_val / 300.0)
-            beta = bright_val
-            effect_img = cv2.convertScaleAbs(effect_img, alpha=alpha, beta=beta)
+        // 核心影像處理（純網頁前端計算）
+        function applyEffects() {
+            if (!originalImage.src) return;
+            status.innerText = "狀態：處理中...";
 
-        # 3. 根據 AI 遮罩進行局部融合
-        orig_img_float = self.orig_image.astype(float)
-        effect_img_float = effect_img.astype(float)
-        
-        output = orig_img_float * (1.0 - face_weight) + effect_img_float * face_weight
-        self.processed_image = np.clip(output, 0, 255).astype(np.uint8)
+            // 先畫回原圖
+            resetAndDraw();
 
-        self.display_image(self.processed_image)
+            const blurVal = parseInt(sliderBlur.value());
+            const brightVal = parseInt(sliderBright.value());
 
-    def display_image(self, img):
-        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_img.shape
-        bytes_per_line = ch * w
-        qt_img = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
-        pixmap = QPixmap.fromImage(qt_img)
-        scaled_pixmap = pixmap.scaled(self.lbl_image.width(), self.lbl_image.height(), 
-                                      Qt.AspectRatioMode.KeepAspectRatio, 
-                                      Qt.TransformationMode.SmoothTransformation)
-        self.lbl_image.setPixmap(scaled_pixmap)
+            // 取得像素資料
+            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let data = imgData.data;
 
-    def save_image(self):
-        if self.processed_image is None:
-            return
-        file_path, _ = QFileDialog.getOpenFileName(self, '儲存圖片', '', 'JPEG (*.jpg);;PNG (*.png)')
-        if file_path:
-            ext = file_path.split('.')[-1]
-            _, img_encoded = cv2.imencode(f'.{ext}', self.processed_image)
-            img_encoded.tofile(file_path)
+            // 1. 亮度美白處理 (利用 HTML Canvas 矩陣)
+            if (brightVal > 0) {
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i]     = Math.min(255, data[i] + brightVal);     // 紅
+                    data[i + 1] = Math.min(255, data[i + 1] + brightVal); // 綠
+                    data[i + 2] = Math.min(255, data[i + 2] + brightVal); // 藍
+                }
+            }
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    editor = AIPhotoEditor()
-    editor.show()
-    sys.exit(app.exec())
+            // 2. 磨皮處理（網頁端採用快速高斯平滑近似，確保網頁不卡頓）
+            if (blurVal > 0) {
+                ctx.putImageData(imgData, 0, 0);
+                ctx.filter = `blur(${blurVal / 4}px)`;
+                ctx.drawImage(canvas, 0, 0);
+                // 恢復濾鏡避免疊加
+                ctx.filter = 'none';
+            } else {
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            status.innerText = "狀態：處理完成";
+        }
+
+        // 下載圖片
+        btnSave.addEventListener('click', () => {
+            if (!originalImage.src) return;
+            const link = document.createElement('a');
+            link.download = 'ai_beautiful_photo.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
