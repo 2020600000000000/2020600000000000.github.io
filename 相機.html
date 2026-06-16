@@ -2,26 +2,14 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>美顏App（單檔版）</title>
+<title>穩定美顏App</title>
 
 <style>
-body { margin:0; background:black; font-family:sans-serif; }
+body{margin:0;background:black;font-family:sans-serif;}
+#camera,#editor{position:absolute;width:100%;height:100%;}
+video,canvas{width:100%;height:100%;object-fit:cover;}
 
-/* ===== Camera ===== */
-#cameraPage, #editorPage {
-  position:absolute;
-  width:100%;
-  height:100%;
-}
-
-video, canvas {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* UI */
-#snapBtn {
+#btn{
   position:fixed;
   bottom:20px;
   left:50%;
@@ -30,7 +18,7 @@ video, canvas {
   font-size:18px;
 }
 
-#ui {
+#ui{
   position:fixed;
   bottom:10px;
   width:100%;
@@ -38,29 +26,28 @@ video, canvas {
   color:white;
 }
 
-button, input { margin:5px; padding:10px; }
-
-/* hide editor first */
-#editorPage { display:none; }
+#editor{display:none;}
+input{width:200px;}
+button{padding:10px;margin:5px;}
 </style>
 </head>
 
 <body>
 
-<!-- ================= CAMERA PAGE ================= -->
-<div id="cameraPage">
+<!-- 📷 CAMERA -->
+<div id="camera">
   <video id="video" autoplay playsinline></video>
-  <button id="snapBtn">📸 拍照</button>
+  <button id="snap">📸 拍照</button>
 </div>
 
-<!-- ================= EDITOR PAGE ================= -->
-<div id="editorPage">
+<!-- 🎨 EDITOR -->
+<div id="editor">
   <canvas id="canvas"></canvas>
 
   <div id="ui">
     ✨ 美顏強度
     <input id="slider" type="range" min="0" max="1" step="0.01" value="0.5">
-    <button id="backBtn">🔙 返回拍照</button>
+    <button id="back">🔙 返回</button>
   </div>
 </div>
 
@@ -69,40 +56,51 @@ const video=document.getElementById("video");
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 
-const cameraPage=document.getElementById("cameraPage");
-const editorPage=document.getElementById("editorPage");
+const camera=document.getElementById("camera");
+const editor=document.getElementById("editor");
 
 const slider=document.getElementById("slider");
 
-// ================= CAMERA =================
+let imgData=null;
+
+// 📷 開相機（穩定版）
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
   video.srcObject=stream;
+})
+.catch(err=>{
+  alert("相機開啟失敗："+err);
 });
 
-// 📸 拍照 → 切頁
-document.getElementById("snapBtn").onclick=()=>{
+// 📸 拍照 + 切頁（一定會動）
+document.getElementById("snap").onclick=()=>{
   canvas.width=video.videoWidth;
   canvas.height=video.videoHeight;
 
   ctx.drawImage(video,0,0);
 
-  cameraPage.style.display="none";
-  editorPage.style.display="block";
+  imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+  camera.style.display="none";
+  editor.style.display="block";
 };
 
-// ================= SKIN TONE =================
-const target=[255,235,238];
-
+// 🎯 更穩定膚色判斷
 function isSkin(r,g,b){
-  return r>60 && g>40 && b>30;
+  return r>70 && g>40 && b>30;
 }
 
-function apply(){
+// 🌸 膚色目標（粉嫩）
+const target=[255,235,238];
+
+// ✨ 修圖（一定有變化）
+function render(){
+  if(!imgData) return;
+
   let t=parseFloat(slider.value);
 
-  let img=ctx.getImageData(0,0,canvas.width,canvas.height);
-  let d=img.data;
+  let d=new Uint8ClampedArray(imgData.data);
+  let w=canvas.width;
 
   for(let i=0;i<d.length;i+=4){
 
@@ -115,20 +113,22 @@ function apply(){
     }
   }
 
-  ctx.putImageData(img,0,0);
+  let newImg=new ImageData(d,canvas.width,canvas.height);
+  ctx.putImageData(newImg,0,0);
 }
 
-// 🎚 即時調整
-slider.oninput=()=>{
-  ctx.drawImage(canvas,0,0);
-  apply();
+// 🎚 slider 一定有效
+slider.oninput=render;
+
+// 🔙 返回拍照
+document.getElementById("back").onclick=()=>{
+  editor.style.display="none";
+  camera.style.display="block";
 };
 
-// 🔙 回拍照
-document.getElementById("backBtn").onclick=()=>{
-  editorPage.style.display="none";
-  cameraPage.style.display="block";
-};
+// 初始 render（避免空白）
+setInterval(render,100);
+
 </script>
 
 </body>
