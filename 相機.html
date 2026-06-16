@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 手機雙鏡頭即時黃金重塑相機</title>
+    <title>AI 手機雙鏡頭即時對比相機</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
@@ -27,7 +26,7 @@
         .viewfinders-split { width: 100vw; height: 68vh; display: flex; flex-direction: row; gap: 4px; background: #000; padding: 4px; box-sizing: border-box; }
         .viewfinder-box { flex: 1; height: 100%; position: relative; background: #1c1c1e; border-radius: 12px; overflow: hidden; }
         
-        /* 💡 修正點 1：將鏡像反轉改由 Canvas 內部 2D 渲染處理，避免 CSS 強制反轉導致網頁定位破圖與拉伸變形 */
+        /* 觀景窗內的畫布 */
         .viewfinder-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .viewfinder-label { position: absolute; z-index: 10; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); }
 
@@ -50,24 +49,25 @@
         .slider-input { width: 100%; height: 6px; background: #48484a; border-radius: 3px; -webkit-appearance: none; }
         .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #0071e3; }
         
-        .grid-layout { display: flex; gap: 8px; overflow-x: auto; width: 100%; }
+        .grid-layout { display: flex; gap: 8px; overflow-x: auto; width: 100%; white-space: nowrap; }
         .grid-item { flex: 0 0 auto; padding: 10px 15px; background-color: #3a3a3c; border-radius: 15px; border: 2px solid transparent; color: #fff; font-size: 12px; font-weight: bold; }
         .grid-item.active { border-color: #0071e3; background-color: #0071e3; }
-        .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; }
+        .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; margin-top: 10px; }
+        
+        #hidden-video { display: none; }
     </style>
 </head>
 <body>
 
-    <video id="hidden-video" autoplay playsinline muted style="display: none;"></video>
+    <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 即時雙鏡頭對比相機</div>
         <div class="intro-desc">
             <b>🙌 隔空手勢操控與即時對比：</b><br><br>
             * 畫面上方將同步拆分為<b>「原鏡頭」</b>與<b>「修改後」</b>左右對比視窗。<br><br>
-            1. <b>✌️ 比出 YA：</b> 右側視窗直接重塑為「黃金比例瓜子臉」。再比一次 YA 即可取消右側變形，恢復正常。<br>
-            2. <b>👌 比出 OK：</b> 觸發 5 秒拍照，自動擷取右側修改後的完美畫面。<br>
-            3. <b>🖐️ 隔空揮手：</b> 手掌左右大範圍晃動，直接切換右側視窗的快門濾鏡。
+            1. <b>🖐️ 隔空揮手：</b> 手掌左右大範圍晃動，直接切換右側視窗的快門濾鏡。<br>
+            2. <b>👌 比出 OK：</b> 觸發 5 秒拍照，自動擷取右側套用濾鏡後的精美畫面。
         </div>
         <button class="start-btn" onclick="enterCameraStage()">開啟對比相機</button>
     </div>
@@ -82,14 +82,13 @@
             </div>
             <div class="viewfinder-box">
                 <canvas id="canvas-live-fx"></canvas>
-                <div class="viewfinder-label" id="fx-label">✨ 修改後預覽</div>
+                <div class="viewfinder-label">✨ 修改後預覽</div>
             </div>
         </div>
         
         <div class="control-panel">
             <div class="filter-indicator" id="filter-name">濾鏡：原圖</div>
             <div class="gesture-tips">
-                ✌️ 比YA：右窗變更黃金比例 (再比YA取消)<br>
                 🖐️ 揮手：換濾鏡 | 👌 比OK：5秒拍照
             </div>
         </div>
@@ -101,10 +100,27 @@
         </div>
         
         <div class="menu-row">
+            <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">自訂貼紙</button>
             <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">精準美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">智慧磨皮</button>
             <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">主題妝容</button>
-            <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">創意貼紙</button>
+        </div>
+
+        <!-- 貼紙選單：已換成上傳的圖片檔 -->
+        <div id="panel-sticker" class="sub-panel">
+            <div class="grid-layout">
+                <button class="grid-item stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
+                <button class="grid-item stk-btn" id="stk-5188" onclick="setSticker('5188')">貼紙 5188</button>
+                <button class="grid-item stk-btn" id="stk-5189" onclick="setSticker('5189')">貼紙 5189</button>
+                <button class="grid-item stk-btn" id="stk-5190" onclick="setSticker('5190')">貼紙 5190</button>
+                <button class="grid-item stk-btn" id="stk-5191" onclick="setSticker('5191')">貼紙 5191</button>
+                <button class="grid-item stk-btn" id="stk-5192" onclick="setSticker('5192')">貼紙 5192</button>
+                <button class="grid-item stk-btn" id="stk-5193" onclick="setSticker('5193')">貼紙 5193</button>
+                <button class="grid-item stk-btn" id="stk-5194" onclick="setSticker('5194')">貼紙 5194</button>
+                <button class="grid-item stk-btn" id="stk-5195" onclick="setSticker('5195')">貼紙 5195</button>
+                <button class="grid-item stk-btn" id="stk-5196" onclick="setSticker('5196')">貼紙 5196</button>
+                <button class="grid-item stk-btn" id="stk-5197" onclick="setSticker('5197')">貼紙 5197</button>
+            </div>
         </div>
 
         <div id="panel-skin" class="sub-panel">
@@ -128,15 +144,7 @@
             </div>
         </div>
 
-        <div id="panel-sticker" class="sub-panel">
-            <div class="grid-layout">
-                <button class="grid-item stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
-                <button class="grid-item stk-btn" id="stk-cat" onclick="setSticker('cat')">🐱 貓耳</button>
-                <button class="grid-item stk-btn" id="stk-glasses" onclick="setSticker('glasses')">🕶️ 墨鏡</button>
-            </div>
-        </div>
-
-        <button class="confirm-btn" onclick="savePhoto()">💾 儲存黃金比例照片</button>
+        <button class="confirm-btn" onclick="savePhoto()">💾 儲存照片</button>
     </div>
 
     <script>
@@ -152,30 +160,34 @@
         let currentFilterIndex = 0;
         const filters = ['原圖', '浪漫粉紅', '日系清新', '冷調冷冽', '暖陽復古'];
         const filterCSSMap = { '原圖': 'none', '浪漫粉紅': 'hue-rotate(-10deg) saturate(1.2) brightness(1.05)', '日系清新': 'brightness(1.15) contrast(0.9)', '冷調冷冽': 'saturate(0.6) contrast(1.15) hue-rotate(15deg)', '暖陽復古': 'sepia(0.25) saturate(1.3)' };
-        let faceLandmarksData = null;
-        let isReshapeActive = false;
-        let yaHandInFrame = false;
+        
         let lastHandX = null; let waveCooldown = false;
         let isCountingDown = false; let countdownTimer = null;
         let capturedCanvasBackup = null;
 
         let currentMakeup = 'none'; let currentSticker = 'none';
-        const stickerConfig = { cat: { text: "🐱", size: 80 }, glasses: { text: "🕶️", size: 70 } };
-        let stickerState = { x: 180, y: 180, scale: 1.0 };
-        let isDragging = false; let dragStartX = 0;
-        let dragStartY = 0; let initStickerX = 0; let initStickerY = 0;
+        
+        // 建立新圖片貼紙物件庫映射對照表
+        const stickerImages = {};
+        const stickerIds = ['5188', '5189', '5190', '5191', '5192', '5193', '5194', '5195', '5196', '5197'];
+        
+        // 預先載入圖片資源
+        stickerIds.forEach(id => {
+            const img = new Image();
+            img.src = `IMG_${id}.JPG`;
+            stickerImages[id] = img;
+        });
 
-        // 💡 修正點 2：調正 Canvas 畫布原生解析度為標準自拍的 3:4 比例，防止被擠壓變形
-        const VIEW_W = 360;
-        const VIEW_H = 480;
+        let stickerState = { x: 180, y: 220, width: 120, height: 120 };
+        let isDragging = false; let dragStartX = 0; let dragStartY = 0; let initStickerX = 0; let initStickerY = 0;
+
+        const CW = 300;
+        const CH = 525;
 
         function init() {
-            canvasRaw.width = VIEW_W;
-            canvasRaw.height = VIEW_H;
-            canvasLiveFx.width = VIEW_W; 
-            canvasLiveFx.height = VIEW_H;
-            canvasEdit.width = VIEW_W; 
-            canvasEdit.height = VIEW_H;
+            canvasRaw.width = CW; canvasRaw.height = CH;
+            canvasLiveFx.width = CW; canvasLiveFx.height = CH;
+            canvasEdit.width = 360; canvasEdit.height = 450;
         }
         init();
 
@@ -183,57 +195,42 @@
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
             
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 480, height: 640 } })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 960 } } })
                 .then(stream => {
                     videoElement.srcObject = stream;
                     videoElement.addEventListener('loadedmetadata', () => {
                         startRenderLoop();
                         initMediaPipe();
                     });
-                }).catch(err => alert("請用 Safari/Chrome 開啟並允許前鏡頭權限"));
+                }).catch(err => alert("請允許前鏡頭權限"));
+        }
+
+        function drawVideoCover(ctx, video, canvasW, canvasH) {
+            const vW = video.videoWidth;
+            const vH = video.videoHeight;
+            const videoRatio = vW / vH;
+            const canvasRatio = canvasW / canvasH;
+            
+            let sx, sy, sW, sH;
+            if (videoRatio > canvasRatio) {
+                sH = vH; sW = vH * canvasRatio; sx = (vW - sW) / 2; sy = 0;
+            } else {
+                sW = vW; sH = vW / canvasRatio; sx = 0; sy = (vH - sH) / 2;
+            }
+            
+            ctx.save();
+            ctx.translate(canvasW, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, sx, sy, sW, sH, 0, 0, canvasW, canvasH);
+            ctx.restore();
         }
 
         function startRenderLoop() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = VIEW_W; 
-            tempCanvas.height = VIEW_H;
-            const tempCtx = tempCanvas.getContext('2d');
-
             const render = () => {
                 if (videoElement.readyState >= 2) {
-                    // 💡 修正點 3：改由內建 Context 做 2D 反轉鏡像繪製，確保濾鏡、液化點位與畫面完全一致
-                    
-                    // 繪製左窗（真實原廠畫面）
-                    ctxRaw.save();
-                    ctxRaw.translate(VIEW_W, 0);
-                    ctxRaw.scale(-1, 1);
-                    ctxRaw.drawImage(videoElement, 0, 0, VIEW_W, VIEW_H);
-                    ctxRaw.restore();
-
-                    // 準備右窗（動態特效預覽）
+                    drawVideoCover(ctxRaw, videoElement, CW, CH);
                     canvasLiveFx.style.filter = filterCSSMap[filters[currentFilterIndex]];
-                    
-                    if (isReshapeActive && faceLandmarksData) {
-                        document.getElementById('fx-label').innerText = "✨ 黃金比例中";
-                        
-                        // 先將真實畫面畫入隱藏的 tempCanvas
-                        tempCtx.save();
-                        tempCtx.translate(VIEW_W, 0);
-                        tempCtx.scale(-1, 1);
-                        tempCtx.drawImage(videoElement, 0, 0, VIEW_W, VIEW_H);
-                        tempCtx.restore();
-
-                        // 計算變形點位並渲染
-                        const targetPoints = getReshapedLandmarks(faceLandmarksData, 100, VIEW_W, VIEW_H);
-                        drawMeshDeformation(ctxLive, tempCanvas, faceLandmarksData, targetPoints, VIEW_W, VIEW_H);
-                    } else {
-                        document.getElementById('fx-label').innerText = "✨ 修改後預覽";
-                        ctxLive.save();
-                        ctxLive.translate(VIEW_W, 0);
-                        ctxLive.scale(-1, 1);
-                        ctxLive.drawImage(videoElement, 0, 0, VIEW_W, VIEW_H);
-                        ctxLive.restore();
-                    }
+                    drawVideoCover(ctxLive, videoElement, CW, CH);
                 }
                 requestAnimationFrame(render);
             };
@@ -245,28 +242,19 @@
             const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
             hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.6 });
             hands.onResults(results => {
+                if(!isCountingDown) {
+                    status.innerText = "🖐️ 左右揮手換濾鏡 | 👌 比出 OK 手勢拍照";
+                }
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     handleHandGestures(results.multiHandLandmarks[0]);
-                } else { yaHandInFrame = false; lastHandX = null; }
+                } else { lastHandX = null; }
             });
 
-            const faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
-            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5 });
-            faceMesh.onResults(results => {
-                if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                    faceLandmarksData = results.multiFaceLandmarks[0];
-                    if(!isCountingDown) {
-                        status.innerText = isReshapeActive ? "✌️ 右窗黃金變臉中 (再比YA可恢復)" : "✋ 請對鏡頭比出 YA 觸發右窗變臉";
-                    }
-                } else { faceLandmarksData = null; }
-            });
-
-            let toggle = true;
             function aiLoop() {
                 if (videoElement.readyState >= 2) {
-                    let p = toggle ? hands.send({ image: videoElement }) : faceMesh.send({ image: videoElement });
-                    toggle = !toggle;
-                    p.then(() => requestAnimationFrame(aiLoop)).catch(() => requestAnimationFrame(aiLoop));
+                    hands.send({ image: videoElement })
+                        .then(() => requestAnimationFrame(aiLoop))
+                        .catch(() => requestAnimationFrame(aiLoop));
                 } else { requestAnimationFrame(aiLoop); }
             }
             requestAnimationFrame(aiLoop);
@@ -274,15 +262,7 @@
 
         function handleHandGestures(lm) {
             const status = document.getElementById('status-text');
-            const isYa = (lm[8].y < lm[6].y) && (lm[12].y < lm[10].y) && (lm[16].y > lm[14].y) && (lm[20].y > lm[18].y);
             const isOk = (Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.05) && (lm[12].y < lm[10].y) && (lm[16].y < lm[14].y);
-
-            if (isYa) {
-                if (!yaHandInFrame) {
-                    isReshapeActive = !isReshapeActive;
-                    yaHandInFrame = true;
-                }
-            } else { yaHandInFrame = false; }
 
             if (isOk && !isCountingDown) {
                 isCountingDown = true;
@@ -292,7 +272,7 @@
                     status.innerText = `👌 偵測到 OK！倒數 ${count} 秒拍照...`;
                     if (count <= 0) {
                         clearInterval(countdownTimer);
-                        status.innerText = "💥 捕捉完美右窗！";
+                        status.innerText = "💥 拍照成功！進入後製階段";
                         setTimeout(triggerSnapshot, 300);
                     }
                 }, 1000);
@@ -313,22 +293,15 @@
 
         function triggerSnapshot() {
             capturedCanvasBackup = document.createElement('canvas');
-            capturedCanvasBackup.width = VIEW_W; 
-            capturedCanvasBackup.height = VIEW_H;
+            capturedCanvasBackup.width = 360; capturedCanvasBackup.height = 450;
             const bCtx = capturedCanvasBackup.getContext('2d');
             
-            // 直接擷取修改後的右側畫面進入後製
-            bCtx.drawImage(canvasLiveFx, 0, 0, VIEW_W, VIEW_H);
+            bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450);
             
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
             
-            if (faceLandmarksData) {
-                // 💡 修正點 4：修正自拍鏡像後貼紙的定位初始值
-                stickerState.x = (1 - faceLandmarksData[1].x) * canvasEdit.width;
-                stickerState.y = faceLandmarksData[1].y * canvasEdit.height;
-            }
-            openSubPanel('skin'); 
+            openSubPanel('sticker'); 
             initStickerMobileDrag();
         }
 
@@ -341,92 +314,18 @@
         }
 
         function setMakeup(m) { currentMakeup = m; document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m)); applyEditEffects(); }
-        function setSticker(s) { currentSticker = s; document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); applyEditEffects(); }
-
-        // 💡 修正點 5：對齊自拍鏡像座標系統 (1 - p.x)，使縮臉與瘦下巴特效能百分之百對齊真實人臉
-        function getReshapedLandmarks(lm, intensity, w, h) {
-            let newLm = lm.map(p => ({ x: (1 - p.x) * w, y: p.y * h }));
-            const k = intensity / 100;
-            const fCenter = newLm[1].x; const pTop = newLm[10].y; const pMid = newLm[9].y;
-            const pBot = newLm[2].y; const pChin = newLm[152].y;
-            const currentLength = pChin - pTop; const targetWidth = currentLength / 1.618;
-            
-            for (let i = 0; i < newLm.length; i++) {
-                let pt = newLm[i];
-                if (pt.y > pMid) { 
-                    const distToCenter = pt.x - fCenter;
-                    const targetX = fCenter + (distToCenter * (targetWidth / (w * 0.72)));
-                    pt.x = pt.x + (targetX - pt.x) * k * 0.55;
-                }
-                const idealCourtLen = currentLength / 3;
-                if (pt.y > pTop && pt.y <= pMid) {
-                    let targetY = pTop + ((pt.y - pTop) / (pMid - pTop)) * idealCourtLen;
-                    pt.y = pt.y + (targetY - pt.y) * k * 0.3;
-                } else if (pt.y > pMid && pt.y <= pBot) {
-                    let targetY = (pTop + idealCourtLen) + ((pt.y - pMid) / (pBot - pMid)) * idealCourtLen;
-                    pt.y = pt.y + (targetY - pt.y) * k * 0.3;
-                } else if (pt.y > pBot) {
-                    let targetY = (pTop + idealCourtLen * 2) + ((pt.y - pBot) / (pChin - pBot)) * idealCourtLen;
-                    pt.y = pt.y + (targetY - pt.y) * k * 0.3;
-                }
-            }
-            return newLm;
-        }
-
-        function drawMeshDeformation(ctx, origCanvas, origLm, targetLm, w, h) {
-            const rows = 16;
-            const cols = 12;
-            ctx.clearRect(0, 0, w, h);
-
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const srcX1 = (c / cols) * w;
-                    const srcY1 = (r / rows) * h;
-                    const srcX2 = ((c + 1) / cols) * w;
-                    const srcY2 = ((r + 1) / rows) * h;
-                    
-                    const getOffset = (sx, sy) => {
-                        let nearestIdx = 1;
-                        let minDist = Infinity;
-                        [10,152,234,454,1,9,2].forEach(idx => {
-                            // 💡 同步鏡像座標
-                            let origX = (1 - origLm[idx].x) * w;
-                            let origY = origLm[idx].y * h;
-                            let d = Math.hypot(origX - sx, origY - sy);
-                            if(d < minDist) { minDist = d; nearestIdx = idx; }
-                        });
-                        const weight = Math.max(0, 1 - (minDist / 140));
-                        let origX = (1 - origLm[nearestIdx].x) * w;
-                        let origY = origLm[nearestIdx].y * h;
-                        return { 
-                            x: sx + (targetLm[nearestIdx].x - origX) * weight, 
-                            y: sy + (targetLm[nearestIdx].y - origY) * weight 
-                        };
-                    };
-
-                    const p1 = getOffset(srcX1, srcY1); const p2 = getOffset(srcX2, srcY1);
-                    const p3 = getOffset(srcX1, srcY2); const p4 = getOffset(srcX2, srcY2);
-
-                    ctx.save(); ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.clip();
-                    const t1 = (p2.x - p1.x) / (srcX2 - srcX1); const t2 = (p2.y - p1.y) / (srcX2 - srcX1);
-                    const t3 = (p3.x - p1.x) / (srcY2 - srcY1); const t4 = (p3.y - p1.y) / (srcY2 - srcY1);
-                    ctx.transform(t1, t2, t3, t4, p1.x - srcX1 * t1 - srcY1 * t3, p1.y - srcX1 * t2 - srcY1 * t4);
-                    ctx.drawImage(origCanvas, 0, 0); ctx.restore();
-
-                    ctx.save(); ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.clip();
-                    const t1b = (p4.x - p3.x) / (srcX2 - srcX1); const t2b = (p4.y - p3.y) / (srcX2 - srcX1);
-                    const t3b = (p4.x - p2.x) / (srcY2 - srcY1); const t4b = (p4.y - p2.y) / (srcY2 - srcY1);
-                    ctx.transform(t1b, t2b, t3b, t4b, p3.x - srcX1 * t1b - srcY2 * t3b, p3.y - srcX1 * t2b - srcY2 * t4b);
-                    ctx.drawImage(origCanvas, 0, 0); ctx.restore();
-                }
-            }
+        
+        function setSticker(s) { 
+            currentSticker = s; 
+            document.querySelectorAll('.stk-btn').forEach(b => b.classList.toggle('active', b.id === 'stk-'+s)); 
+            applyEditEffects(); 
         }
 
         function applyEditEffects() {
             if (!capturedCanvasBackup) return;
             const w = canvasEdit.width; const h = canvasEdit.height;
-            ctxEdit.clearRect(0,0,w,h); ctxEdit.drawImage(capturedCanvasBackup, 0,0);
-            if (!faceLandmarksData) return;
+            ctxEdit.clearRect(0, 0, w, h); 
+            ctxEdit.drawImage(capturedCanvasBackup, 0, 0);
 
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             if (whitVal > 0) {
@@ -439,30 +338,37 @@
                 ctxEdit.globalAlpha = 0.2 * (smooVal/100); ctxEdit.shadowBlur = 12; ctxEdit.shadowColor = "#fff"; ctxEdit.drawImage(canvasEdit, 0,0); ctxEdit.restore();
             }
 
-            drawThemedMakeup(ctxEdit, faceLandmarksData, w, h);
-            if (currentSticker !== 'none') {
-                const conf = stickerConfig[currentSticker];
-                ctxEdit.save(); ctxEdit.translate(stickerState.x, stickerState.y);
-                ctxEdit.font = `${conf.size * stickerState.scale}px Arial`; ctxEdit.textAlign = 'center'; ctxEdit.textBaseline = 'middle';
-                ctxEdit.fillText(conf.text, 0, 0); ctxEdit.restore();
+            drawStaticMakeup(ctxEdit, w, h);
+            
+            // 繪製自訂圖片貼紙
+            if (currentSticker !== 'none' && stickerImages[currentSticker]) {
+                const img = stickerImages[currentSticker];
+                ctxEdit.save();
+                // 移至貼紙中心點進行繪製
+                ctxEdit.translate(stickerState.x, stickerState.y);
+                ctxEdit.drawImage(img, -stickerState.width / 2, -stickerState.height / 2, stickerState.width, stickerState.height);
+                ctxEdit.restore();
             }
         }
 
-        function drawThemedMakeup(ctx, lm, w, h) {
+        function drawStaticMakeup(ctx, w, h) {
             if (currentMakeup === 'none') return;
             ctx.save();
-            const getX = (idx) => (1 - lm[idx].x) * w;
             if (currentMakeup === 'kr') {
-                ctx.fillStyle = "rgba(255, 100, 130, 0.35)";
-                ctx.beginPath(); [61,146,91,181,84,17,314,405,321,375,291].forEach(i=>ctx.lineTo(getX(i), lm[i].y*h)); ctx.fill();
+                let grad1 = ctx.createRadialGradient(w*0.3, h*0.45, 5, w*0.3, h*0.45, 35);
+                grad1.addColorStop(0, "rgba(255, 120, 140, 0.3)"); grad1.addColorStop(1, "rgba(255,120,140,0)");
+                ctx.fillStyle = grad1; ctx.beginPath(); ctx.arc(w*0.3, h*0.45, 35, 0, Math.PI*2); ctx.fill();
+                
+                let grad2 = ctx.createRadialGradient(w*0.7, h*0.45, 5, w*0.7, h*0.45, 35);
+                grad2.addColorStop(0, "rgba(255, 120, 140, 0.3)"); grad2.addColorStop(1, "rgba(255,120,140,0)");
+                ctx.fillStyle = grad2; ctx.beginPath(); ctx.arc(w*0.7, h*0.45, 35, 0, Math.PI*2); ctx.fill();
             } else if (currentMakeup === 'jp') {
-                ctx.fillStyle = "rgba(255, 120, 120, 0.2)";
-                ctx.beginPath(); ctx.arc(getX(31), lm[31].y*h+8, 15, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(getX(261), lm[261].y*h+8, 15, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "rgba(255, 90, 90, 0.15)";
+                ctx.beginPath(); ctx.arc(w*0.32, h*0.42, 20, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(w*0.68, h*0.42, 20, 0, Math.PI*2); ctx.fill();
             } else if (currentMakeup === 'opera') {
-                ctx.fillStyle = "rgba(230, 0, 40, 0.5)";
-                ctx.beginPath(); [70,156,157,33,113].forEach(i=>ctx.lineTo(getX(i), lm[i].y*h)); ctx.fill();
-                ctx.beginPath(); [300,383,384,263,342].forEach(i=>ctx.lineTo(getX(i), lm[i].y*h)); ctx.fill();
+                ctx.fillStyle = "rgba(230, 0, 40, 0.25)";
+                ctx.beginPath(); ctx.arc(w*0.5, h*0.35, 50, 0, Math.PI*2); ctx.fill();
             }
             ctx.restore();
         }
@@ -472,7 +378,9 @@
                 if (currentSticker === 'none') return;
                 let t = e.touches[0]; let rect = canvasEdit.getBoundingClientRect();
                 let canvasX = t.clientX - rect.left; let canvasY = t.clientY - rect.top;
-                if (Math.hypot(canvasX - stickerState.x, canvasY - stickerState.y) < 50) {
+                
+                // 點擊點距離貼紙中心 60px 內判定為拖曳貼紙
+                if (Math.hypot(canvasX - stickerState.x, canvasY - stickerState.y) < 60) {
                     isDragging = true; dragStartX = canvasX; dragStartY = canvasY;
                     initStickerX = stickerState.x; initStickerY = stickerState.y;
                 }
@@ -488,7 +396,7 @@
             window.addEventListener('touchend', () => isDragging = false);
         }
 
-        function savePhoto() { alert("🎉 照片已儲存修改後的完美右窗！"); }
+        function savePhoto() { alert("🎉 照片已成功儲存！"); }
     </script>
 </body>
 </html>
