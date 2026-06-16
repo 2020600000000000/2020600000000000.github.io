@@ -2,56 +2,46 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>美顏Camera App</title>
+<title>美顏App 完整版</title>
 
 <style>
-body {
-  margin: 0;
-  background: black;
-  font-family: sans-serif;
+body{margin:0;background:black;font-family:sans-serif;}
+
+#cameraView,#editorView{
+  position:absolute;
+  width:100%;
+  height:100%;
 }
 
-#cameraView, #editorView {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+video,canvas{
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
-/* camera */
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* 拍照按鈕 */
+#snapBtn{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:15px;
+  font-size:18px;
 }
 
-/* editor */
-canvas {
-  width: 100%;
-  height: 85%;
-  object-fit: contain;
-  background: black;
+/* UI */
+#ui{
+  position:fixed;
+  bottom:10px;
+  width:100%;
+  text-align:center;
+  color:white;
 }
 
-#ui {
-  position: fixed;
-  bottom: 10px;
-  width: 100%;
-  text-align: center;
-  color: white;
-}
+button{padding:10px;margin:5px;}
+input{width:200px;}
 
-button {
-  padding: 10px;
-  margin: 5px;
-}
-
-input {
-  width: 200px;
-}
-
-#editorView {
-  display: none;
-}
+#editorView{display:none;}
 </style>
 </head>
 
@@ -60,14 +50,7 @@ input {
 <!-- 📷 CAMERA -->
 <div id="cameraView">
   <video id="video" autoplay playsinline></video>
-  <button id="snapBtn" style="
-    position:fixed;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    padding:15px;
-    font-size:18px;
-  ">📸 拍照</button>
+  <button id="snapBtn">📸 拍照</button>
 </div>
 
 <!-- 🎨 EDITOR -->
@@ -81,98 +64,161 @@ input {
   </div>
 </div>
 
+<!-- FaceMesh -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
 <script>
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
 
-const cameraView = document.getElementById("cameraView");
-const editorView = document.getElementById("editorView");
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-const slider = document.getElementById("slider");
+const cameraView=document.getElementById("cameraView");
+const editorView=document.getElementById("editorView");
 
-let originalImage = null;
+const slider=document.getElementById("slider");
 
-// =======================
-// 📷 開相機（GitHub可用）
-// =======================
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => {
-  video.srcObject = stream;
-})
-.catch(err => {
-  alert("相機開啟失敗：" + err);
+let face=null;
+let originalImage=null;
+
+// =====================
+// 📷 camera
+// =====================
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+  video.srcObject=stream;
 });
 
-// =======================
-// 📸 拍照 → 切畫面
-// =======================
-document.getElementById("snapBtn").onclick = () => {
+// =====================
+// 🤖 FaceMesh
+// =====================
+const fm=new FaceMesh({
+  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+});
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+fm.setOptions({
+  maxNumFaces:1,
+  refineLandmarks:true
+});
 
-  ctx.drawImage(video, 0, 0);
+fm.onResults(r=>{
+  if(r.multiFaceLandmarks?.length){
+    face=r.multiFaceLandmarks[0];
+  }
+});
 
-  originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+// camera feed to FaceMesh
+const cam=new Camera(video,{
+  onFrame:async()=>{
+    await fm.send({image:video});
+  },
+  width:640,
+  height:480
+});
+cam.start();
 
-  cameraView.style.display = "none";
-  editorView.style.display = "block";
+// =====================
+// 📸 拍照 + 切頁
+// =====================
+document.getElementById("snapBtn").onclick=()=>{
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+
+  ctx.drawImage(video,0,0);
+
+  originalImage=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+  cameraView.style.display="none";
+  editorView.style.display="block";
+
+  render();
 };
 
-// =======================
-// 🌸 膚色調整（安全版，不會糊）
-// =======================
-const target = [255, 235, 238];
+// =====================
+// 🎯 臉範圍（正確）
+// =====================
+function inFace(x,y,w,h){
+  if(!face) return false;
 
-function isSkin(r, g, b) {
-  return r > 70 && g > 40 && b > 30;
+  let xs=face.map(p=>p.x*w);
+  let ys=face.map(p=>p.y*h);
+
+  let minX=Math.min(...xs);
+  let maxX=Math.max(...xs);
+  let minY=Math.min(...ys);
+  let maxY=Math.max(...ys);
+
+  // 脖子
+  maxY += (maxY-minY)*0.6;
+
+  return (x>=minX && x<=maxX && y>=minY && y<=maxY);
 }
 
-function renderBeauty() {
+// =====================
+// 🌸 膚色判斷（穩定版）
+// =====================
+function isSkin(r,g,b){
+  return (
+    r>60 &&
+    g>40 &&
+    b>30 &&
+    Math.abs(r-g)<30 &&
+    r>b
+  );
+}
 
-  if (!originalImage) return;
+// =====================
+// ✨ 修圖核心（完整）
+// =====================
+function render(){
 
-  let t = parseFloat(slider.value);
+  if(!originalImage) return;
 
-  let img = new ImageData(
+  let t=parseFloat(slider.value);
+
+  let img=new ImageData(
     new Uint8ClampedArray(originalImage.data),
     canvas.width,
     canvas.height
   );
 
-  let d = img.data;
+  let d=img.data;
 
-  for (let i = 0; i < d.length; i += 4) {
+  for(let y=0;y<canvas.height;y+=2){
+    for(let x=0;x<canvas.width;x+=2){
 
-    let r = d[i];
-    let g = d[i + 1];
-    let b = d[i + 2];
+      let i=(y*canvas.width+x)*4;
 
-    if (isSkin(r, g, b)) {
+      if(!inFace(x,y,canvas.width,canvas.height)) continue;
 
-      // 👉 只做「柔和混色」，不做 blur
-      d[i]     = r + (target[0] - r) * t;
-      d[i + 1] = g + (target[1] - g) * t;
-      d[i + 2] = b + (target[2] - b) * t;
+      let r=d[i];
+      let g=d[i+1];
+      let b=d[i+2];
+
+      if(!isSkin(r,g,b)) continue;
+
+      // 🌸 柔和膚色融合（不糊臉）
+      d[i]   = r + (255-r)*t;
+      d[i+1] = g + (235-g)*t;
+      d[i+2] = b + (238-b)*t;
     }
   }
 
-  ctx.putImageData(img, 0, 0);
+  ctx.putImageData(img,0,0);
 }
 
-// =======================
-// 🎚 slider 即時更新
-// =======================
-slider.oninput = renderBeauty;
+// slider 即時更新
+slider.oninput=render;
 
-// =======================
+// =====================
 // 🔙 重拍
-// =======================
-document.getElementById("backBtn").onclick = () => {
-  editorView.style.display = "none";
-  cameraView.style.display = "block";
+// =====================
+document.getElementById("backBtn").onclick=()=>{
+  editorView.style.display="none";
+  cameraView.style.display="block";
 };
+
 </script>
 
 </body>
