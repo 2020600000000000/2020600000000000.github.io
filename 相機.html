@@ -1,54 +1,179 @@
-// 🌸 更高級：保邊磨皮 + 局部膚色
-function beauty(img, w, h, strength){
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>美顏Camera App</title>
 
-  const d = img.data;
+<style>
+body {
+  margin: 0;
+  background: black;
+  font-family: sans-serif;
+}
 
-  // 👉 先備份原圖（很重要！避免越修越糊）
-  const original = new Uint8ClampedArray(d);
+#cameraView, #editorView {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
 
-  function skin(r,g,b){
-    return r>70 && g>40 && b>30;
-  }
+/* camera */
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-  for(let y=1;y<h-1;y++){
-    for(let x=1;x<w-1;x++){
+/* editor */
+canvas {
+  width: 100%;
+  height: 85%;
+  object-fit: contain;
+  background: black;
+}
 
-      let i=(y*w+x)*4;
+#ui {
+  position: fixed;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  color: white;
+}
 
-      let r=d[i], g=d[i+1], b=d[i+2];
+button {
+  padding: 10px;
+  margin: 5px;
+}
 
-      if(!skin(r,g,b)) continue;
+input {
+  width: 200px;
+}
 
-      // ===== ① 保邊「磨皮」（不是 blur）=====
-      let avgR=0,avgG=0,avgB=0,c=0;
+#editorView {
+  display: none;
+}
+</style>
+</head>
 
-      for(let dy=-1;dy<=1;dy++){
-        for(let dx=-1;dx<=1;dx++){
+<body>
 
-          let ni=((y+dy)*w+(x+dx))*4;
+<!-- 📷 CAMERA -->
+<div id="cameraView">
+  <video id="video" autoplay playsinline></video>
+  <button id="snapBtn" style="
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:15px;
+    font-size:18px;
+  ">📸 拍照</button>
+</div>
 
-          avgR+=original[ni];
-          avgG+=original[ni+1];
-          avgB+=original[ni+2];
-          c++;
-        }
-      }
+<!-- 🎨 EDITOR -->
+<div id="editorView">
+  <canvas id="canvas"></canvas>
 
-      avgR/=c; avgG/=c; avgB/=c;
+  <div id="ui">
+    ✨ 美顏強度
+    <input id="slider" type="range" min="0" max="1" step="0.01" value="0.5">
+    <button id="backBtn">🔙 重拍</button>
+  </div>
+</div>
 
-      // ===== ② 膚色統一（但不過曝）=====
-      const target=[255,235,238];
+<script>
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-      let tr=r+(target[0]-r)*strength;
-      let tg=g+(target[1]-g)*strength;
-      let tb=b+(target[2]-b)*strength;
+const cameraView = document.getElementById("cameraView");
+const editorView = document.getElementById("editorView");
 
-      // ===== ③ 混合（關鍵）=====
-      d[i]   = (avgR*0.6 + tr*0.4);
-      d[i+1] = (avgG*0.6 + tg*0.4);
-      d[i+2] = (avgB*0.6 + tb*0.4);
+const slider = document.getElementById("slider");
+
+let originalImage = null;
+
+// =======================
+// 📷 開相機（GitHub可用）
+// =======================
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+  video.srcObject = stream;
+})
+.catch(err => {
+  alert("相機開啟失敗：" + err);
+});
+
+// =======================
+// 📸 拍照 → 切畫面
+// =======================
+document.getElementById("snapBtn").onclick = () => {
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0);
+
+  originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  cameraView.style.display = "none";
+  editorView.style.display = "block";
+};
+
+// =======================
+// 🌸 膚色調整（安全版，不會糊）
+// =======================
+const target = [255, 235, 238];
+
+function isSkin(r, g, b) {
+  return r > 70 && g > 40 && b > 30;
+}
+
+function renderBeauty() {
+
+  if (!originalImage) return;
+
+  let t = parseFloat(slider.value);
+
+  let img = new ImageData(
+    new Uint8ClampedArray(originalImage.data),
+    canvas.width,
+    canvas.height
+  );
+
+  let d = img.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+
+    let r = d[i];
+    let g = d[i + 1];
+    let b = d[i + 2];
+
+    if (isSkin(r, g, b)) {
+
+      // 👉 只做「柔和混色」，不做 blur
+      d[i]     = r + (target[0] - r) * t;
+      d[i + 1] = g + (target[1] - g) * t;
+      d[i + 2] = b + (target[2] - b) * t;
     }
   }
 
-  return img;
+  ctx.putImageData(img, 0, 0);
 }
+
+// =======================
+// 🎚 slider 即時更新
+// =======================
+slider.oninput = renderBeauty;
+
+// =======================
+// 🔙 重拍
+// =======================
+document.getElementById("backBtn").onclick = () => {
+  editorView.style.display = "none";
+  cameraView.style.display = "block";
+};
+</script>
+
+</body>
+</html>
