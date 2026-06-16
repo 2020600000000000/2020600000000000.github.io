@@ -1,225 +1,116 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>美顏App 完整版</title>
+import cv2
+import numpy as np
+import mediapipe as mp
 
-<style>
-body{margin:0;background:black;font-family:sans-serif;}
 
-#cameraView,#editorView{
-  position:absolute;
-  width:100%;
-  height:100%;
-}
+def create_lut(whiten_level):
+    """建立美白 LUT"""
+    lut = np.zeros(256, dtype=np.uint8)
 
-video,canvas{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+    for i in range(256):
+        val = i * whiten_level
+        lut[i] = np.clip(val, 0, 255)
 
-/* 拍照按鈕 */
-#snapBtn{
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  padding:15px;
-  font-size:18px;
-}
+    return lut
 
-/* UI */
-#ui{
-  position:fixed;
-  bottom:10px;
-  width:100%;
-  text-align:center;
-  color:white;
-}
 
-button{padding:10px;margin:5px;}
-input{width:200px;}
+def get_face_mask(image, face_mesh):
+    """產生臉部 mask"""
+    h, w = image.shape[:2]
 
-#editorView{display:none;}
-</style>
-</head>
+    img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(img_rgb)
 
-<body>
+    mask = np.zeros((h, w), dtype=np.uint8)
 
-<!-- 📷 CAMERA -->
-<div id="cameraView">
-  <video id="video" autoplay playsinline></video>
-  <button id="snapBtn">📸 拍照</button>
-</div>
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
 
-<!-- 🎨 EDITOR -->
-<div id="editorView">
-  <canvas id="canvas"></canvas>
+            points = []
 
-  <div id="ui">
-    ✨ 美顏強度
-    <input id="slider" type="range" min="0" max="1" step="0.01" value="0.5">
-    <button id="backBtn">🔙 重拍</button>
-  </div>
-</div>
+            for lm in face_landmarks.landmark:
+                x = int(lm.x * w)
+                y = int(lm.y * h)
+                points.append((x, y))
 
-<!-- FaceMesh -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+            points = np.array(points, dtype=np.int32)
 
-<script>
+            hull = cv2.convexHull(points)
 
-const video=document.getElementById("video");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+            cv2.fillConvexPoly(mask, hull, 255)
 
-const cameraView=document.getElementById("cameraView");
-const editorView=document.getElementById("editorView");
+    # 擴展到脖子 + 柔化邊緣
+    mask = cv2.GaussianBlur(mask, (31, 31), 0)
 
-const slider=document.getElementById("slider");
+    return mask
 
-let face=null;
-let originalImage=null;
 
-// =====================
-// 📷 camera
-// =====================
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-  video.srcObject=stream;
-});
+def ai_beauty_whitening(image_path, whiten_level=1.5):
 
-// =====================
-// 🤖 FaceMesh
-// =====================
-const fm=new FaceMesh({
-  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
-});
+    img = cv2.imread(image_path)
+    if img is None:
+        print("❌ 圖片讀取失敗")
+        return None
 
-fm.setOptions({
-  maxNumFaces:1,
-  refineLandmarks:true
-});
+    h, w = img.shape[:2]
 
-fm.onResults(r=>{
-  if(r.multiFaceLandmarks?.length){
-    face=r.multiFaceLandmarks[0];
-  }
-});
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True
+    )
 
-// camera feed to FaceMesh
-const cam=new Camera(video,{
-  onFrame:async()=>{
-    await fm.send({image:video});
-  },
-  width:640,
-  height:480
-});
-cam.start();
+    # ===== 1. Face Mask =====
+    mask = get_face_mask(img, face_mesh)
+    mask = mask.astype(np.float32) / 255.0
+    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
-// =====================
-// 📸 拍照 + 切頁
-// =====================
-document.getElementById("snapBtn").onclick=()=>{
-  canvas.width=video.videoWidth;
-  canvas.height=video.videoHeight;
+    # ===== 2. LUT 美白 =====
+    lut = create_lut(whiten_level)
+    whiten_img = cv2.LUT(img, lut)
 
-  ctx.drawImage(video,0,0);
+    # ===== 3. 磨皮（bilateral）=====
+    smooth_img = cv2.bilateralFilter(
+        whiten_img,
+        d=7,
+        sigmaColor=50,
+        sigmaSpace=50
+    )
 
-  originalImage=ctx.getImageData(0,0,canvas.width,canvas.height);
+    # ===== 4. 融合（關鍵修正）=====
+    mask = mask.astype(np.float32)
 
-  cameraView.style.display="none";
-  editorView.style.display="block";
+    img_f = img.astype(np.float32)
+    smooth_f = smooth_img.astype(np.float32)
 
-  render();
-};
+    output = img_f * (1 - mask) + smooth_f * mask
+    output = np.clip(output, 0, 255).astype(np.uint8)
 
-// =====================
-// 🎯 臉範圍（正確）
-// =====================
-function inFace(x,y,w,h){
-  if(!face) return false;
+    face_mesh.close()
 
-  let xs=face.map(p=>p.x*w);
-  let ys=face.map(p=>p.y*h);
+    return output
 
-  let minX=Math.min(...xs);
-  let maxX=Math.max(...xs);
-  let minY=Math.min(...ys);
-  let maxY=Math.max(...ys);
 
-  // 脖子
-  maxY += (maxY-minY)*0.6;
+# =========================
+# 🔥 測試
+# =========================
+if __name__ == "__main__":
 
-  return (x>=minX && x<=maxX && y>=minY && y<=maxY);
-}
+    input_file = "input.jpg"
 
-// =====================
-// 🌸 膚色判斷（穩定版）
-// =====================
-function isSkin(r,g,b){
-  return (
-    r>60 &&
-    g>40 &&
-    b>30 &&
-    Math.abs(r-g)<30 &&
-    r>b
-  );
-}
+    result = ai_beauty_whitening(
+        input_file,
+        whiten_level=1.8
+    )
 
-// =====================
-// ✨ 修圖核心（完整）
-// =====================
-function render(){
+    if result is not None:
+        cv2.imshow("Original", cv2.imread(input_file))
+        cv2.imshow("AI Beauty Fixed", result)
 
-  if(!originalImage) return;
+        cv2.imwrite("ai_beauty_result.jpg", result)
 
-  let t=parseFloat(slider.value);
+        print("✅ 完成！已輸出 ai_beauty_result.jpg")
 
-  let img=new ImageData(
-    new Uint8ClampedArray(originalImage.data),
-    canvas.width,
-    canvas.height
-  );
-
-  let d=img.data;
-
-  for(let y=0;y<canvas.height;y+=2){
-    for(let x=0;x<canvas.width;x+=2){
-
-      let i=(y*canvas.width+x)*4;
-
-      if(!inFace(x,y,canvas.width,canvas.height)) continue;
-
-      let r=d[i];
-      let g=d[i+1];
-      let b=d[i+2];
-
-      if(!isSkin(r,g,b)) continue;
-
-      // 🌸 柔和膚色融合（不糊臉）
-      d[i]   = r + (255-r)*t;
-      d[i+1] = g + (235-g)*t;
-      d[i+2] = b + (238-b)*t;
-    }
-  }
-
-  ctx.putImageData(img,0,0);
-}
-
-// slider 即時更新
-slider.oninput=render;
-
-// =====================
-// 🔙 重拍
-// =====================
-document.getElementById("backBtn").onclick=()=>{
-  editorView.style.display="none";
-  cameraView.style.display="block";
-};
-
-</script>
-
-</body>
-</html>
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
