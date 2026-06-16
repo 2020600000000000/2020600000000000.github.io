@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學重塑相機 - 專屬黃金比例極致版</title>
+    <title>AI 古典美學重塑相機 - GitHub Pages 部署版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -175,16 +175,16 @@
         let showGoldenRatio = false;  
         let isCountingDown = false; 
         let countdownTimer = null;
-        let capturedVideoFrame = document.createElement('canvas'); // 暫存快門影像的畫布
+        let capturedVideoFrame = document.createElement('canvas'); 
         let currentMakeup = 'none'; 
         let currentSticker = 'none';
 
-        // 載入貼紙圖片
+        // 載入貼紙圖片 (預設改為小寫 .jpg，如檔名是大寫請改回 .JPG)
         const stickerImages = {};
         const stickerIds = ['5188', '5189', '5190', '5191', '5192', '5193', '5194', '5195', '5196', '5197'];
         stickerIds.forEach(id => {
             const img = new Image();
-            img.src = `IMG_${id}.JPG`; // 請確認實體貼紙圖檔與此網頁放在同一個資料夾
+            img.src = `IMG_${id}.jpg`; 
             stickerImages[id] = img;
         });
 
@@ -198,12 +198,10 @@
         const CH = 630;
         let isCameraActive = false;
         
-        // AI 手勢冷卻、座標變數
         let lastHandX = null;
         let waveCooldown = false;
         let okStartTime = null;
 
-        // MediaPipe 實例變數
         let hands = null;
         let faceMesh = null;
 
@@ -219,7 +217,6 @@
             buildFilterScrollThumbs();
         }
 
-        // 動態生成下方濾鏡滾動圓圈
         function buildFilterScrollThumbs() {
             const bar = document.getElementById('filter-bar');
             bar.innerHTML = '';
@@ -260,7 +257,6 @@
             if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
 
-        // 切換進入相機捕捉舞台
         function enterCameraStage() {
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
@@ -272,7 +268,7 @@
                 videoElement.srcObject = stream;
                 isCameraActive = true;
                 startRenderLoop();
-                initMediaPipeAI(); // 確保相機成功開啟後再啟動 MediaPipe 監聽
+                initMediaPipeAI(); 
             })
             .catch(err => {
                 alert("相機開啟失敗，請確認是否給予瀏覽器相機使用權限。");
@@ -280,7 +276,6 @@
             });
         }
 
-        // 以滿版 Cover 形式渲染 Video 到 Canvas 上 (包含鏡像處理)
         function drawVideoCover(ctx, video, canvasW, canvasH) {
             if (video.videoWidth === 0) return;
             const vW = video.videoWidth; 
@@ -301,12 +296,11 @@
             }
             ctx.save();
             ctx.translate(canvasW, 0); 
-            ctx.scale(-1, 1); // 鏡像
+            ctx.scale(-1, 1); 
             ctx.drawImage(video, sx, sy, sW, sH, 0, 0, canvasW, canvasH);
             ctx.restore();
         }
 
-        // 即時預覽循環繪製
         function startRenderLoop() {
             if (!isCameraActive) return;
             if (videoElement.readyState >= 2) {
@@ -322,11 +316,9 @@
             requestAnimationFrame(startRenderLoop);
         }
 
-        // 🚀 初始化 MediaPipe AI 實例
         function initMediaPipeAI() {
             alert("initMediaPipeAI 啟動成功！");
 
-            // 手勢追蹤模型配置
             hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
             hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.6 });
             
@@ -343,7 +335,6 @@
                 }
             });
 
-            // 臉部網格模型配置
             faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
             faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6 });
             
@@ -353,11 +344,9 @@
                 }
             });
 
-            // 啟動專屬偵測迴圈
             requestAnimationFrame(aiLoop);
         }
 
-        // 修正後的獨立 AI 偵測循環
         async function aiLoop() {
             if (!isCameraActive) return;
             if (videoElement.readyState >= 2 && hands && faceMesh) {
@@ -373,14 +362,12 @@
             requestAnimationFrame(aiLoop);
         }
 
-        // 🧠 處理與判斷 AI 手勢（揮手與 OK）
         function handleAIGestures(lm) {
             const status = document.getElementById('status-text');
 
-            // ===== 1. OK 手勢判斷 (拍照) =====
-            // 計算大拇指指尖(4)與食指指尖(8)的距離
+            // OK 手勢
             const okDistance = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
-            const isOk = okDistance < 0.055; // 距離夠近視為收攏成圈
+            const isOk = okDistance < 0.055; 
 
             if (isOk && !isCountingDown) {
                 if (!okStartTime) {
@@ -389,7 +376,7 @@
                 const holdTime = Date.now() - okStartTime;
                 status.innerText = `👌 OK 偵測中... 蓄力值: ${Math.min(5, Math.floor(holdTime / 100))}/5`;
                 
-                if (holdTime > 500) { // 定格定住超過 0.5 秒，即出發倒數
+                if (holdTime > 500) { 
                     okStartTime = null;
                     triggerCountdownCamera();
                 }
@@ -397,11 +384,11 @@
                 okStartTime = null;
             }
 
-            // ===== 2. 揮手手勢判斷 (換濾鏡) =====
-            const currentX = lm[9].x; // 採用中指根部作為代表點
+            // 揮手手勢
+            const currentX = lm[9].x; 
             if (lastHandX !== null && !waveCooldown && !isCountingDown) {
                 const delta = currentX - lastHandX;
-                if (Math.abs(delta) > 0.035) { // 橫向擺動幅度大於閾值
+                if (Math.abs(delta) > 0.035) { 
                     waveCooldown = true;
                     if (delta > 0) {
                         currentFilterIndex = (currentFilterIndex + 1) % filters.length;
@@ -410,13 +397,12 @@
                     }
                     selectFilterByIndex(currentFilterIndex);
                     status.innerText = `👋 揮手觸發！已變更濾鏡為：${filters[currentFilterIndex]}`;
-                    setTimeout(() => { waveCooldown = false; }, 650); // 防止短時間連續觸發
+                    setTimeout(() => { waveCooldown = false; }, 650); 
                 }
             }
             lastHandX = currentX;
         }
 
-        // 啟動 5 秒拍照倒數
         function triggerCountdownCamera() {
             if (isCountingDown) return;
             isCountingDown = true;
@@ -437,20 +423,18 @@
             }, 1000);
         }
 
-        // 快門截圖並進到後期修圖艙
         function triggerSnapshot() {
             isCameraActive = false;
             const bCtx = capturedVideoFrame.getContext('2d');
-            bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450); // 將即時帶有濾鏡的畫面裁切繪入暫存
+            bCtx.drawImage(canvasLiveFx, 0, 0, 360, 450); 
             
             if (videoElement.srcObject) {
-                videoElement.srcObject.getTracks().forEach(track => track.stop()); // 關閉相機串流省電
+                videoElement.srcObject.getTracks().forEach(track => track.stop()); 
             }
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
             
-            // 如果有偵測到臉，自動將貼紙定位在眉心(點1)附近
             if (faceLandmarksData) {
                 stickerState.x = faceLandmarksData[1].x * 360;
                 stickerState.y = faceLandmarksData[1].y * 450;
@@ -493,7 +477,6 @@
             applyEditEffects(); 
         }
 
-        // 🎨 核心繪製：將磨皮、美白、妝容、貼紙、黃金面具融合至畫布上
         function applyEditEffects() {
             const w = canvasEdit.width;
             const h = canvasEdit.height;
@@ -502,7 +485,6 @@
             ctxEdit.drawImage(capturedVideoFrame, 0, 0);
             if (!faceLandmarksData) return;
 
-            // 建立臉部肌膚遮罩
             const skinMask = document.createElement('canvas');
             skinMask.width = w; 
             skinMask.height = h; 
@@ -517,7 +499,6 @@
             smCtx.closePath(); 
             smCtx.fill();
 
-            // 挖除眼睛與嘴巴區域避免失真模糊
             smCtx.globalCompositeOperation = 'destination-out';
             const digZone = (arr) => { 
                 smCtx.beginPath();
@@ -528,7 +509,6 @@
             digZone([362, 385, 387, 263, 373, 380]);
             digZone([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291]);
 
-            // 實作智能美白
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             if (whitVal > 0) {
                 const whitenLayer = document.createElement('canvas');
@@ -540,7 +520,7 @@
                 const px = imgData.data;
                 const offset = (whitVal / 100) * 32;
                 for(let i=0; i<px.length; i+=4) {
-                    if(px[i] > 45 && px[i] > px[i+2]) { // 簡易紅潤感膚色演算法
+                    if(px[i] > 45 && px[i] > px[i+2]) {
                         px[i] = Math.min(255, px[i] + offset);
                         px[i+1] = Math.min(255, px[i+1] + offset * 0.95);
                         px[i+2] = Math.min(255, px[i+2] + offset * 0.88);
@@ -557,7 +537,6 @@
                 ctxEdit.drawImage(whitenMasked, 0, 0);
             }
 
-            // 實作高階磨皮 (混合高斯模糊)
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
             if (smooVal > 0) {
                 const blurLayer = document.createElement('canvas');
@@ -580,15 +559,12 @@
                 ctxEdit.restore();
             }
 
-            // 繪製古典妝容
             drawOurThemedMakeup(ctxEdit, faceLandmarksData, w, h);
             
-            // 繪製黃金比例輔助線
             if (showGoldenRatio) {
                 drawOurClassicGoldenRatio(ctxEdit, faceLandmarksData, w, h);
             }
             
-            // 繪製貼紙 (支援縮放、移動、旋轉)
             if (currentSticker !== 'none' && stickerImages[currentSticker]) {
                 const img = stickerImages[currentSticker];
                 ctxEdit.save();
@@ -601,7 +577,6 @@
             }
         }
 
-        // 📐 繪製古典三庭五眼黃金比例線
         function drawOurClassicGoldenRatio(ctx, lm, w, h) {
             ctx.save();
             ctx.lineWidth = 1.5;
@@ -651,7 +626,6 @@
             ctx.restore();
         }
 
-        // 💄 基於 FaceMesh 點位繪製主題妝容
         function drawOurThemedMakeup(ctx, lm, w, h) {
             if (currentMakeup === 'none') return;
             ctx.save();
@@ -697,7 +671,6 @@
             ctx.restore();
         }
 
-        // 🖐️ 手勢與滑鼠操作貼紙（拖曳、滾輪縮放、雙指手勢）
         function initStickerInteractions() {
             const container = document.getElementById('preview-container');
             const getEventCoords = (e) => {
@@ -744,7 +717,6 @@
             
             window.addEventListener('mouseup', () => { isDragging = false; });
 
-            // 電腦端：滑鼠滾輪縮放貼紙
             canvasEdit.addEventListener('wheel', (e) => {
                 if (currentSticker === 'none') return; 
                 e.preventDefault();
@@ -752,7 +724,6 @@
                 applyEditEffects();
             }, { passive: false });
 
-            // 行動端：觸控拖曳與雙指旋轉縮放
             container.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
                     let p = getEventCoords(e);
