@@ -123,18 +123,21 @@
                 <input type="range" id="slider-big-eye" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
+
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
                 <span style="font-size:12px;">皮膚局部美白強度 (配合變形後的最新形狀、不爆白)</span>
                 <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
+
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
-                 <span style="font-size:12px;">膚色調勻平滑磨皮 (配合變形後的最新形狀、保護五官)</span>
+                <span style="font-size:12px;">膚色調勻平滑磨皮 (配合變形後的最新形狀、保護五官)</span>
                 <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
+
         <div id="panel-sticker" class="sub-panel">
             <div class="grid-layout" id="sticker-thumb-container">
                 <button class="text-thumb-btn stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
@@ -159,16 +162,20 @@
         const filterLabelMap = ['原圖', '黑白極簡', '復古琥珀', '高對比戲劇', '奇幻色相'];
         
         let frozenFaceLandmarks = null; 
-        let isCountingDown = false; let countdownTimer = null;
+        let isCountingDown = false; 
+        let countdownTimer = null;
         let originalSnapshot = document.createElement('canvas'); 
         let currentSticker = 'none';
         
-        let hands = null; let faceMeshStatic = null;
+        let hands = null; 
+        let faceMeshStatic = null;
         let cameraUtilsInstance = null;
 
         // 快取核心處理畫布
-        let warpCanvas = document.createElement('canvas'); let warpCtx = warpCanvas.getContext('2d');
-        let skinMaskCanvas = document.createElement('canvas'); let skinMaskCtx = skinMaskCanvas.getContext('2d');
+        let warpCanvas = document.createElement('canvas'); 
+        let warpCtx = warpCanvas.getContext('2d');
+        let skinMaskCanvas = document.createElement('canvas'); 
+        let skinMaskCtx = skinMaskCanvas.getContext('2d');
 
         const stickerConfig = {
             'cat': { text: "🐱", name: "萌萌貓咪", size: 80 },
@@ -179,13 +186,16 @@
         };
         let stickerState = { x: 180, y: 225, scale: 1.0, angle: 0 };
         let isDragging = false;
-        let dragStartX = 0, dragStartY = 0; let initStickerX = 0, initStickerY = 0;
+        let dragStartX = 0, dragStartY = 0; 
+        let initStickerX = 0, initStickerY = 0;
         let startTouchDist = 0, startTouchAngle = 0, initScale = 1.0, initAngle = 0;
         
         const CW = 360;
         const CH = 630;
-        let isCameraActive = false; let waveCooldown = false;
-        let isTrackingHand = false; let handStartTrackX = 0;
+        let isCameraActive = false; 
+        let waveCooldown = false;
+        let isTrackingHand = false; 
+        let handStartTrackX = 0;
         let handStartTrackY = 0;
 
         // 全臉外圍閉合線點索引（包含額頭、面頰與下顎線）
@@ -225,15 +235,26 @@
             filters.forEach((cssFilter, idx) => {
                 const item = document.createElement('div');
                 item.className = `filter-thumb-item ${idx === 0 ? 'active' : ''}`;
-                item.id = `thumb-item-${idx}`; item.onclick = () => selectFilterByIndex(idx);
+                item.id = `thumb-item-${idx}`; 
+                item.onclick = () => selectFilterByIndex(idx);
+                
                 const circle = document.createElement('div');
-                circle.className = 'filter-circle-preview'; circle.style.filter = cssFilter;
+                circle.className = 'filter-circle-preview'; 
+                circle.style.filter = cssFilter;
+                
                 const thumbCanvas = document.createElement('canvas');
-                thumbCanvas.id = `thumb-canvas-${idx}`; thumbCanvas.width = 80; thumbCanvas.height = 80;
+                thumbCanvas.id = `thumb-canvas-${idx}`; 
+                thumbCanvas.width = 80; 
+                thumbCanvas.height = 80;
+                
                 circle.appendChild(thumbCanvas);
                 const label = document.createElement('div');
-                label.className = 'filter-thumb-name'; label.innerText = filterLabelMap[idx];
-                item.appendChild(circle); item.appendChild(label); bar.appendChild(item);
+                label.className = 'filter-thumb-name'; 
+                label.innerText = filterLabelMap[idx];
+                
+                item.appendChild(circle); 
+                item.appendChild(label); 
+                bar.appendChild(item);
             });
         }
 
@@ -241,7 +262,9 @@
             currentFilterIndex = idx;
             const el = document.getElementById('filter-name');
             if(el) el.innerText = `目前濾鏡：${filterLabelMap[idx]}`;
-            document.querySelectorAll('.filter-thumb-item').forEach((item, i) => { item.classList.toggle('active', i === idx); });
+            document.querySelectorAll('.filter-thumb-item').forEach((item, i) => { 
+                item.classList.toggle('active', i === idx); 
+            });
         }
 
         function enterCameraStage() {
@@ -252,13 +275,21 @@
 
         function drawVideoCover(ctx, video, canvasW, canvasH) {
             if (!video || video.videoWidth === 0) return;
-            const vW = video.videoWidth; const vH = video.videoHeight;
-            const videoRatio = vW / vH; const canvasRatio = canvasW / canvasH;
+            const vW = video.videoWidth; 
+            const vH = video.videoHeight;
+            const videoRatio = vW / vH; 
+            const canvasRatio = canvasW / canvasH;
             let sx, sy, sW, sH;
-            if (videoRatio > canvasRatio) { sH = vH; sW = vH * canvasRatio; sx = (vW - sW) / 2; sy = 0; } 
-            else { sW = vW; sH = vW / canvasRatio; sx = 0; sy = (vH - sH) / 2; }
-            ctx.save(); ctx.translate(canvasW, 0); ctx.scale(-1, 1);
-            ctx.drawImage(video, sx, sy, sW, sH, 0, 0, canvasW, canvasH); ctx.restore();
+            if (videoRatio > canvasRatio) { 
+                sH = vH; sW = vH * canvasRatio; sx = (vW - sW) / 2; sy = 0; 
+            } else { 
+                sW = vW; sH = vW / canvasRatio; sx = 0; sy = (vH - sH) / 2; 
+            }
+            ctx.save(); 
+            ctx.translate(canvasW, 0); 
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, sx, sy, sW, sH, 0, 0, canvasW, canvasH); 
+            ctx.restore();
         }
 
         function renderVideoFrames() {
@@ -306,8 +337,10 @@
 
         function detectRelativeGesture(landmarks) {
             const wrist = landmarks[0];
-            const thumb = landmarks[4]; const index = landmarks[8];
-            const dx = Math.abs(thumb.x - index.x); const dy = Math.abs(thumb.y - index.y);
+            const thumb = landmarks[4]; 
+            const index = landmarks[8];
+            const dx = Math.abs(thumb.x - index.x); 
+            const dy = Math.abs(thumb.y - index.y);
             if (dx < 0.045 && dy < 0.045) {
                 if (!isCountingDown) { triggerCountdownCamera(); }
                 return;
@@ -398,14 +431,16 @@
         function applyFaceLiquefy(srcCanvas, landmarks, thinStrength, bigEyeStrength) {
             const w = srcCanvas.width;
             const h = srcCanvas.height;
-            warpCtx.clearRect(0, 0, w, h); warpCtx.drawImage(srcCanvas, 0, 0);
+            warpCtx.clearRect(0, 0, w, h); 
+            warpCtx.drawImage(srcCanvas, 0, 0);
             if ((thinStrength === 0 && bigEyeStrength === 0) || !landmarks) return srcCanvas;
 
             const imgData = warpCtx.getImageData(0, 0, w, h);
             const outData = warpCtx.createImageData(w, h);
             outData.data.set(imgData.data);
 
-            const src = imgData.data; const dst = outData.data;
+            const src = imgData.data; 
+            const dst = outData.data;
             const faceCenterX = landmarks[4].x * w; // 鼻尖為面部物理橫向中心
 
             const leftEyeCenter = { x: landmarks[133].x * w, y: landmarks[133].y * h };
@@ -435,7 +470,8 @@
                     let sy = y;
                     for (const wp of warps) {
                         const dx = sx - wp.cx;
-                        const dy = sy - wp.cy; const dist = Math.hypot(dx, dy);
+                        const dy = sy - wp.cy; 
+                        const dist = Math.hypot(dx, dy);
                         if (dist < wp.r) {
                             const f = (1.0 - dist / wp.r);
                             if (wp.type === 'swell') {
@@ -482,18 +518,22 @@
                 return;
             }
 
-            // 依據變形後的最新五官位置，重新繪製一塊全臉閉合遮罩
+            // 【核心重構點】依據變形後的最新五官位置，重新繪製一塊全臉閉合遮罩
             skinMaskCtx.clearRect(0, 0, w, h);
-            skinMaskCtx.fillStyle = '#000'; skinMaskCtx.fillRect(0, 0, w, h);
+            skinMaskCtx.fillStyle = '#000'; 
+            skinMaskCtx.fillRect(0, 0, w, h);
             
-            skinMaskCtx.fillStyle = '#fff'; skinMaskCtx.beginPath();
+            skinMaskCtx.fillStyle = '#fff'; 
+            skinMaskCtx.beginPath();
             faceOutlineIndices.forEach((idx, i) => {
-                const px = landmarks[idx].x * w; const py = landmarks[idx].y * h;
+                const px = landmarks[idx].x * w; 
+                const py = landmarks[idx].y * h;
                 if (i === 0) skinMaskCtx.moveTo(px, py); else skinMaskCtx.lineTo(px, py);
             });
-            skinMaskCtx.closePath(); skinMaskCtx.fill();
+            skinMaskCtx.closePath(); 
+            skinMaskCtx.fill();
 
-            // 扣除雙眼區域，保護眼神銳利度
+            // 扣除雙眼區域，保護五官不被揉糊
             const eyes = [ [33,160,158,133,153,144], [362,385,387,263,373,380] ];
             skinMaskCtx.fillStyle = '#000';
             eyes.forEach(pts => {
@@ -502,28 +542,32 @@
                     if (i === 0) skinMaskCtx.moveTo(landmarks[idx].x * w, landmarks[idx].y * h);
                     else skinMaskCtx.lineTo(landmarks[idx].x * w, landmarks[idx].y * h);
                 });
-                skinMaskCtx.closePath(); skinMaskCtx.fill();
+                skinMaskCtx.closePath(); 
+                skinMaskCtx.fill();
             });
 
-            // 從變形後的 baseCanvas 快取中取得影像資料進行像素處理
+            // 從變形後的 warpCtx 中取得最新影像資料進行像素處理
             const srcImgData = warpCtx.getImageData(0, 0, w, h);
             const maskImgData = skinMaskCtx.getImageData(0, 0, w, h);
             const outImgData = targetCtx.createImageData(w, h);
             outImgData.data.set(srcImgData.data);
 
             const src = srcImgData.data;
-            const mask = maskImgData.data; const dst = outImgData.data;
+            const mask = maskImgData.data; 
+            const dst = outImgData.data;
 
             const whitenFactor = (whitVal / 100) * 35;
             const smoothFactor = (smooVal / 100) * 0.75; 
             const radius = 4;
+            
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     const idx = (y * w + x) * 4;
                     // 100% 限制在變形後的臉部遮罩邊界內，絕不溢出至背景
                     if (mask[idx] > 128) {
                         let r = src[idx];
-                        let g = src[idx+1]; let b = src[idx+2];
+                        let g = src[idx+1]; 
+                        let b = src[idx+2];
                         const luma = 0.299 * r + 0.587 * g + 0.114 * b;
                         
                         // 動態美白
@@ -543,13 +587,18 @@
                                     const ny = Math.max(0, Math.min(h - 1, y + ky));
                                     const nx = Math.max(0, Math.min(w - 1, x + kx));
                                     const nIdx = (ny * w + nx) * 4;
-                                    const nr = src[nIdx]; const ng = src[nIdx+1]; const nb = src[nIdx+2];
+                                    const nr = src[nIdx]; 
+                                    const ng = src[nIdx+1]; 
+                                    const nb = src[nIdx+2];
                                     const nLuma = 0.299 * nr + 0.587 * ng + 0.114 * nb;
                                     const lumaDiff = Math.abs(luma - nLuma);
-                                    // 保邊色彩容差限制，避免揉糊五官與邊緣
+                                    
+                                    // 保邊色彩容差限制，避免揉糊五官細節
                                     if (lumaDiff < 65) {
                                         const wFactor = (1.0 - lumaDiff / 65);
-                                        sumR += nr * wFactor; sumG += ng * wFactor; sumB += nb * wFactor;
+                                        sumR += nr * wFactor; 
+                                        sumG += ng * wFactor; 
+                                        sumB += nb * wFactor;
                                         weightSum += wFactor;
                                     }
                                 }
@@ -583,12 +632,13 @@
             const thinStrength = parseInt(document.getElementById('slider-thin').value);
             const bigEyeStrength = parseInt(document.getElementById('slider-big-eye').value);
 
-            // 第一步：先執行瘦臉液化變形
+            // 第一步：先執行幾何瘦臉液化形變
             const baseCanvas = applyFaceLiquefy(originalSnapshot, frozenFaceLandmarks, thinStrength, bigEyeStrength);
+            
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
 
-            // 第二步：美白與磨皮，完全繼承變形後的底圖與臉廓形狀
+            // 第二步：美白與磨皮，完全繼承變形後的底圖與新臉廓形狀
             applySkinEffects(ctxEdit, baseCanvas, frozenFaceLandmarks, whitVal, smooVal);
 
             // 🎉 第三步：專屬貼紙層
@@ -692,7 +742,6 @@
             alert('🎉 照片已成功產生並儲存！');
         }
 
-        // 🚀 網頁載入時自動執行初始化
         window.onload = function() {
             init();
         };
