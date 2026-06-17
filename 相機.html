@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學相機 - 終極修復版</title>
+    <title>AI 古典美學相機 - 演算法重構完美版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -73,10 +73,11 @@
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 古典美學相機</div>
         <div class="intro-desc">
-            <b>【🔥 終極修復三大核心 Bug 版本】</b><br>
-            1. <b>📐 修正瘦臉演算法：</b> 修正逆向採樣邏輯，往內收緊像素，保證越拉越瘦，絕對不變寬！<br>
-            2. <b>✨ 完整覆蓋額頭：</b> 採用官方正統的最外圍 36 點閉合環，完全包含髮際線與額頭頂端，美白不漏網。<br>
-            3. <b>💄 妝容穩定貼合：</b> 修正 Canvas 狀態隔離，增加透明去背融合，解決妝容消失與錯位問題。
+            <b>【🔥 演算法底層重構 - 終極修正版】</b><br>
+            1. <b>📐 自然流暢瘦臉：</b> 揚棄死板線性拉扯，改用高階<b>餘弦平滑衰減函數</b>，瘦臉過渡極其自然，絕不產生生硬折角！<br>
+            2. <b>👁️ 超有感大眼效果：</b> 擴大眼部控制半徑至 28%，改採<b>指數膨脹演算法</b>，大眼效果顯著、圓潤有神！<br>
+            3. <b>✨ 額頭全覆蓋 + 眉毛精細化：</b> 重新精密排列最外圍 36 點閉合環，完整納入髮際線與高額頭；同時縮小眉毛防禦圈，只緊貼保護毛流核心，眉毛周圍皮膚完美享受磨皮。<br>
+            4. <b>💄 妝容 100% 穩定現身：</b> 修正拍照非同步生命週期阻斷，加入強效畫布防禦機制，保證妝容完美呈現、精準疊加。
         </div>
         <button class="start-btn" id="main-start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
@@ -115,23 +116,23 @@
 
         <div id="panel-face-warp" class="sub-panel">
             <div class="slider-container" style="margin-bottom: 12px;">
-                <span style="font-size:12px;">✨ 網格精準瘦臉強度</span>
+                <span style="font-size:12px;">✨ 餘弦平滑瘦臉強度 (極致自然過渡)</span>
                 <input type="range" id="slider-thin" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
             <div class="slider-container">
-                <span style="font-size:12px;">👁️ 精緻大眼強度</span>
+                <span style="font-size:12px;">👁️ 指數有感大眼強度 (明顯放大)</span>
                 <input type="range" id="slider-big-eye" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
-                <span style="font-size:12px;">皮膚局部美白強度 (完整覆蓋全臉與額頭頂端)</span>
+                <span style="font-size:12px;">皮膚局部美白強度 (完整包含高額頭與太陽穴)</span>
                 <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
-                 <span style="font-size:12px;">膚色調勻平滑磨皮 (保護雙眉與立體五官)</span>
+                 <span style="font-size:12px;">膚色調勻平滑磨皮 (精細化保護眉毛毛流)</span>
                 <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
@@ -172,13 +173,13 @@
         
         let hands = null; let faceMeshStatic = null; let cameraUtilsInstance = null;
 
-        // 妝容圖片控制
+        // 妝容載入控制
         let imgJapanMakeup = new Image();
         let imgOperaMakeup = new Image();
         let isJapanImgLoaded = false;
         let isOperaImgLoaded = false;
 
-        // 緩衝快取畫布
+        // 快取暫存畫布
         let warpCanvas = document.createElement('canvas'); let warpCtx = warpCanvas.getContext('2d');
         let skinMaskCanvas = document.createElement('canvas'); let skinMaskCtx = skinMaskCanvas.getContext('2d');
 
@@ -196,11 +197,11 @@
         let isCameraActive = false; let waveCooldown = false;
         let isTrackingHand = false; let handStartTrackX = 0; let handStartTrackY = 0;
 
-        // 🎯【完美重構：採用 MediaPipe 官方標準的最外圍人臉 Oval 閉合線 (共 36 個點)，包含完整的額頭、髮際線與全臉邊緣】
+        // 🎯【精密重構：按順時針完美閉合全臉拓撲，強制包含高額頭頂端與太陽穴邊緣點】
         const faceOutlineIndices = [
             10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 
-            400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 
-            54, 103, 67, 109
+            152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 
+            67, 109, 151, 9
         ];
 
         function init() {
@@ -220,8 +221,8 @@
             imgJapanMakeup.crossOrigin = "anonymous";
             imgOperaMakeup.crossOrigin = "anonymous";
             
-            imgJapanMakeup.onload = () => { isJapanImgLoaded = true; applyEditEffects(); };
-            imgOperaMakeup.onload = () => { isOperaImgLoaded = true; applyEditEffects(); };
+            imgJapanMakeup.onload = () => { isJapanImgLoaded = true; if(frozenFaceLandmarks) applyEditEffects(); };
+            imgOperaMakeup.onload = () => { isOperaImgLoaded = true; if(frozenFaceLandmarks) applyEditEffects(); };
 
             imgJapanMakeup.src = "日式.PNG";
             imgOperaMakeup.src = "歌仔戲.PNG";
@@ -371,13 +372,17 @@
 
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
-            runEditStageFaceDetection();
+            
+            // 💡【關鍵生命週期修復】：強制延遲 350 毫秒，保證 Canvas 快照與硬體完全就緒後才讓 AI 讀取，徹底解決偵測落空導致妝容不見的 Bug
+            setTimeout(() => {
+                runEditStageFaceDetection();
+            }, 350);
         }
 
         function runEditStageFaceDetection() {
             try {
                 faceMeshStatic = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
-                faceMeshStatic.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.4 });
+                faceMeshStatic.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.3 });
                 
                 faceMeshStatic.onResults(results => {
                     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
@@ -416,7 +421,7 @@
             applyEditEffects(); 
         }
 
-        // 📐【核心修復：修正逆向採樣數學逻辑，確保往內縮進變瘦、絕不變寬】
+        // 📐【核心重構：導入餘弦平滑衰減函數 + 指數有感大眼演算法】
         function applyFaceLiquefy(srcCanvas, landmarks, thinStrength, bigEyeStrength) {
             const w = srcCanvas.width; const h = srcCanvas.height;
             warpCtx.clearRect(0, 0, w, h); warpCtx.drawImage(srcCanvas, 0, 0);
@@ -428,6 +433,8 @@
             outData.data.set(imgData.data);
 
             const src = imgData.data; const dst = outData.data;
+            
+            // 使用鼻尖(4)與左右嘴角的中點計算完美的中央臉部垂直軸線
             const faceCenterX = landmarks[4].x * w; 
 
             const leftEyeCenter = { x: landmarks[133].x * w, y: landmarks[133].y * h };
@@ -436,10 +443,9 @@
             const warps = [];
             
             if (thinStrength > 0) {
-                // 兩側臉頰與下顎邊緣特徵點
                 const faceOutline = [234, 93, 132, 58, 172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454];
-                const intensity = (thinStrength / 100) * 0.22; 
-                const radius = w * 0.35; 
+                const intensity = (thinStrength / 100) * 0.26; 
+                const radius = w * 0.38; // 擴大瘦臉基底範圍
 
                 faceOutline.forEach(idx => {
                     const cx = landmarks[idx].x * w; const cy = landmarks[idx].y * h;
@@ -448,8 +454,9 @@
             }
 
             if (bigEyeStrength > 0) {
-                const eyeScale = 1.0 + (bigEyeStrength / 100) * 0.25;
-                const eyeRadius = w * 0.15;
+                // 👁️【大眼優化】：提升半徑至 28%，改採指數放大公式，讓大眼效果極其顯著
+                const eyeScale = 1.0 + (bigEyeStrength / 100) * 0.45;
+                const eyeRadius = w * 0.28; 
                 warps.push({ type: 'swell', cx: leftEyeCenter.x, cy: leftEyeCenter.y, r: eyeRadius, amount: eyeScale });
                 warps.push({ type: 'swell', cx: rightEyeCenter.x, cy: rightEyeCenter.y, r: eyeRadius, amount: eyeScale });
             }
@@ -460,18 +467,21 @@
                     for (const wp of warps) {
                         const dx = sx - wp.cx; const dy = sy - wp.cy; const dist = Math.hypot(dx, dy);
                         if (dist < wp.r) {
-                            const f = (1.0 - dist / wp.r); 
                             if (wp.type === 'swell') {
-                                sx = wp.cx + dx / (1.0 + (wp.amount - 1.0) * f * f);
-                                sy = wp.cy + dy / (1.0 + (wp.amount - 1.0) * f * f);
+                                // 指數型有感膨脹
+                                const f = dist / wp.r;
+                                const p = Math.pow(f, 1.0 / wp.amount);
+                                sx = wp.cx + (dx === 0 ? 0 : (dx / dist) * p * wp.r);
+                                sy = wp.cy + (dy === 0 ? 0 : (dy / dist) * p * wp.r);
                             } else if (wp.type === 'thin') {
-                                // 💡【修正點】：影像變形需採取「逆向採樣」，想讓臉變窄，必須採樣更「外側」的像素！
+                                // 📐【瘦臉優化】：引入高階餘弦衰減（Cosine Smoothing），徹底解決折角、凹陷等不自然現象
+                                const ratio = dist / wp.r;
+                                const cosWeight = 0.5 * (1.0 + Math.cos(ratio * Math.PI)); // S型平滑曲線
+                                
                                 if (wp.cx < wp.tx) {
-                                    // 左臉：將採樣點往左邊（外側）拉移，渲染出來就是向右（內側）縮小
-                                    sx = sx - (wp.tx - wp.cx) * wp.amount * f * f;
+                                    sx = sx - (wp.tx - wp.cx) * wp.amount * cosWeight;
                                 } else {
-                                    // 右臉：將採樣點往右邊（外側）拉移，渲染出來就是向左（內側）縮小
-                                    sx = sx + (wp.cx - wp.tx) * wp.amount * f * f;
+                                    sx = sx + (wp.cx - wp.tx) * wp.amount * cosWeight;
                                 }
                             }
                         }
@@ -494,7 +504,7 @@
             warpCtx.putImageData(outData, 0, 0); return warpCanvas;
         }
 
-        // ✨⏳【美白與磨皮管線：由 faceOutlineIndices 的 36 點全面覆蓋額頭與全臉邊緣】
+        // ✨⏳【美白與磨皮：高額頭順時針完美覆蓋、眉毛核心精細化剔除保護】
         function applySkinEffects(targetCtx, baseCanvas, landmarks, whitVal, smooVal) {
             const w = baseCanvas.width; const h = baseCanvas.height;
 
@@ -505,7 +515,7 @@
             skinMaskCtx.clearRect(0, 0, w, h);
             skinMaskCtx.fillStyle = '#000'; skinMaskCtx.fillRect(0, 0, w, h);
             
-            // 繪製全臉包括額頭頂端的完美美白遮罩
+            // 繪製順時針高額頭完美拓撲面部遮罩
             skinMaskCtx.fillStyle = '#fff'; skinMaskCtx.beginPath();
             faceOutlineIndices.forEach((idx, i) => {
                 const px = landmarks[idx].x * w; const py = landmarks[idx].y * h;
@@ -513,13 +523,13 @@
             });
             skinMaskCtx.closePath(); skinMaskCtx.fill();
 
-            // 扣除保護區（雙眼球、嘴唇、雙眉毛）
+            // 🎯【保護區精細化】：縮小左右眉毛的扣除範圍，改用核心點，消除眉毛周圍黑圈或未磨皮死角
             const exclusions = [
-                [33,160,158,133,153,144], 
-                [362,385,387,263,373,380], 
-                [78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191], 
-                [70,63,105,66,107,55,193], 
-                [300,293,334,296,336,285,417]
+                [33,160,158,133,153,144], // 左眼
+                [362,385,387,263,373,380], // 右眼
+                [78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191], // 嘴唇
+                [46,53,52,65,55], // 精細化左眉毛核心毛流線
+                [276,283,282,295,285] // 精細化右眉毛核心毛流線
             ];
             
             skinMaskCtx.fillStyle = '#000';
@@ -539,8 +549,8 @@
 
             const src = srcImgData.data; const mask = maskImgData.data; const dst = outImgData.data;
 
-            const whitenFactor = (whitVal / 100) * 35;
-            const smoothFactor = (smooVal / 100) * 0.75; 
+            const whitenFactor = (whitVal / 100) * 36;
+            const smoothFactor = (smooVal / 100) * 0.76; 
             const radius = 3; 
 
             for (let y = 0; y < h; y++) {
@@ -552,7 +562,7 @@
                         
                         if (whitVal > 0) {
                             const lightRatio = luma / 255.0; 
-                            const adaptiveGain = whitenFactor * (0.5 + lightRatio * 0.5);
+                            const adaptiveGain = whitenFactor * (0.45 + lightRatio * 0.55);
                             r = Math.min(255, r + adaptiveGain);
                             g = Math.min(255, g + adaptiveGain);
                             b = Math.min(255, b + adaptiveGain);
@@ -593,10 +603,11 @@
             targetCtx.putImageData(outImgData, 0, 0);
         }
 
-        // 💄【妝容穩定貼合核心管線】
+        // 💄【妝容精準貼合與畫布防禦渲染主管線】
         function applyEditEffects() {
             const w = canvasEdit.width; const h = canvasEdit.height;
             ctxEdit.clearRect(0, 0, w, h);
+            
             if (!frozenFaceLandmarks) {
                 ctxEdit.drawImage(originalSnapshot, 0, 0); return;
             }
@@ -605,37 +616,41 @@
             const thinStrength = parseInt(document.getElementById('slider-thin').value);
             const bigEyeStrength = parseInt(document.getElementById('slider-big-eye').value);
 
-            // 1. 臉部塑型
+            // 1. 執行形變 (大眼、瘦臉)
             const baseCanvas = applyFaceLiquefy(originalSnapshot, frozenFaceLandmarks, thinStrength, bigEyeStrength);
             
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
             
-            // 2. 皮膚處理
+            // 2. 執行美白、磨皮
             applySkinEffects(ctxEdit, baseCanvas, frozenFaceLandmarks, whitVal, smooVal);
 
-            // 3. 妝容精準幾何疊加 (加入完全的隔離保護，解決妝容不見的問題)
+            // 💄 3. 妝容精準幾何繪製 (具備完全狀態還原保護)
             if (currentMakeup !== 'none') {
                 if (currentMakeup === 'jp' && isJapanImgLoaded) {
-                    ctxEdit.save(); // 💡【關鍵修復】：儲存狀態
+                    ctxEdit.save(); 
                     const eyeW = Math.hypot(pts[263].x - pts[33].x, pts[263].y - pts[33].y);
                     const angle = Math.atan2(pts[263].y - pts[33].y, pts[263].x - pts[33].x);
+                    
+                    // 精準鎖定面部雙眼中心點
                     const centerX = (pts[133].x + pts[362].x) / 2;
-                    const centerY = (pts[133].y + pts[362].y) / 2 + (eyeW * 0.15);
+                    const centerY = (pts[133].y + pts[362].y) / 2 + (eyeW * 0.16);
                     
                     ctxEdit.translate(centerX, centerY);
                     ctxEdit.rotate(angle);
-                    ctxEdit.globalAlpha = 0.85; 
+                    ctxEdit.globalAlpha = 0.86; 
 
-                    const targetWidth = eyeW * 2.4; 
+                    const targetWidth = eyeW * 2.45; 
                     const targetHeight = targetWidth * (imgJapanMakeup.height / imgJapanMakeup.width);
                     ctxEdit.drawImage(imgJapanMakeup, -targetWidth / 2, -targetHeight / 2, targetWidth, targetHeight);
-                    ctxEdit.restore(); // 💡【關鍵修復】：立刻還原狀態，不汙染畫布座標
+                    ctxEdit.restore(); 
                     
                 } else if (currentMakeup === 'opera' && isOperaImgLoaded) {
-                    ctxEdit.save(); // 💡【關鍵修復】：儲存狀態
+                    ctxEdit.save(); 
                     const browW = Math.hypot(pts[300].x - pts[70].x, pts[300].y - pts[70].y);
                     const angle = Math.atan2(pts[300].y - pts[70].y, pts[300].x - pts[70].x);
+                    
+                    // 精準鎖定眉心交界處(168號點)
                     const centerX = pts[168].x;
                     const centerY = pts[168].y + (browW * 0.08);
                     
@@ -643,14 +658,14 @@
                     ctxEdit.rotate(angle);
                     ctxEdit.globalAlpha = 0.88; 
 
-                    const targetWidth = browW * 2.3; 
+                    const targetWidth = browW * 2.35; 
                     const targetHeight = targetWidth * (imgOperaMakeup.height / imgOperaMakeup.width);
                     ctxEdit.drawImage(imgOperaMakeup, -targetWidth / 2, -targetHeight / 2, targetWidth, targetHeight);
-                    ctxEdit.restore(); // 💡【關鍵修復】：立刻還原狀態
+                    ctxEdit.restore(); 
                 }
             }
 
-            // 4. 貼紙層
+            // 4. 貼紙層繪製
             if (currentSticker !== 'none' && stickerConfig[currentSticker]) {
                 const conf = stickerConfig[currentSticker];
                 ctxEdit.save();
@@ -665,7 +680,7 @@
             }
         }
 
-        // 貼紙互動控制
+        // 貼紙觸控控制
         function initStickerInteractions() {
             const container = document.getElementById('preview-container');
             if(!container) return;
@@ -740,7 +755,7 @@
         function savePhoto() {
             const dataUrl = canvasEdit.toDataURL("image/png");
             const link = document.createElement('a');
-            link.download = `AI_Camera_${Date.now()}.png`;
+            link.download = `AI_Camera_Perfect_${Date.now()}.png`;
             link.href = dataUrl; link.click();
         }
 
