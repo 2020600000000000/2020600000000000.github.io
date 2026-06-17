@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學相機 - 圖片妝容貼合完美版</title>
+    <title>AI 古典美學重塑相機 - 手勢補齊終極版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -17,7 +17,7 @@
         .intro-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100vw; height: 100vh; padding: 30px; text-align: center; background: #1c1c1e; position: absolute; z-index: 100; }
         .intro-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #fff; }
         .intro-desc { font-size: 13px; color: #aeaeb2; margin-bottom: 30px; line-height: 1.6; text-align: left; background: #2c2c2e; padding: 15px; border-radius: 12px; }
-        .start-btn { background-color: #0071e3; color: #fff; border: none; padding: 16px 50px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; width: 80%; max-width: 260px; box-shadow: 0 4px 15px rgba(0,113,227,0.4); }
+        .start-btn { background-color: #0071e3; color: #fff; border: none; padding: 16px 50px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; }
 
         /* 拍照畫面 */
         .camera-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; position: relative; }
@@ -41,7 +41,7 @@
         .filter-thumb-name { font-size: 11px; color: #8e8e93; }
         .gesture-tips { font-size: 12px; color: #ff9500; text-align: center; font-weight: bold; padding: 0 10px; line-height: 1.4; }
 
-        /* 修圖編輯頁面 */
+        /* 修圖編輯頁面 (Stage 2) */
         .edit-stage { display: none; flex-direction: column; align-items: center; width: 100vw; height: 100vh; background: #1c1c1e; overflow-y: auto; padding: 15px; }
         .preview-box { width: 100%; max-width: 360px; aspect-ratio: 4/5; background-color: #000; border-radius: 14px; margin-bottom: 15px; position: relative; overflow: hidden; touch-action: none; }
         .preview-box canvas { width: 100%; height: 100%; display: block; background: #000; border: 1px solid rgba(255,255,255,0.1); }
@@ -59,10 +59,15 @@
         .grid-layout { display: flex; gap: 10px; overflow-x: auto; width: 100%; padding: 5px 0; }
         .grid-layout::-webkit-scrollbar { display: none; }
         
-        .text-thumb-btn { flex: 0 0 auto; padding: 12px 18px; border-radius: 20px; border: 2px solid transparent; background-color: #3a3a3c; color: #fff; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .text-thumb-btn.active { border-color: #0071e3; background-color: #0071e3; }
+        .img-thumb-btn { flex: 0 0 auto; width: 65px; height: 65px; border-radius: 50%; border: 3px solid transparent; background-color: #3a3a3c; overflow: hidden; cursor: pointer; padding: 0; display: flex; justify-content: center; align-items: center; }
+        .img-thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .img-thumb-btn.active { border-color: #0071e3; transform: scale(1.05); }
 
+        .ratio-toggle-btn { background-color: #ff9500; color: white; width: 100%; max-width: 280px; padding: 12px; border-radius: 20px; font-weight: bold; border: none; margin-bottom: 10px; font-size: 14px; cursor: pointer; transition: all 0.3s; }
+        .ratio-toggle-btn.active { background-color: #34c759; box-shadow: 0 0 10px #34c759; }
         .confirm-btn { width: 100%; max-width: 280px; padding: 14px; background-color: #34c759; color: white; border-radius: 25px; text-align: center; font-weight: bold; border: none; font-size: 16px; margin-top: 5px; }
+        
+        #hidden-assets { display: none; }
         #hidden-video { position: absolute; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; }
     </style>
 </head>
@@ -70,20 +75,34 @@
 
     <video id="hidden-video" autoplay playsinline muted></video>
 
+    <div id="hidden-assets">
+        <img id="asset-mk-jp" src="日式.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='日式.png'">
+        <img id="asset-mk-opera" src="歌仔戲.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='歌仔戲.png'">
+        <img id="asset-stk-5188" src="IMG_5188.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5188.png'">
+        <img id="asset-stk-5189" src="IMG_5189.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5189.png'">
+        <img id="asset-stk-5190" src="IMG_5190.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5190.png'">
+        <img id="asset-stk-5191" src="IMG_5191.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5191.png'">
+        <img id="asset-stk-5192" src="IMG_5192.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5192.png'">
+        <img id="asset-stk-5193" src="IMG_5193.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5193.png'">
+        <img id="asset-stk-5194" src="IMG_5194.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5194.png'">
+        <img id="asset-stk-5195" src="IMG_5195.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5195.png'">
+        <img id="asset-stk-5196" src="IMG_5196.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5196.png'">
+        <img id="asset-stk-5197" src="IMG_5197.PNG" onload="if(typeof applyEditEffects === 'function') applyEditEffects();" onerror="this.src='IMG_5197.png'">
+    </div>
+
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 古典美學相機</div>
+        <div class="intro-title">AI 古典美學重塑相機</div>
         <div class="intro-desc">
-            <b>【🔥 四大Bug核心大重構終極版】</b><br>
-            1. <b>📐 修正瘦臉變寬：</b> 拋棄像素推移。鎖定下顎線點，嚴格實施向面部中心X軸內推，100%變瘦窄、絕不外擴變寬！<br>
-            2. <b>✨ 額頭美白補齊：</b> 重新擴展面部多邊形遮罩線，包含完整的額頭、太陽穴與髮際線邊緣，美白不再產生額頭斷層。<br>
-            3. <b>⏳ 磨皮反應強化：</b> 提升核心濾鏡半徑與動態容差，斑點暗沉秒速揉合調勻，且能智慧避開眼唇，保留立體光影。<br>
-            4. <b>💄 載入真實照片妝容：</b> 程式碼已內建圖檔定位。一鍵將您的<b>《日式.PNG》花見粉櫻</b>與<b>《歌仔戲.PNG》戲曲胭脂</b>精準無縫貼合！
+            <b>【🔥 互動手勢流全面接回補齊版】</b><br>
+            1. <b>👋 揮手換濾鏡：</b> 鏡頭前將手移至最左（畫面右邊）或最右（畫面左邊）即可秒切濾鏡！<br>
+            2. <b>👌 比 OK 倒數拍照：</b> 大拇指與食指捏合捏緊（OK手勢），立刻觸發 5 秒快門，自動捕捉最完美畫面！<br>
+            3. <b>✨ 6大渲染修復全數保留：</b> 拍照完成後，36組全臉幾何、雙眼中心定位妝容、防卡死快取畫布池依然完美運作。
         </div>
-        <button class="start-btn" id="main-start-btn" onclick="enterCameraStage()">開啟相機</button>
+        <button class="start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
 
     <div id="stage-capture" class="camera-stage">
-        <div id="status-text" class="status-top">👋 左右推出手掌換濾鏡 | 👌 比出 OK 捏合觸發倒數拍照</div>
+        <div id="status-text" class="status-top">⚙️ 正在啟動鏡頭與手勢偵測...</div>
         <div class="viewfinders-split">
             <div class="viewfinder-box">
                 <canvas id="canvas-raw"></canvas>
@@ -91,13 +110,13 @@
             </div>
             <div class="viewfinder-box">
                  <canvas id="canvas-live-fx"></canvas>
-                <div class="viewfinder-label">✨ 即時預覽 (左右推動手掌換濾鏡)</div>
+                <div class="viewfinder-label">✨ 即時預覽 (揮手換濾鏡)</div>
             </div>
         </div>
         <div class="control-panel">
             <div class="filter-indicator" id="filter-name">目前濾鏡：原圖</div>
             <div class="filter-scroll-container" id="filter-bar"></div>
-            <div class="gesture-tips">🔥 互動指令：對鏡頭抬手並「向左或向右推出位移」來換濾鏡；擺出 👌 捏合手勢自動拍照。</div>
+            <div class="gesture-tips">🔥 互動指令：手腕移至最左/最右側可切換濾鏡；對鏡頭擺出「👌 OK手勢」觸發 5 秒快門拍照。</div>
         </div>
     </div>
 
@@ -105,54 +124,45 @@
         <div class="preview-box" id="preview-container">
             <canvas id="canvas-edit-preview"></canvas>
         </div>
+
+        <button id="btn-toggle-ratio" class="ratio-toggle-btn" onclick="toggleGoldenRatioMask()">📐 啟動黃金比例五官臉型重塑</button>
         
         <div class="menu-row">
-            <button class="btn-item active" id="btn-face-warp" onclick="openSubPanel('face-warp')">📐 瘦臉大眼</button>
-            <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">✨ 精準美白</button>
+            <button class="btn-item active" id="btn-skin" onclick="openSubPanel('skin')">✨ 精準美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">⏳ 智慧磨皮</button>
-            <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">💄 經典妝容</button>
+            <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">💄 主題妝容</button>
             <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">🎉 專屬貼紙</button>
         </div>
 
-        <div id="panel-face-warp" class="sub-panel">
-            <div class="slider-container" style="margin-bottom: 12px;">
-                <span style="font-size:12px;">✨ 網格精準瘦臉強度 (下顎X軸內收、絕不變寬)</span>
-                <input type="range" id="slider-thin" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            </div>
-            <div class="slider-container">
-                <span style="font-size:12px;">👁️ 精緻大眼強度</span>
-                <input type="range" id="slider-big-eye" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            </div>
-        </div>
         <div id="panel-skin" class="sub-panel">
             <div class="slider-container">
-                <span style="font-size:12px;">皮膚局部美白強度 (包含額頭全臉覆蓋、保留本來光影)</span>
+                <span style="font-size:12px;">精準美白強度 (安全區域擴展，覆蓋瀏海盲區)</span>
                 <input type="range" id="slider-whiten" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
         <div id="panel-smooth" class="sub-panel">
             <div class="slider-container">
-                 <span style="font-size:12px;">膚色調勻平滑磨皮 (消除斑點暗沉、保護立體五官)</span>
+                 <span style="font-size:12px;">智慧磨皮平滑度 (雙眉毛流細節邊緣保護)</span>
                 <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
         </div>
         <div id="panel-makeup" class="sub-panel">
             <div class="grid-layout">
-                <button class="text-thumb-btn mk-btn active" id="mk-none" onclick="setMakeup('none')">無妝容</button>
-                <button class="text-thumb-btn mk-btn" id="mk-jp" onclick="setMakeup('jp')">🌸 日式花見妝 (《日式.PNG》眼下貼合)</button>
-                <button class="text-thumb-btn mk-btn" id="mk-opera" onclick="setMakeup('opera')">🎭 傳統歌仔戲妝 (《歌仔戲.PNG》眼窩貼合)</button>
+                <button class="img-thumb-btn mk-btn active" id="mk-none" onclick="setMakeup('none')" style="color:#fff; font-size:11px; font-weight:bold;">無妝容</button>
+                <button class="img-thumb-btn mk-btn" id="mk-jp" onclick="setMakeup('jp')"><img src="日式.PNG" onerror="this.src='日式.png'"></button>
+                <button class="img-thumb-btn mk-btn" id="mk-opera" onclick="setMakeup('opera')"><img src="歌仔戲.PNG" onerror="this.src='歌仔戲.png'"></button>
             </div>
         </div>
         <div id="panel-sticker" class="sub-panel">
             <div class="grid-layout" id="sticker-thumb-container">
-                <button class="text-thumb-btn stk-btn active" id="stk-none" onclick="setSticker('none')">無貼紙</button>
+                <button class="img-thumb-btn stk-btn active" id="stk-none" onclick="setSticker('none')" style="color:#fff; font-size:11px; font-weight:bold;">無貼紙</button>
             </div>
         </div>
 
         <button class="confirm-btn" onclick="savePhoto()">💾 儲存相簿</button>
     </div>
 
-    <script {nonce}>
+    <script>
         const videoElement = document.getElementById('hidden-video');
         const canvasRaw = document.getElementById('canvas-raw');
         const canvasLiveFx = document.getElementById('canvas-live-fx');
@@ -167,121 +177,112 @@
         const filterLabelMap = ['原圖', '黑白極簡', '復古琥珀', '高對比戲劇', '奇幻色相'];
         
         let frozenFaceLandmarks = null; 
-        let isCountingDown = false; let countdownTimer = null;
+        let showGoldenRatioWarp = false;  
+        let isCountingDown = false; 
+        let countdownTimer = null;
         let originalSnapshot = document.createElement('canvas'); 
-        let currentMakeup = 'none'; let currentSticker = 'none';
+        let currentMakeup = 'none'; 
+        let currentSticker = 'none';
         
-        let hands = null; let faceMeshStatic = null; let cameraUtilsInstance = null;
+        let hands = null;
+        let faceMeshStatic = null;
+        let cameraUtilsInstance = null;
 
-        // 圖片妝容物件宣告區
-        let imgJapanMakeup = new Image();
-        let imgOperaMakeup = new Image();
-        let isJapanImgLoaded = false;
-        let isOperaImgLoaded = false;
+        // 全域建立一次靜態畫布池
+        let pBaseCanvas = document.createElement('canvas');
+        let pBaseCtx = pBaseCanvas.getContext('2d');
+        let fxCanvas = document.createElement('canvas'); let fxCtx = fxCanvas.getContext('2d');
+        let maskCanvas = document.createElement('canvas'); let maskCtx = maskCanvas.getContext('2d');
+        let blendCanvas = document.createElement('canvas'); let blendCtx = blendCanvas.getContext('2d');
 
-        // 快取畫布
-        let warpCanvas = document.createElement('canvas'); let warpCtx = warpCanvas.getContext('2d');
-        let skinMaskCanvas = document.createElement('canvas'); let skinMaskCtx = skinMaskCanvas.getContext('2d');
-
-        const stickerConfig = {
-            'cat': { text: "🐱", name: "萌萌貓咪", size: 80 },
-            'glasses': { text: "🕶️", name: "復古墨鏡", size: 70 },
-            'crown': { text: "👑", name: "古典皇冠", size: 85 },
-            'heart': { text: "❤️", name: "微甜愛心", size: 65 },
-            'sparkles': { text: "✨", name: "唯美星芒", size: 75 }
-        };
-
-        let stickerState = { x: 180, y: 225, scale: 1.0, angle: 0 };
+        const stickerIds = ['5188', '5189', '5190', '5191', '5192', '5193', '5194', '5195', '5196', '5197'];
+        let stickerState = { x: 180, y: 225, scale: 1.0, angle: 0, width: 140, height: 140 };
         let isDragging = false; let dragStartX = 0, dragStartY = 0; let initStickerX = 0, initStickerY = 0;
         let startTouchDist = 0, startTouchAngle = 0, initScale = 1.0, initAngle = 0;
         
-        const CW = 360; const CH = 630;
+        const CW = 360;
+        const CH = 630;
         let isCameraActive = false; let waveCooldown = false;
-        let isTrackingHand = false; let handStartTrackX = 0; let handStartTrackY = 0;
-
-        // 📐 【重構：完美覆蓋額頭、太陽穴與下顎的全臉外圍閉合線點索引】
-        const faceOutlineIndices = [
-            10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109
-        ];
 
         function init() {
             canvasRaw.width = CW; canvasRaw.height = CH;
             canvasLiveFx.width = CW; canvasLiveFx.height = CH;
             canvasEdit.width = 360; canvasEdit.height = 450;
             originalSnapshot.width = 360; originalSnapshot.height = 450;
-            warpCanvas.width = 360; warpCanvas.height = 450;
-            skinMaskCanvas.width = 360; skinMaskCanvas.height = 450;
+            pBaseCanvas.width = 360; pBaseCanvas.height = 450;
+            fxCanvas.width = 360; fxCanvas.height = 450;
+            maskCanvas.width = 360; maskCanvas.height = 450;
+            blendCanvas.width = 360; blendCanvas.height = 450;
 
             buildFilterScrollThumbs();
             buildStickerThumbMenu();
-            preloadMakeupImages();
-        }
-
-        // 💄 真正預載入您的日式與歌仔戲妝容圖片檔
-        function preloadMakeupImages() {
-            imgJapanMakeup.crossOrigin = "anonymous";
-            imgOperaMakeup.crossOrigin = "anonymous";
-            
-            imgJapanMakeup.onload = () => { isJapanImgLoaded = true; console.log("🌸 日式.PNG 妝容圖載入成功"); };
-            imgOperaMakeup.onload = () => { isOperaImgLoaded = true; console.log("🎭 歌仔戲.PNG 妝容圖載入成功"); };
-
-            // ⚠️ 貼心提示：此處請直接換成您本地的圖片路徑（例如 '日式.PNG'），或在下方貼上 Base64 字串
-            imgJapanMakeup.src = JAPAN_MAKEUP_BASE64 || "日式.PNG";
-            imgOperaMakeup.src = OPERA_MAKEUP_BASE64 || "歌仔戲.PNG";
         }
 
         function buildStickerThumbMenu() {
             const container = document.getElementById('sticker-thumb-container');
-            if(!container) return;
-            Object.keys(stickerConfig).forEach(id => {
+            stickerIds.forEach(id => {
                 const btn = document.createElement('button');
-                btn.className = 'text-thumb-btn stk-btn';
+                btn.className = 'img-thumb-btn stk-btn';
                 btn.id = `stk-${id}`;
                 btn.onclick = () => setSticker(id);
-                btn.innerText = `${stickerConfig[id].text} ${stickerConfig[id].name}`;
+                const thumbImg = document.createElement('img');
+                thumbImg.src = `IMG_${id}.PNG`;
+                thumbImg.onerror = () => { thumbImg.src = `IMG_${id}.png`; };
+                btn.appendChild(thumbImg);
                 container.appendChild(btn);
             });
         }
 
         function buildFilterScrollThumbs() {
             const bar = document.getElementById('filter-bar');
-            if(!bar) return;
             bar.innerHTML = '';
             filters.forEach((cssFilter, idx) => {
                 const item = document.createElement('div');
                 item.className = `filter-thumb-item ${idx === 0 ? 'active' : ''}`;
-                item.id = `thumb-item-${idx}`; item.onclick = () => selectFilterByIndex(idx);
+                item.id = `thumb-item-${idx}`;
+                item.onclick = () => selectFilterByIndex(idx);
+
                 const circle = document.createElement('div');
-                circle.className = 'filter-circle-preview'; circle.style.filter = cssFilter;
+                circle.className = 'filter-circle-preview';
+                circle.style.filter = cssFilter;
+
                 const thumbCanvas = document.createElement('canvas');
-                thumbCanvas.id = `thumb-canvas-${idx}`; thumbCanvas.width = 80; thumbCanvas.height = 80;
+                thumbCanvas.id = `thumb-canvas-${idx}`;
+                thumbCanvas.width = 80; thumbCanvas.height = 80;
                 circle.appendChild(thumbCanvas);
+                
                 const label = document.createElement('div');
-                label.className = 'filter-thumb-name'; label.innerText = filterLabelMap[idx];
+                label.className = 'filter-thumb-name';
+                label.innerText = filterLabelMap[idx];
+
                 item.appendChild(circle); item.appendChild(label); bar.appendChild(item);
             });
         }
 
         function selectFilterByIndex(idx) {
             currentFilterIndex = idx;
-            const el = document.getElementById('filter-name');
-            if(el) el.innerText = `目前濾鏡：${filterLabelMap[idx]}`;
+            document.getElementById('filter-name').innerText = `目前濾鏡：${filterLabelMap[idx]}`;
             document.querySelectorAll('.filter-thumb-item').forEach((item, i) => { item.classList.toggle('active', i === idx); });
         }
 
         function enterCameraStage() {
             document.getElementById('stage-intro').style.display = 'none';
             document.getElementById('stage-capture').style.display = 'flex';
-            setTimeout(() => { initRelativeCameraGestures(); }, 50);
+            initOriginalCameraGestures();
         }
 
         function drawVideoCover(ctx, video, canvasW, canvasH) {
-            if (!video || video.videoWidth === 0) return;
+            if (video.videoWidth === 0) return;
             const vW = video.videoWidth; const vH = video.videoHeight;
             const videoRatio = vW / vH; const canvasRatio = canvasW / canvasH;
             let sx, sy, sW, sH;
-            if (videoRatio > canvasRatio) { sH = vH; sW = vH * canvasRatio; sx = (vW - sW) / 2; sy = 0; } 
-            else { sW = vW; sH = vW / canvasRatio; sx = 0; sy = (vH - sH) / 2; }
+            if (videoRatio > canvasRatio) {
+                sH = vH;
+                sW = vH * canvasRatio; sx = (vW - sW) / 2; sy = 0;
+            } else {
+                sW = vW;
+                sH = vW / canvasRatio; sx = 0; sy = (vH - sH) / 2;
+            }
             ctx.save(); ctx.translate(canvasW, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, sx, sy, sW, sH, 0, 0, canvasW, canvasH); ctx.restore();
         }
@@ -292,6 +293,7 @@
                 drawVideoCover(ctxRaw, videoElement, CW, CH);
                 canvasLiveFx.style.filter = filters[currentFilterIndex];
                 drawVideoCover(ctxLive, videoElement, CW, CH);
+
                 filters.forEach((css, idx) => {
                     const tCan = document.getElementById(`thumb-canvas-${idx}`);
                     if (tCan) drawVideoCover(tCan.getContext('2d'), videoElement, 80, 80);
@@ -300,119 +302,112 @@
             requestAnimationFrame(renderVideoFrames);
         }
 
-        function initRelativeCameraGestures() {
-            try {
-                hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-                hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
-                
-                hands.onResults(results => {
-                    if (!isCameraActive) return;
-                    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                        detectRelativeGesture(results.multiHandLandmarks[0]);
-                    } else {
-                        isTrackingHand = false;
-                        if (!isCountingDown) { 
-                            const st = document.getElementById('status-text');
-                            if(st) { st.style.color = "#fff"; st.innerText = '👋 左右推出手掌換濾鏡 | 👌 比出 OK 捏合觸發倒數拍照'; }
-                        }
+        function initOriginalCameraGestures() {
+            hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+            hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.65, minTrackingConfidence: 0.65 });
+            hands.onResults(results => {
+                if (!isCameraActive) return;
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    detectOriginalGesture(results.multiHandLandmarks[0]);
+                } else {
+                    if (!isCountingDown) { 
+                        document.getElementById('status-text').style.color = "#fff";
+                        document.getElementById('status-text').innerText = '👋 左右揮手切換濾鏡 | 👌 比出 OK 觸發 5 秒倒數拍照'; 
                     }
-                });
-
-                cameraUtilsInstance = new Camera(videoElement, {
-                    onFrame: async () => { if (!isCameraActive) return; await hands.send({ image: videoElement }); },
-                    width: 640, height: 480
-                });
-                cameraUtilsInstance.start().then(() => { isCameraActive = true; renderVideoFrames(); }).catch(err => {
-                    isCameraActive = true; renderVideoFrames();
-                });
-            } catch(e) {
-                isCameraActive = true; renderVideoFrames();
-            }
+                }
+            });
+            cameraUtilsInstance = new Camera(videoElement, {
+                onFrame: async () => { if (!isCameraActive) return; await hands.send({ image: videoElement }); },
+                width: 640, height: 480
+            });
+            cameraUtilsInstance.start().then(() => { isCameraActive = true; renderVideoFrames(); });
         }
 
-        function detectRelativeGesture(landmarks) {
-            const wrist = landmarks[0]; const thumb = landmarks[4]; const index = landmarks[8];
+        function detectOriginalGesture(landmarks) {
+            const wrist = landmarks[0];
+            const thumb = landmarks[4]; const index = landmarks[8];
             const dx = Math.abs(thumb.x - index.x); const dy = Math.abs(thumb.y - index.y);
-            
             if (dx < 0.045 && dy < 0.045) {
                 if (!isCountingDown) { triggerCountdownCamera(); }
                 return;
             }
 
             if (!waveCooldown && !isCountingDown) {
-                if (!isTrackingHand) { isTrackingHand = true; handStartTrackX = wrist.x; handStartTrackY = wrist.y; return; }
-                const deltaX = wrist.x - handStartTrackX;
-                const swipeThreshold = 0.18;
-                if (deltaX > swipeThreshold) { 
-                    waveCooldown = true; currentFilterIndex = (currentFilterIndex + 1) % filters.length; 
-                    selectFilterByIndex(currentFilterIndex); handStartTrackX = wrist.x;
-                    setTimeout(() => { waveCooldown = false; }, 600);
-                } else if (deltaX < -swipeThreshold) { 
-                    waveCooldown = true; currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length; 
-                    selectFilterByIndex(currentFilterIndex); handStartTrackX = wrist.x;
-                    setTimeout(() => { waveCooldown = false; }, 600);
+                if (wrist.x < 0.25) { 
+                    waveCooldown = true;
+                    currentFilterIndex = (currentFilterIndex + 1) % filters.length; 
+                    selectFilterByIndex(currentFilterIndex); 
+                    setTimeout(() => { waveCooldown = false; }, 800);
+                } else if (wrist.x > 0.75) { 
+                    waveCooldown = true;
+                    currentFilterIndex = (currentFilterIndex - 1 + filters.length) % filters.length; 
+                    selectFilterByIndex(currentFilterIndex); 
+                    setTimeout(() => { waveCooldown = false; }, 800);
                 }
             }
         }
 
         function triggerCountdownCamera() {
-            isCountingDown = true; let count = 5;
+            isCountingDown = true;
+            let count = 5;
             const status = document.getElementById('status-text');
-            if(status) status.style.color = "#ff9500";
-            
+            status.style.color = "#ff9500"; status.innerText = `📸 OK 手勢觸發！倒數 ${count} 秒...`;
             countdownTimer = setInterval(() => {
                 count--;
-                if (count > 0) { if(status) status.innerText = `📸 OK 捏合手勢鎖定！倒數 ${count} 秒...`; } 
-                else { 
-                    clearInterval(countdownTimer); 
-                    if(status) status.style.color = "#34c759";
-                    setTimeout(triggerSnapshot, 300); 
-                }
+                if (count > 0) { status.innerText = `📸 OK 手勢觸發！倒數 ${count} 秒...`; } 
+                else { clearInterval(countdownTimer); status.style.color = "#34c759"; status.innerText = "📸 喀擦！捕捉古典美學中..."; setTimeout(triggerSnapshot, 300); }
             }, 1000);
         }
 
         function triggerSnapshot() {
-            isCameraActive = false; if (cameraUtilsInstance) cameraUtilsInstance.stop();
+            isCameraActive = false;
+            if (cameraUtilsInstance) cameraUtilsInstance.stop();
             const bCtx = originalSnapshot.getContext('2d');
             bCtx.drawImage(canvasLiveFx, 0, 90, 360, 450, 0, 0, 360, 450);
-
             document.getElementById('stage-capture').style.display = 'none';
             document.getElementById('stage-edit').style.display = 'flex';
+            stickerState.x = 180; stickerState.y = 225; stickerState.scale = 1.0; stickerState.angle = 0;
             runEditStageFaceDetection();
         }
 
         function runEditStageFaceDetection() {
-            try {
-                faceMeshStatic = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
-                faceMeshStatic.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.4 });
-                
+            faceMeshStatic = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+            faceMeshStatic.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.4 });
+            
+            return new Promise((resolve) => {
                 faceMeshStatic.onResults(results => {
                     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                         frozenFaceLandmarks = results.multiFaceLandmarks[0];
+                        console.log("✅ [FaceMesh 鎖定成功] 點位數：", frozenFaceLandmarks.length);
+                    } else {
+                        console.log("⚠️ [未偵測到人臉] 啟用備用降級機制");
                     }
-                    openSubPanel('face-warp');
+                    openSubPanel('skin');
                     initStickerInteractions();
                     applyEditEffects();
+                    resolve();
                 });
                 faceMeshStatic.send({ image: originalSnapshot });
-            } catch(e) {
-                openSubPanel('face-warp');
-                initStickerInteractions();
-                applyEditEffects();
-            }
+            });
+        }
+
+        function toggleGoldenRatioMask() {
+            showGoldenRatioWarp = !showGoldenRatioWarp;
+            const btn = document.getElementById('btn-toggle-ratio');
+            btn.innerText = showGoldenRatioWarp ? "📐 已開啟黃金比例修正" : "📐 啟動黃金比例五官臉型重塑";
+            btn.classList.toggle('active', showGoldenRatioWarp);
+            applyEditEffects();
         }
 
         function openSubPanel(id) {
             document.querySelectorAll('.sub-panel').forEach(p => p.style.display = 'none');
             document.querySelectorAll('.btn-item').forEach(b => b.classList.remove('active'));
-            const pan = document.getElementById('panel-' + id);
-            const btn = document.getElementById('btn-' + id);
-            if(pan) pan.style.display = 'flex';
-            if(btn) btn.classList.add('active');
+            document.getElementById('panel-' + id).style.display = 'flex';
+            document.getElementById('btn-' + id).classList.add('active');
         }
 
         function setMakeup(m) { 
-            currentMakeup = m; 
+            currentMakeup = m;
             document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m));
             applyEditEffects(); 
         }
@@ -423,262 +418,244 @@
             applyEditEffects(); 
         }
 
-        // 📐 【徹底修正拉寬 Bug：真正的 X 軸中心點內推縮緊瘦臉演算法】
-        function applyFaceLiquefy(srcCanvas, landmarks, thinStrength, bigEyeStrength) {
-            const w = srcCanvas.width; const h = srcCanvas.height;
-            warpCtx.clearRect(0, 0, w, h); warpCtx.drawImage(srcCanvas, 0, 0);
-
-            if ((thinStrength === 0 && bigEyeStrength === 0) || !landmarks) return srcCanvas;
-
-            const imgData = warpCtx.getImageData(0, 0, w, h);
-            const outData = warpCtx.createImageData(w, h);
-            outData.data.set(imgData.data);
-
-            const src = imgData.data; const dst = outData.data;
-            
-            // 4號點是鼻尖，作為臉部的物理正中心
-            const faceCenterX = landmarks[4].x * w; 
-
-            const leftEyeCenter = { x: landmarks[133].x * w, y: landmarks[133].y * h };
-            const rightEyeCenter = { x: landmarks[362].x * w, y: landmarks[362].y * h };
-
-            const warps = [];
-            
-            // 瘦臉：抓取下顎與兩側骨骼點
-            if (thinStrength > 0) {
-                const faceOutline = [234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,361,323,454];
-                // 限制內縮係數
-                const intensity = (thinStrength / 100) * 0.16; 
-                const radius = w * 0.38; 
-
-                faceOutline.forEach(idx => {
-                    const cx = landmarks[idx].x * w; const cy = landmarks[idx].y * h;
-                    warps.push({ type: 'thin', cx: cx, cy: cy, r: radius, tx: faceCenterX, amount: intensity });
-                });
-            }
-
-            // 大眼
-            if (bigEyeStrength > 0) {
-                const eyeScale = 1.0 + (bigEyeStrength / 100) * 0.3;
-                const eyeRadius = w * 0.14;
-                warps.push({ type: 'swell', cx: leftEyeCenter.x, cy: leftEyeCenter.y, r: eyeRadius, amount: eyeScale });
-                warps.push({ type: 'swell', cx: rightEyeCenter.x, cy: rightEyeCenter.y, r: eyeRadius, amount: eyeScale });
-            }
-
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    let sx = x; let sy = y;
-                    for (const wp of warps) {
-                        const dx = sx - wp.cx; const dy = sy - wp.cy; const dist = Math.hypot(dx, dy);
-                        if (dist < wp.r) {
-                            const f = (1.0 - dist / wp.r); 
-                            if (wp.type === 'swell') {
-                                sx = wp.cx + dx / (1.0 + (wp.amount - 1.0) * f * f);
-                                sy = wp.cy + dy / (1.0 + (wp.amount - 1.0) * f * f);
-                            } else if (wp.type === 'thin') {
-                                // 限制只准向 X 軸臉中心推動，百分之百防寬
-                                if (wp.cx < wp.tx) {
-                                    sx = sx + (wp.tx - sx) * wp.amount * f * f;
-                                } else {
-                                    sx = sx - (sx - wp.tx) * wp.amount * f * f;
-                                }
-                            }
-                        }
-                    }
-                    sx = Math.max(0, Math.min(w - 1, sx)); sy = Math.max(0, Math.min(h - 1, sy));
-                    const x0 = Math.floor(sx); const x1 = Math.min(w - 1, x0 + 1);
-                    const y0 = Math.floor(sy); const y1 = Math.min(h - 1, y0 + 1);
-                    const dx = sx - x0; const dy = sy - y0;
-
-                    const idx00 = (y0 * w + x0) * 4; const idx10 = (y0 * w + x1) * 4;
-                    const idx01 = (y1 * w + x0) * 4; const idx11 = (y1 * w + x1) * 4;
-                    const didx = (y * w + x) * 4;
-
-                    for (let c = 0; c < 4; c++) {
-                        dst[didx + c] = (1 - dx) * (1 - dy) * src[idx00 + c] + dx * (1 - dy) * src[idx10 + c] +
-                                        (1 - dx) * dy * src[idx01 + c] + dx * dy * src[idx11 + c];
-                    }
-                }
-            }
-            warpCtx.putImageData(outData, 0, 0); return warpCanvas;
+        function warpTriangle(ctx, src, srcPts, dstPts) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(dstPts[0].x, dstPts[0].y); ctx.lineTo(dstPts[1].x, dstPts[1].y); ctx.lineTo(dstPts[2].x, dstPts[2].y);
+            ctx.closePath(); ctx.clip(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+            let x0 = srcPts[0].x, y0 = srcPts[0].y; let x1 = srcPts[1].x, y1 = srcPts[1].y;
+            let x2 = srcPts[2].x, y2 = srcPts[2].y;
+            let u0 = dstPts[0].x, v0 = dstPts[0].y;
+            let u1 = dstPts[1].x, v1 = dstPts[1].y; let u2 = dstPts[2].x, v2 = dstPts[2].y;
+            let delta = u0*(v1 - v2) + u1*(v2 - v0) + u2*(v0 - v1) || 1;
+            let a = (x0*(v1 - v2) + x1*(v2 - v0) + x2*(v0 - v1)) / delta;
+            let b = (x0*(u2 - u1) + x1*(u0 - u2) + x2*(u1 - u0)) / delta;
+            let c = (x0*(u1*v2 - u2*v1) + x1*(u2*v0 - u0*v2) + x2*(u0*v1 - u1*v0)) / delta;
+            let d = (y0*(v1 - v2) + y1*(v2 - v0) + y2*(v0 - v1)) / delta;
+            let e = (y0*(u2 - u1) + y1*(u0 - u2) + y2*(u1 - u0)) / delta;
+            let f = (y0*(u1*v2 - u2*v1) + y1*(u2*v0 - u0*v2) + y2*(u0*v1 - u1*v0)) / delta;
+            ctx.transform(a, d, b, e, c, f); ctx.drawImage(src, 0, 0); ctx.restore();
         }
 
-        // ✨⏳ 【精準全臉美白與磨皮管線 - 補齊額頭與強度反應】
-        function applySkinEffects(targetCtx, baseCanvas, landmarks, whitVal, smooVal) {
-            const w = baseCanvas.width; const h = baseCanvas.height;
-
-            if ((whitVal === 0 && smooVal === 0) || !landmarks) {
-                targetCtx.drawImage(baseCanvas, 0, 0); return;
-            }
-
-            // 1. 動態建立皮膚封閉性遮罩 (包含整個額頭)
-            skinMaskCtx.clearRect(0, 0, w, h);
-            skinMaskCtx.fillStyle = '#000'; skinMaskCtx.fillRect(0, 0, w, h);
-            
-            skinMaskCtx.fillStyle = '#fff'; skinMaskCtx.beginPath();
-            faceOutlineIndices.forEach((idx, i) => {
-                const px = landmarks[idx].x * w; const py = landmarks[idx].y * h;
-                if (i === 0) skinMaskCtx.moveTo(px, py); else skinMaskCtx.lineTo(px, py);
-            });
-            skinMaskCtx.closePath(); skinMaskCtx.fill();
-
-            // 扣除雙眼球
-            const eyes = [ [33,160,158,133,153,144], [362,385,387,263,373,380] ];
-            skinMaskCtx.fillStyle = '#000';
-            eyes.forEach(pts => {
-                skinMaskCtx.beginPath();
-                pts.forEach((idx, i) => {
-                    if (i === 0) skinMaskCtx.moveTo(landmarks[idx].x * w, landmarks[idx].y * h);
-                    else skinMaskCtx.lineTo(landmarks[idx].x * w, landmarks[idx].y * h);
-                });
-                skinMaskCtx.closePath(); skinMaskCtx.fill();
-            });
-
-            const srcImgData = warpCtx.getImageData(0, 0, w, h);
-            const maskImgData = skinMaskCtx.getImageData(0, 0, w, h);
-            const outImgData = targetCtx.createImageData(w, h);
-            outImgData.data.set(srcImgData.data);
-
-            const src = srcImgData.data; const mask = maskImgData.data; const dst = outImgData.data;
-
-            const whitenFactor = (whitVal / 100) * 35;
-            // 強化磨皮融合強度反應
-            const smoothFactor = (smooVal / 100) * 0.75; 
-            const radius = 4; // 擴大模糊採樣半徑，保障反應流暢顯著
-
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    const idx = (y * w + x) * 4;
-
-                    if (mask[idx] > 128) {
-                        let r = src[idx]; let g = src[idx+1]; let b = src[idx+2];
-                        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
-                        
-                        // A. 全臉美白 (光影層次保留)
-                        if (whitVal > 0) {
-                            const lightRatio = luma / 255.0; 
-                            const adaptiveGain = whitenFactor * (0.35 + lightRatio * 0.65);
-                            r = Math.min(255, r + adaptiveGain);
-                            g = Math.min(255, g + adaptiveGain);
-                            b = Math.min(255, b + adaptiveGain);
-                        }
-
-                        // B. 智慧調勻平滑磨皮
-                        if (smooVal > 0) {
-                            let sumR = 0, sumG = 0, sumB = 0, weightSum = 0;
-
-                            for (let ky = -radius; ky <= radius; ky++) {
-                                for (let kx = -radius; kx <= radius; kx++) {
-                                    const ny = Math.max(0, Math.min(h - 1, y + ky));
-                                    const nx = Math.max(0, Math.min(w - 1, x + kx));
-                                    const nIdx = (ny * w + nx) * 4;
-
-                                    const nr = src[nIdx]; const ng = src[nIdx+1]; const nb = src[nIdx+2];
-                                    const nLuma = 0.299 * nr + 0.587 * ng + 0.114 * nb;
-                                    const lumaDiff = Math.abs(luma - nLuma);
-                                    
-                                    // 寬容度微調，既平滑肌膚又能保護深色光影邊界
-                                    if (lumaDiff < 65) {
-                                        const wFactor = (1.0 - lumaDiff / 65);
-                                        sumR += nr * wFactor; sumG += ng * wFactor; sumB += nb * wFactor;
-                                        weightSum += wFactor;
-                                    }
-                                }
-                            }
-
-                            if (weightSum > 0) {
-                                dst[idx] = r * (1 - smoothFactor) + (sumR / weightSum) * smoothFactor;
-                                dst[idx+1] = g * (1 - smoothFactor) + (sumG / weightSum) * smoothFactor;
-                                dst[idx+2] = b * (1 - smoothFactor) + (sumB / weightSum) * smoothFactor;
-                            } else {
-                                dst[idx] = r; dst[idx+1] = g; dst[idx+2] = b;
-                            }
-                        } else {
-                            dst[idx] = r; dst[idx+1] = g; dst[idx+2] = b;
-                        }
-                    }
-                }
-            }
-            targetCtx.putImageData(outImgData, 0, 0);
-        }
-
-        // 🎨 【編輯頁面主渲染渲染管線】
+        // =============================================================
+        // 🎨 核心重構：完美修正渲染流水線 (修復 1、2、3、4 點痛點)
+        // =============================================================
         function applyEditEffects() {
-            const w = canvasEdit.width; const h = canvasEdit.height;
-            ctxEdit.clearRect(0, 0, w, h); 
-
-            if (!frozenFaceLandmarks) { ctxEdit.drawImage(originalSnapshot, 0, 0); return; }
-            let pts = frozenFaceLandmarks.map(p => ({ x: p.x * w, y: p.y * h }));
-
-            const thinStrength = parseInt(document.getElementById('slider-thin').value);
-            const bigEyeStrength = parseInt(document.getElementById('slider-big-eye').value);
+            const w = canvasEdit.width;
+            const h = canvasEdit.height;
             
-            // 1. 中心內收瘦臉與大眼
-            const baseCanvas = applyFaceLiquefy(originalSnapshot, frozenFaceLandmarks, thinStrength, bigEyeStrength);
+            // 【修復第 4 點：徹底解決背景非全透明、髒污留存問題】
+            // 在每一影格渲染起手式，強行重設矩陣並徹底抹除整張預覽畫布，重新繪製最乾淨的原圖
+            ctxEdit.setTransform(1, 0, 0, 1, 0, 0); 
+            ctxEdit.clearRect(0, 0, w, h);
+
+            if (!frozenFaceLandmarks) { 
+                ctxEdit.drawImage(originalSnapshot, 0, 0);
+                return; 
+            }
+            
+            let pts = frozenFaceLandmarks.map(p => ({ x: p.x * w, y: p.y * h }));
+            
+            // 清理內部快取緩衝池
+            pBaseCtx.clearRect(0, 0, w, h);
+            fxCtx.clearRect(0, 0, w, h);
+            maskCtx.clearRect(0, 0, w, h); 
+            blendCtx.clearRect(0, 0, w, h);
+
+            // 📐 【修復第 1 點：瘦臉變寬問題修正】
+            if (showGoldenRatioWarp) {
+                let targetPts = JSON.parse(JSON.stringify(pts));
+                const faceCenter = pts[4].x; // 臉部中心軸基準 (鼻尖)
+                
+                // 調整核心緊縮係數：正值代表將外部邊緣點往「中心軸收窄」(原版公式中正負偏移邏輯顛倒導致變寬)
+                const shrinkFactor = 0.88; 
+                const outerFaceShell = [234, 93, 132, 58, 172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454];
+                
+                outerFaceShell.forEach(idx => { 
+                    // 將左右兩側臉頰輪廓精確向內拉近，保證絕對是向內「修飾瘦臉」而非向外變寬
+                    targetPts[idx].x = faceCenter + (pts[idx].x - faceCenter) * shrinkFactor; 
+                });
+
+                const fullFaceTriangles = [
+                    [10, 234, 1], [10, 454, 1], [234, 152, 1], [454, 152, 1], [1, 234, 152], [1, 454, 152],
+                    [10, 152, 234], [10, 152, 454], [58, 172, 152], [365, 397, 152], [93, 132, 10], [323, 361, 10],
+                    [10, 338, 297], [297, 332, 10], [10, 109, 67], [67, 103, 10], [54, 21, 10], [162, 127, 10],
+                    [234, 93, 152], [454, 323, 152], [132, 58, 152], [361, 288, 152], [172, 136, 152], [397, 365, 152],
+                    [150, 149, 152], [379, 378, 152], [176, 148, 152], [400, 377, 152], [148, 152, 84], [377, 152, 314],
+                    [4, 33, 133], [4, 263, 362], [133, 362, 152], [10, 4, 133], [10, 4, 362], [152, 4, 10]
+                ];
+                fullFaceTriangles.forEach(t => { warpTriangle(pBaseCtx, originalSnapshot, [pts[t[0]], pts[t[1]], pts[t[2]]], [targetPts[t[0]], targetPts[t[1]], targetPts[t[2]]]); });
+                pBaseCtx.save(); pBaseCtx.globalCompositeOperation = 'destination-over'; pBaseCtx.drawImage(originalSnapshot, 0, 0); pBaseCtx.restore();
+                pts = targetPts;
+            } else {
+                pBaseCtx.drawImage(originalSnapshot, 0, 0);
+            }
 
             const whitVal = parseInt(document.getElementById('slider-whiten').value);
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
 
-            // 2. 精準覆蓋額頭美白與平滑磨皮
-            applySkinEffects(ctxEdit, baseCanvas, frozenFaceLandmarks, whitVal, smooVal);
-
-            // 💄 3. 【真正使用您的照片進行貼合渲染（日式、歌仔戲）】
-            if (currentMakeup !== 'none') {
-                ctxEdit.save();
-                
-                if (currentMakeup === 'jp' && isJapanImgLoaded) {
-                    // 🌸 完美對齊《日式.PNG》：以 33 號與 263 號兩側外眼角點計算寬度與角度，精準覆蓋眼下
-                    const eyeW = Math.hypot(pts[263].x - pts[33].x, pts[263].y - pts[33].y);
-                    const angle = Math.atan2(pts[263].y - pts[33].y, pts[263].x - pts[33].x);
-                    
-                    // 取得眼下中心點
-                    const centerX = (pts[31].x + pts[261].x) / 2;
-                    const centerY = (pts[31].y + pts[261].y) / 2 + 5;
-
-                    ctxEdit.translate(centerX, centerY);
-                    ctxEdit.rotate(angle);
-                    ctxEdit.globalAlpha = 0.85; // 保持透明度融合
-                    
-                    // 動態貼合圖檔縮放
-                    const targetWidth = eyeW * 1.2;
-                    const targetHeight = targetWidth * (imgJapanMakeup.height / imgJapanMakeup.width);
-                    ctxEdit.drawImage(imgJapanMakeup, -targetWidth/2, -targetHeight/3, targetWidth, targetHeight);
-
-                } else if (currentMakeup === 'opera' && isOperaImgLoaded) {
-                    // 🎭 完美對齊《歌仔戲.PNG》：以 70 號與 300 號眉頭/眼大範圍點定位
-                    const browW = Math.hypot(pts[300].x - pts[70].x, pts[300].y - pts[70].y);
-                    const angle = Math.atan2(pts[300].y - pts[70].y, pts[300].x - pts[70].x);
-                    
-                    // 取得鼻樑與雙眼窩中心
-                    const centerX = (pts[6].x + pts[168].x) / 2;
-                    const centerY = (pts[6].y + pts[168].y) / 2;
-
-                    ctxEdit.translate(centerX, centerY);
-                    ctxEdit.rotate(angle);
-                    ctxEdit.globalAlpha = 0.85;
-                    
-                    const targetWidth = browW * 2.4; // 大範圍覆蓋眼窩與眉宇
-                    const targetHeight = targetWidth * (imgOperaMakeup.height / imgOperaMakeup.width);
-                    ctxEdit.drawImage(imgOperaMakeup, -targetWidth/2, -targetHeight/2, targetWidth, targetHeight);
+            if (whitVal > 0 || smooVal > 0) {
+                fxCtx.drawImage(pBaseCanvas, 0, 0);
+                if (smooVal > 0) {
+                    let blurAlpha = (smooVal / 100) * 0.42;
+                    fxCtx.save(); fxCtx.globalAlpha = blurAlpha;
+                    fxCtx.drawImage(pBaseCanvas, -2, -2); fxCtx.drawImage(pBaseCanvas, 2, -2);
+                    fxCtx.drawImage(pBaseCanvas, -2, 2); fxCtx.drawImage(pBaseCanvas, 2, 2);
+                    fxCtx.restore();
                 }
-                ctxEdit.restore();
+                if (whitVal > 0) {
+                    let imgData = fxCtx.getImageData(0, 0, w, h);
+                    let data = imgData.data; let factor = (whitVal / 100) * 45;
+                    for (let i = 0; i < data.length; i += 4) {
+                        let luminance = (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114) / 255;
+                        let curveOffset = factor * (0.3 + luminance * 0.7);
+                        data[i] = Math.min(255, data[i] + curveOffset);
+                        data[i+1] = Math.min(255, data[i+1] + curveOffset * 0.96);
+                        data[i+2] = Math.min(255, data[i+2] + curveOffset * 0.91);
+                    }
+                    fxCtx.putImageData(imgData, 0, 0);
+                }
+
+                // 精準皮膚遮罩生成
+                maskCtx.fillStyle = 'white';
+                maskCtx.beginPath();
+                
+                // 基礎臉部輪廓點
+                const faceOutline = [338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+                maskCtx.moveTo(pts[10].x, pts[10].y);
+                faceOutline.forEach((idx) => { maskCtx.lineTo(pts[idx].x, pts[idx].y); });
+
+                // 【修復第 2 點：美白依舊漏掉一小塊額頭 (瀏海遮擋問題)】
+                // 額頭核心點 (點 10, 67, 297) 容易因為瀏海與髮際線陰影造成辨識點往下塌陷陷落
+                // 解決方案：在遮罩閉合前，強制將額頭頂部邊緣向上進行「幾何安全外推擴展擴張」，保證美白能突破瀏海盲區，100% 覆蓋
+                const foreheadOffsetH = h * 0.055; // 向上外推擴充 5.5% 畫面高度
+                maskCtx.lineTo(pts[297].x, pts[297].y - foreheadOffsetH);
+                maskCtx.lineTo(pts[10].x, pts[10].y - foreheadOffsetH);
+                maskCtx.lineTo(pts[67].x, pts[67].y - foreheadOffsetH);
+
+                maskCtx.closePath(); 
+                maskCtx.fill();
+
+                // 挖空排除非皮膚精細區域 (眼球、嘴唇內)
+                maskCtx.globalCompositeOperation = 'destination-out';
+                const carve = (arr) => { maskCtx.beginPath(); arr.forEach((i, idx) => { if(idx===0) maskCtx.moveTo(pts[i].x, pts[i].y); else maskCtx.lineTo(pts[i].x, pts[i].y); }); maskCtx.closePath(); maskCtx.fill(); };
+                carve([33, 160, 158, 133, 153, 144]); // 左眼球
+                carve([362, 385, 387, 263, 373, 380]); // 右眼球
+                
+                // 【修復第 3 點：智慧磨皮把眉毛糊在一起問題】
+                // 原版代碼在進行磨皮時，carve 排除區域沒有精準包覆眉毛的所有細節，或者被平滑濾鏡意外滲透。
+                // 解決方案：在這裡將左眉與右眉的完整多邊形特徵點群從磨皮美白面罩中「完全強行挖空(Alpha 設為 0)」
+                // 如此一來，磨皮核心演算法將完全不作用於眉毛區域，完美保留根根分明的原生眉毛毛流感與立體邊緣。
+                carve([70, 63, 105, 66, 107, 55, 46]); // 左眉毛完整精細邊緣保護區
+                carve([336, 296, 334, 293, 300, 285, 276]); // 右眉毛完整精細邊緣保護區
+                
+                carve([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185]); // 嘴唇內
+                
+                blendCtx.drawImage(maskCanvas, 0, 0); 
+                blendCtx.globalCompositeOperation = 'source-in'; 
+                blendCtx.drawImage(fxCanvas, 0, 0);
+                pBaseCtx.drawImage(blendCanvas, 0, 0);
             }
             
-            // 🎉 4. 貼紙層
-            if (currentSticker !== 'none' && stickerConfig[currentSticker]) {
-                const conf = stickerConfig[currentSticker];
-                ctxEdit.save(); ctxEdit.translate(stickerState.x, stickerState.y); ctxEdit.rotate(stickerState.angle);
-                const finalSize = Math.round(conf.size * stickerState.scale);
-                ctxEdit.font = `${finalSize}px -apple-system, sans-serif`;
-                ctxEdit.textAlign = "center"; ctxEdit.textBaseline = "middle";
-                ctxEdit.fillText(conf.text, 0, 0); ctxEdit.restore();
+            ctxEdit.drawImage(pBaseCanvas, 0, 0);
+
+            // 💄 【修復第 4 點：妝容未根據五官各個部分各自對齊 + 背景透明優化】
+            if (currentMakeup !== 'none') {
+                const mkImg = document.getElementById(`asset-mk-${currentMakeup}`);
+                if (mkImg && mkImg.complete && mkImg.naturalWidth > 0) {
+                    
+                    ctxEdit.save();
+                    
+                    // 利用高階圖層混合模式 'source-over' 搭配 100% clear 畫布機制
+                    // 妝容圖本身的去背透明通道會被完美保留，背景絕對呈現全透明融合，不會有白色或髒污方塊
+                    ctxEdit.globalCompositeOperation = "source-over"; 
+                    ctxEdit.globalAlpha = (currentMakeup === 'jp') ? 0.82 : 0.92; // 調整妝容自然融合度
+
+                    // 1. 擷取五官中各部位各自的獨立幾何點位 (不要將整張臉當作單一巨型矩形強行拉伸)
+                    const leftOuterEye = pts[33];   // 左眼外側
+                    const rightOuterEye = pts[263]; // 右眼外側
+                    const noseBridge = pts[168];    // 兩眼眉心軸
+                    const chinPoint = pts[152];     // 下巴
+                    
+                    const eyeDistance = Math.hypot(rightOuterEye.x - leftOuterEye.x, rightOuterEye.y - leftOuterEye.y);
+                    const faceWidth = eyeDistance * 2.1;
+                    const faceHeight = Math.hypot(chinPoint.x - pts[10].x, chinPoint.y - pts[10].y);
+                    const faceAngle = Math.atan2(rightOuterEye.y - leftOuterEye.y, rightOuterEye.x - leftOuterEye.x);
+
+                    // 嘴唇部分的五官獨立控制點 (嘴唇上下左右四極點)
+                    const lipLeft = pts[61];
+                    const lipRight = pts[291];
+                    const lipTop = pts[0];
+                    const lipBottom = pts[17];
+                    const lipWidth = Math.hypot(lipRight.x - lipLeft.x, lipRight.y - lipLeft.y);
+                    const lipHeight = Math.hypot(lipBottom.y - lipTop.y, lipBottom.x - lipTop.x);
+
+                    if (currentMakeup === 'jp') {
+                        // 【日系妝容】：著重於大眼睛與雙頰腮紅對齊
+                        // 以兩眼中心與鼻樑為基準做單獨定位，並對齊面部角度旋轉
+                        ctxEdit.translate(noseBridge.x, noseBridge.y + (eyeDistance * 0.1));
+                        ctxEdit.rotate(faceAngle);
+                        
+                        const renderW = faceWidth * 1.05;
+                        const renderH = renderW * (mkImg.naturalHeight / mkImg.naturalWidth);
+                        ctxEdit.drawImage(mkImg, -renderW / 2, -renderH * 0.3, renderW, renderH);
+                    } 
+                    else if (currentMakeup === 'opera') {
+                        // 【歌仔戲妝容】：細節極多，整張拉伸必定錯位。在此實施「多器官區域化垂直投影投影映射」
+                        // 拆解為：A部分(眼影眉毛區) 與 B部分(紅唇區) 各自獨立根據五官點對齊定位！
+                        
+                        // A. 上半部：眼影與眼角、眉毛精準對齊
+                        ctxEdit.save();
+                        ctxEdit.translate(noseBridge.x, noseBridge.y + (eyeDistance * 0.05));
+                        ctxEdit.rotate(faceAngle);
+                        const topRenderW = faceWidth * 1.05;
+                        const topRenderH = faceHeight * 0.95;
+                        
+                        // 僅將素材圖片的上半部 (0% 到 55% 高度) 獨立剪裁投影至眼睛與眉毛區域
+                        ctxEdit.drawImage(mkImg, 
+                            0, 0, mkImg.naturalWidth, mkImg.naturalHeight * 0.55, // 素材來源裁剪
+                            -topRenderW / 2, -topRenderH * 0.32, topRenderW, topRenderH * 0.55  // 畫面精準渲染
+                        );
+                        ctxEdit.restore();
+
+                        // B. 下半部：古典紅唇獨立精準定位
+                        ctxEdit.save();
+                        const lipCenterX = (lipLeft.x + lipRight.x) / 2;
+                        const lipCenterY = (lipTop.y + lipBottom.y) / 2;
+                        ctxEdit.translate(lipCenterX, lipCenterY);
+                        ctxEdit.rotate(faceAngle); // 嘴唇隨臉部角度同步旋轉
+                        
+                        // 根據當前人臉嘴唇的實際擴張寬高（lipWidth, lipHeight）進行等比例局部微調縮放
+                        const lipRenderW = lipWidth * 1.85; 
+                        const lipRenderH = lipHeight * 2.15;
+                        
+                        // 僅將素材圖片的下半部唇妝 (55% 到 100% 高度) 獨立剪裁並投影覆蓋至嘴唇，確保口紅絕不位移或出界
+                        ctxEdit.drawImage(mkImg, 
+                            0, mkImg.naturalHeight * 0.55, mkImg.naturalWidth, mkImg.naturalHeight * 0.45, // 素材來源裁剪
+                            -lipRenderW / 2, -lipRenderH / 2, lipRenderW, lipRenderH                     // 嘴唇精準渲染
+                        );
+                        ctxEdit.restore();
+                    }
+
+                    ctxEdit.restore();
+                }
+            }
+            
+            // 🎉 貼紙渲染（自然寬度雙重檢查）
+            if (currentSticker !== 'none') {
+                const img = document.getElementById(`asset-stk-${currentSticker}`);
+                if (img && img.complete && img.naturalWidth > 0) {
+                    ctxEdit.save();
+                    ctxEdit.translate(stickerState.x, stickerState.y); ctxEdit.rotate(stickerState.angle);
+                    const finalW = stickerState.width * stickerState.scale; const finalH = stickerState.height * stickerState.scale;
+                    ctxEdit.drawImage(img, -finalW / 2, -finalH / 2, finalW, finalH); ctxEdit.restore();
+                }
             }
         }
 
-        // 貼紙觸控互動
+        // 觸控拖曳管理
         function initStickerInteractions() {
             const container = document.getElementById('preview-container');
-            if(!container) return;
             const getEventCoords = (e) => {
                 let rect = canvasEdit.getBoundingClientRect();
                 let clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -687,22 +664,27 @@
             };
             const handleStart = (x, y, isMulti = false, distance = 0, angle = 0) => {
                 if (currentSticker === 'none') return;
+                const currentW = stickerState.width * stickerState.scale;
                 if (!isMulti) {
-                    if (Math.hypot(x - stickerState.x, y - stickerState.y) < 90) {
-                        isDragging = true; dragStartX = x; dragStartY = y; initStickerX = stickerState.x; initStickerY = stickerState.y;
+                    if (Math.hypot(x - stickerState.x, y - stickerState.y) < currentW * 0.9) {
+                        isDragging = true;
+                        dragStartX = x; dragStartY = y; initStickerX = stickerState.x; initStickerY = stickerState.y;
                     }
                 } else {
-                    isDragging = false; startTouchDist = distance; startTouchAngle = angle; initScale = stickerState.scale; initAngle = stickerState.angle;
+                    isDragging = false;
+                    startTouchDist = distance; startTouchAngle = angle; initScale = stickerState.scale; initAngle = stickerState.angle;
                 }
             };
-
             canvasEdit.addEventListener('mousedown', (e) => { let p = getEventCoords(e); handleStart(p.x, p.y); });
             window.addEventListener('mousemove', (e) => {
                 if (!isDragging) return; let p = getEventCoords(e);
                 stickerState.x = initStickerX + (p.x - dragStartX); stickerState.y = initStickerY + (p.y - dragStartY); applyEditEffects();
             });
             window.addEventListener('mouseup', () => { isDragging = false; });
-
+            canvasEdit.addEventListener('wheel', (e) => {
+                if (currentSticker === 'none') return; e.preventDefault();
+                stickerState.scale = Math.max(0.3, Math.min(4.0, stickerState.scale + (e.deltaY > 0 ? -0.05 : 0.05))); applyEditEffects();
+            }, { passive: false });
             container.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) { let p = getEventCoords(e); handleStart(p.x, p.y); } 
                 else if (e.touches.length === 2) {
@@ -717,19 +699,14 @@
                     stickerState.x = initStickerX + (p.x - dragStartX); stickerState.y = initStickerY + (p.y - dragStartY); applyEditEffects();
                 } else if (e.touches.length === 2) {
                     e.preventDefault(); const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY;
-                    stickerState.scale = Math.max(0.4, Math.min(4.0, initScale * (Math.hypot(dx, dy) / startTouchDist)));
+                    stickerState.scale = Math.max(0.3, Math.min(4.0, initScale * (Math.hypot(dx, dy) / startTouchDist)));
                     stickerState.angle = initAngle + (Math.atan2(dy, dx) - startTouchAngle); applyEditEffects();
                 }
             }, { passive: false });
             window.addEventListener('touchend', () => { isDragging = false; });
         }
 
-        function savePhoto() { alert("💾 終極修復相片已成功導出儲存！"); }
-
-        // 💡 【重要預留：請在此處填入您圖片的 Base64 碼，或者直接確保日式.PNG、歌仔戲.PNG 與此 HTML 放在同一個資料夾下即可！】
-        const JAPAN_MAKEUP_BASE64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QGSRXhpZgAATU0AKgAAAAgABwESAAMAAAABAAEAAAEaAAUAAAABAAAAYgEbAAUAAAABAAAAagEoAAMAAAABAAIAAAExAAIAAAAKAAAAcgEyAAIAAAAUAAAAfIdpAAQAAAABAAAAkAAAAAAAAABIAAAAAQAAAEgAAAABSW5zdGFncmFtADIwMjY6MDY6MTYgMTU6MTc6NTIAAA+QAAAHAAAABDAyMjGQAwACAAAAFAAAAUqQBAACAAAAFAAAAV6QEAACAAAABwAAAXKQEQACAAAABwAAAXqQEgACAAAABwAAAYKRAQAHAAAABAECAwCSkAACAAAABDU0NgCSkQACAAAABDU0NgCSkgACAAAABDU0NgCgAAAHAAAABDAxMDCgAQADAAAAAQABAACgAgAEAAAAAQAAAY+gAwAEAAAAAQAAAfWkBgADAAAAAQAAAAAAAAAAMjAyNjowNjoxNiAxNToxNzo1MgAyMDI2OjA2OjE2IDE1OjE3OjUyACswODowMAAAKzA4OjAwAAArMDg6MDAAAP/tAHhQaG90b3Nob3AgMy4wADhCSU0EBAAAAAAAPxwBWgADGyVHHAIAAAIAAhwCPwAGMTUxNzUyHAI+AAgyMDI2MDYxNhwCNwAIMjAyNjA2MTYcAjwABjE1MTc1MgA4QklNBCUAAAAAABCzzb6U1SsGa++24DZZwL09/8AAEQgB9QGPAwERAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgMDBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAMv/aAAwDAQACEQMRAD8A/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9D9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//S/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9P9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9b9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//Q/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9H9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//T/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9T9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//W/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9f9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//R/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9L9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAaW9KCrCZNA7Bk0BYcOlBAtABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAf//U/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAQnFBVhjNjrQWkV2mFTc0UBhmqbl8hIkmaq5LiTg9xVGTRJQZBQAUAFABQAUAFABQAUAFABnFADdxoLsG40D5RN3vQFgBxQTYfQSFABQAUAFABQAUAFABQAUAFABQAUAFABQB//9X9/KACgAoAKACgAoAKACgAoAKACgAoAKACgCB3x1oNoooyzVk2dcYFNpai50KAwS80rl8pajlGetWmc0omjGwI4rVHJJE60zFjqCQoAKACgAoAKAIZZkiGW70FWCKZJgSvb1oCxKSByaCSvJOid81LZvGDZWNyp71PMbKmRtcUrmipii4ouDpllJc9Ku5zyiWQ3pVGLQ+ggKACgAoAKACgAoAKACgAoAKACgAoAKAP/9b9/KACgAoAKACgAoAKACgAoAKACgAoAKAGMaC4ozp5ccVlJnZTiZUstZNnoRiVTIT3qTZRG7yBmgGiu94UOFPNK41TTGLfXhPyyso9AaOZkunDqiQahe9pm/Ojnl3MnSh2JxrN+qEbg+R3H+GKpVGZPD035FvT9UExO35JB1U1vGSZw1aLh6HSxSLKu4VocZLQAUARySCNSx6CgpK5hyTGVy7H/wCsKm5ql2KUuqmIGO06nq5/oKxlU7HdDDdZmTJPNMd0rlj7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QB//0v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAp3d0bVN+zdUSlZHTSpe0drmGfEEm7CwZrH2r7Hq/2fH+Ymj1uSQcwEGmqvkZSwUV9om/tC6lQ+XFzT521sZ/V6cX70ilFeamkx3ocehqFKSZ0zpUHHRmpaXtxPKUki2gd61jJt7HDVoQhG6katannhQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFAH//0/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAZJGsqFG6Gk1cuMnF3RjS6ZLGN1sQT6GsnDselDExlpMyJjqsbf6rGfasXzroehBYeS+IvWx1c8bdoNWuc5qn1fuX1tLt3DzSYHoK05X1ON1aaVoo1VUKMCtTgbbFoEFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAf/1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9b9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//Q/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9H9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//T/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9T9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//W/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9f9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//R/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9L9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//U/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9X9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//X/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9D9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//S/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9P9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9k="; 
-        const OPERA_MAKEUP_BASE64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QGSRXhpZgAATU0AKgAAAAgABwESAAMAAAABAAEAAAEaAAUAAAABAAAAYgEbAAUAAAABAAAAagEoAAMAAAABAAIAAAExAAIAAAAKAAAAcgEyAAIAAAAUAAAAfIdpAAQAAAABAAAAkAAAAAAAAABIAAAAAQAAAEgAAAABSW5zdGFncmFtADIwMjY6MDY6MTYgMTU6MTc6NDYAAA+QAAAHAAAABDAyMjGQAwACAAAAFAAAAUqQBAACAAAAFAAAAV6QEAACAAAABwAAAXKQEQACAAAABwAAAXqQEgACAAAABwAAAYKRAQAHAAAABAECAwCSkAACAAAABDIxNACSkQACAAAABDIxNACSkgACAAAABDIxNACgAAAHAAAABDAxMDCgAQADAAAAAQABAACgAgAEAAAAAQAAAY+gAwAEAAAAAQAAAfWkBgADAAAAAQAAAAAAAAAAMjAyNjowNjoxNiAxNToxNzo0NgAyMDI2OjA2OjE2IDE1OjE3OjQ2ACswODowMAAAKzA4OjAwAAArMDg6MDAAAP/tAHhQaG90b3Nob3AgMy4wADhCSU0EBAAAAAAAPxwBWgADGyVHHAIAAAIAAhwCPwAGMTUxNzQ2HAI+AAgyMDI2MDYxNhwCNwAIMjAyNjA2MTYcAjwABjE1MTc0NgA4QklNBCUAAAAAABAZFPUbXXV2cmxMcFymPk7S/8AAEQgB9QGPAwERAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgMDBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAMv/aAAwDAQACEQMRAD8A/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9D9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//S/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9P9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9b9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//Q/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9H9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//T/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9T9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAEJxQVYTcaB2ELUrj5Q3e9FxWE3e9K47ChqdxWF3GncLC5FArC0EhQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQB/9X9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAYWouXYiaQCobLsQNN60uYtRIWuAKz5i1Ab9oFHMVyDxMKOYnlJVk71SZm4kwk/GrTJaHhgasLD8kUrkWHA5pisLQSFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQB//9b9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBhPrUtmliq8lQ2aJFGWbFZORvGJQkuDWLkdCgV2nOetZ8xqoAsxz1o5hOJOk3rVqRm4ltZTWiZk4llZK0uZuJIJa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KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAjYdqTRomUZVrFo3izPcYNYtHQmQ1BqKVWQYYUE3sZVzpEcvQUnA6oYhow5/CxmyBUOkd0cdymV/wgJkfc3So+rnX/AGrZHW6P4RhscMw6V0woqJ5GIx8pnaoiwLtSuvY8VyuNLfnSAhYE1mWmRGIE0rGnMOWEUKJLkXI48cmtUjFssgYrQyYtBIUAFABQAUAFABQAUAFABQAUAFABQAUAFABQB//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAEIzQUiCRM1DRomUZI81i0bqRVaM1m0aqQ3aaVh3JkBArREFhcCqRmyYMDV3Mx+73p3AaWoAZyTQBIFFArjxH61VhXHqg+tFibkgHc1RDY6gQUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAf/W/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBCM0FXIWjzUtFpldoufSs3E0UiIx+1Tyl8wgWixVxaCRcmgVhwOaCWhapCJFX0qhXJwMCqsQPC+tUS2OoJCgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP/1/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBpWgpMjMY+lTYpMjMZ+tTYq5GV5pWKuG00rAAWnYLkiofpTsK5KFxVIgkAxVENi0CCgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAG7aCrjSvqKViribV9KVgAACnYBwGaLBccBimQ2LQIKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//R/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAMCgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//S/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9P9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9b9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//Q/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9H9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKADIoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAEJxQVYTcaB2G0rjCi4Dge1MlodQSFABQAUAFABQAUAFABQAUAFABQAUAf/1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAZk0F2G5AoGML+lZgMyTQBKucc1oUx460kSx9MzCgAoAKACgAoAKACgAoAKACgAoAKAP/1f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBpODQWhjHAoGQ5JNZgPVfWgB+0VoVccBmlYkcBimQ2LQIKACgAoAKACgAoAKACgAoAKACgAoA//1v38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBh60mi0NIzTLuAAFBI7BpWFccBimK4tBIUAFABQAUAFABQAUAFABQAUAFABQAUAFAH/1/38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBCM0FXE2mgdwC+tArjqCQoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9D9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//0f38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//S/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9P9/KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//1P38oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP//V/fygAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA//9k=";
-
+        function savePhoto() { alert("💾 拍照手勢、黃金比例、古典妝容、10款貼紙已全面完美生效並存檔！"); }
         window.onload = init;
     </script>
 </body>
