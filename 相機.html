@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 古典美學相機 - 全方位形變貼合版</title>
+    <title>AI 古典美學相機 - 精簡純淨版</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -48,7 +48,7 @@
         
         .menu-row { display: flex; gap: 6px; overflow-x: auto; width: 100%; padding: 5px 0; margin-bottom: 10px; }
         .menu-row::-webkit-scrollbar { display: none; }
-        .btn-item { flex: 0 0 auto; padding: 10px 16px; background-color: #2c2c2e; border-radius: 20px; font-size: 13px; font-weight: bold; border: none; color: #fff; }
+        .btn-item { flex: 1; text-align: center; padding: 10px 0; background-color: #2c2c2e; border-radius: 20px; font-size: 13px; font-weight: bold; border: none; color: #fff; min-width: 85px; }
         .btn-item.active { background-color: #0071e3; }
         
         .sub-panel { width: 100%; display: none; flex-direction: column; align-items: center; background: #2c2c2e; padding: 15px; border-radius: 14px; margin-bottom: 15px; }
@@ -73,11 +73,11 @@
     <div id="stage-intro" class="intro-stage">
         <div class="intro-title">AI 古典美學相機</div>
         <div class="intro-desc">
-            <b>【🚀 影像處理管線全面重構版】</b><br>
-            • <b>📐 網格中心內收圓臉：</b> 鎖定面部物理中心 X 軸向內縮緊，圓臉精準不外擴、不變形。<br>
+            <b>【🚀 影像處理管線全新精簡版】</b><br>
+            • <b>📐 網格中心內收圓臉：</b> 鎖定面部物理中心 X 軸內縮緊，圓臉精準不外擴、不變形。<br>
             • <b>✨ 動態貼合全臉美白：</b> 配合變形（圓臉）後的全新臉型，動態更新閉合遮罩，美白絕不溢出至背景。<br>
             • <b>⏳ 智慧全臉保邊磨皮：</b> 磨皮同樣在變形後的臉部遮罩內運作，完美消除斑點暗沉，並扣除雙眼與嘴唇，保留立體邊緣。<br>
-            • <b>💄 五官依存古典妝容：</b> 妝容與貼紙皆完全依附於變形後的最新特徵點，提供無縫的古典貼合體驗。
+            • <b>🎉 智慧相容專屬貼紙：</b> 貼紙皆可自由拖動、雙指縮放旋轉，提供完美的互動體驗。
         </div>
         <button class="start-btn" id="main-start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
@@ -110,7 +110,6 @@
             <button class="btn-item active" id="btn-face-warp" onclick="openSubPanel('face-warp')">📐 圓臉大眼</button>
             <button class="btn-item" id="btn-skin" onclick="openSubPanel('skin')">✨ 精準美白</button>
             <button class="btn-item" id="btn-smooth" onclick="openSubPanel('smooth')">⏳ 智慧磨皮</button>
-            <button class="btn-item" id="btn-makeup" onclick="openSubPanel('makeup')">💄 經典妝容</button>
             <button class="btn-item" id="btn-sticker" onclick="openSubPanel('sticker')">🎉 專屬貼紙</button>
         </div>
 
@@ -134,13 +133,6 @@
             <div class="slider-container">
                  <span style="font-size:12px;">膚色調勻平滑磨皮 (配合變形後的最新形狀、保護五官)</span>
                 <input type="range" id="slider-smooth-val" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
-            </div>
-        </div>
-        <div id="panel-makeup" class="sub-panel">
-            <div class="grid-layout">
-                <button class="text-thumb-btn mk-btn active" id="mk-none" onclick="setMakeup('none')">無妝容</button>
-                <button class="text-thumb-btn mk-btn" id="mk-jp" onclick="setMakeup('jp')">🌸 日式花見妝 (《日式.PNG》眼下貼合)</button>
-                <button class="text-thumb-btn mk-btn" id="mk-opera" onclick="setMakeup('opera')">🎭 傳統歌仔戲妝 (《歌仔戲.PNG》眼窩貼合)</button>
             </div>
         </div>
         <div id="panel-sticker" class="sub-panel">
@@ -169,15 +161,10 @@
         let frozenFaceLandmarks = null; 
         let isCountingDown = false; let countdownTimer = null;
         let originalSnapshot = document.createElement('canvas'); 
-        let currentMakeup = 'none'; let currentSticker = 'none';
+        let currentSticker = 'none';
         
         let hands = null; let faceMeshStatic = null;
         let cameraUtilsInstance = null;
-
-        let imgJapanMakeup = new Image();
-        let imgOperaMakeup = new Image();
-        let isJapanImgLoaded = false;
-        let isOperaImgLoaded = false;
 
         let warpCanvas = document.createElement('canvas'); let warpCtx = warpCanvas.getContext('2d');
         let skinMaskCanvas = document.createElement('canvas'); let skinMaskCtx = skinMaskCanvas.getContext('2d');
@@ -214,16 +201,6 @@
 
             buildFilterScrollThumbs();
             buildStickerThumbMenu();
-            preloadMakeupImages();
-        }
-
-        function preloadMakeupImages() {
-            imgJapanMakeup.crossOrigin = "anonymous";
-            imgOperaMakeup.crossOrigin = "anonymous";
-            imgJapanMakeup.onload = () => { isJapanImgLoaded = true; };
-            imgOperaMakeup.onload = () => { isOperaImgLoaded = true; };
-            imgJapanMakeup.src = "日式.PNG";
-            imgOperaMakeup.src = "歌仔戲.PNG";
         }
 
         function buildStickerThumbMenu() {
@@ -407,12 +384,6 @@
             const btn = document.getElementById('btn-' + id);
             if(pan) pan.style.display = 'flex';
             if(btn) btn.classList.add('active');
-        }
-
-        function setMakeup(m) { 
-            currentMakeup = m;
-            document.querySelectorAll('.mk-btn').forEach(b => b.classList.toggle('active', b.id === 'mk-'+m));
-            applyEditEffects(); 
         }
         
         function setSticker(s) { 
@@ -607,7 +578,6 @@
             ctxEdit.clearRect(0, 0, w, h);
             if (!frozenFaceLandmarks) { ctxEdit.drawImage(originalSnapshot, 0, 0); return; }
             
-            let pts = frozenFaceLandmarks.map(p => ({ x: p.x * w, y: p.y * h }));
             const thinStrength = parseInt(document.getElementById('slider-thin').value);
             const bigEyeStrength = parseInt(document.getElementById('slider-big-eye').value);
 
@@ -616,28 +586,6 @@
             const smooVal = parseInt(document.getElementById('slider-smooth-val').value);
 
             applySkinEffects(ctxEdit, baseCanvas, frozenFaceLandmarks, whitVal, smooVal, thinStrength, bigEyeStrength);
-
-            if (currentMakeup !== 'none') {
-                ctxEdit.save();
-                if (currentMakeup === 'jp' && isJapanImgLoaded) {
-                    const eyeW = Math.hypot(pts[263].x - pts[33].x, pts[263].y - pts[33].y);
-                    const angle = Math.atan2(pts[263].y - pts[33].y, pts[263].x - pts[33].x);
-                    const centerX = (pts[31].x + pts[261].x) / 2;
-                    const centerY = (pts[31].y + pts[261].y) / 2 + 5;
-                    ctxEdit.translate(centerX, centerY); ctxEdit.rotate(angle); ctxEdit.globalAlpha = 0.85;
-                    const targetWidth = eyeW * 1.2; const targetHeight = targetWidth * (imgJapanMakeup.height / imgJapanMakeup.width);
-                    ctxEdit.drawImage(imgJapanMakeup, -targetWidth/2, -targetHeight/3, targetWidth, targetHeight);
-                } else if (currentMakeup === 'opera' && isOperaImgLoaded) {
-                    const browW = Math.hypot(pts[300].x - pts[70].x, pts[300].y - pts[70].y);
-                    const angle = Math.atan2(pts[300].y - pts[70].y, pts[300].x - pts[70].x);
-                    const centerX = (pts[6].x + pts[168].x) / 2;
-                    const centerY = (pts[6].y + pts[168].y) / 2;
-                    ctxEdit.translate(centerX, centerY); ctxEdit.rotate(angle); ctxEdit.globalAlpha = 0.85;
-                    const targetWidth = browW * 2.4; const targetHeight = targetWidth * (imgOperaMakeup.height / imgOperaMakeup.width);
-                    ctxEdit.drawImage(imgOperaMakeup, -targetWidth/2, -targetHeight/2, targetWidth, targetHeight);
-                }
-                ctxEdit.restore();
-            }
 
             if (currentSticker !== 'none' && stickerConfig[currentSticker]) {
                 const conf = stickerConfig[currentSticker];
@@ -693,7 +641,7 @@
             container.addEventListener('touchend', handleEnd);
         }
 
-        // 💾 專為 iPhone Chrome 最佳化的儲存函式
+        // 💾 iPhone Chrome 儲存方案遮罩
         function savePhoto() {
             const dataUrl = canvasEdit.toDataURL('image/png');
             
