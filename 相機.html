@@ -667,9 +667,22 @@
         }
 
         function savePhoto() {
-            const link = document.createElement('a'); link.download = `AI_Classic_Camera_${Date.now()}.png`; link.href = canvasEdit.toDataURL('image/png');
-            document.body.appendChild(link); link.click(); document.body.removeChild(link); alert('🎉 照片已成功產生並儲存！');
-        }
+    const dataUrl = canvasEdit.toDataURL('image/png');
+    
+    // 建立一個新視窗/新分頁，將變形美白後的圖片直接秀出來，方便手機長按儲存
+    const newWindow = window.open();
+    if (newWindow) {
+        newWindow.document.write(`<img src="${dataUrl}" style="max-width:100%; height:auto;" /><p style="color:#000; font-family:sans-serif; text-align:center;">✨ 請長按上方圖片選擇「儲存圖片」或「加入相片」喔！</p>`);
+    } else {
+        // 如果被瀏覽器彈出視窗攔截，則走回原本的預設下載
+        const link = document.createElement('a');
+        link.download = `AI_Classic_Camera_${Date.now()}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
 
         window.onload = function() { init(); };
     </script>
