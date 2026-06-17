@@ -71,13 +71,13 @@
     <video id="hidden-video" autoplay playsinline muted></video>
 
     <div id="stage-intro" class="intro-stage">
-        <div class="intro-title">AI 古典美學相機</div>
+        <div class="intro-title">AI 抽象美學相機</div>
         <div class="intro-desc">
             <b>【🚀 影像處理管線全面重構版】</b><br>
-            • <b>📐 網格中心內收圓臉：</b> 鎖定面部物理中心 X 軸向內縮緊，圓臉調整精準不外擴、不變形。<br>
+            • <b>📐 網格中心圓臉：</b> 鎖定面部物理中心 X 軸向外發散，圓臉調整精準外擴、變形。<br>
             • <b>✨ 動態貼合全臉美白：</b> 配合變形（圓臉）後的全新臉型，動態更新閉合遮罩，美白絕不溢出至背景。<br>
             • <b>⏳ 智慧全臉保邊磨皮：</b> 磨皮同樣在變形後的臉部遮罩內運作，完美消除斑點暗沉，並扣除雙眼與嘴唇，保留立體邊緣。<br>
-            • <b>🎉 智慧特徵貼紙追蹤：</b> 支援多點觸控交互與精準位置調整，打造專屬古典美學風格。
+            • <b>🎉 智慧特徵貼紙追蹤：</b> 支援多點觸控交互與精準位置調整，打造專屬美學風格。
         </div>
         <button class="start-btn" id="main-start-btn" onclick="enterCameraStage()">開啟相機</button>
     </div>
@@ -115,7 +115,7 @@
 
         <div id="panel-face-warp" class="sub-panel">
             <div class="slider-container" style="margin-bottom: 12px;">
-                <span style="font-size:12px;">✨ 網格精準圓臉強度 (下顎X軸內收、絕不外擴)</span>
+                <span style="font-size:12px;">✨ 網格精準圓臉強度 (下顎X軸外擴)</span>
                 <input type="range" id="slider-thin" class="slider-input" min="0" max="100" value="0" oninput="applyEditEffects()">
             </div>
             <div class="slider-container">
